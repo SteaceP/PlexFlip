@@ -7,6 +7,12 @@ type UserSettingsOptions =
 "DISABLE_HOME_SCREEN_LIBRARIES" |
 "AUTO_MATCH_TRACKS" |
 "AUTO_NEXT_EP" |
+"DISABLE_HERO_DISPLAY" |
+"DISABLE_CONTINUE_WATCHING" |
+"DISABLE_WATCHLIST" |
+"DISABLE_GENRE_RECOMMENDATIONS" |
+"DISABLE_RECENTLY_ADDED" |
+"DISABLE_SIMILAR_RECOMMENDATIONS" |
 string;
 
 export interface UserSettingsState {
@@ -25,6 +31,12 @@ export const useUserSettings = create<UserSettingsState>((set) => ({
         DISABLE_HOME_SCREEN_LIBRARIES: "false",
         AUTO_MATCH_TRACKS: "true",
         AUTO_NEXT_EP: "true",
+        DISABLE_HERO_DISPLAY: "false",
+        DISABLE_CONTINUE_WATCHING: "false",
+        DISABLE_WATCHLIST: "false",
+        DISABLE_GENRE_RECOMMENDATIONS: "false",
+        DISABLE_RECENTLY_ADDED: "false",
+        DISABLE_SIMILAR_RECOMMENDATIONS: "false",
     },
     setSetting: async (key, value) => {
         await axios.post(`${getBackendURL()}/user/options`, {

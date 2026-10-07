@@ -46,20 +46,30 @@ export default function Home() {
           .filter((lib) => ["movie", "show"].includes(lib.type))
           .slice(0, 4); // limit to first 4 libraries
 
-        const featuredData = await getRecommendations(filteredLibraries);
-        setFeatured(featuredData);
-
-        let randomItemData = await getRandomItem(filteredLibraries);
-        let attempts = 0;
-        while (!randomItemData && attempts < 15) {
-          randomItemData = await getRandomItem(filteredLibraries);
-          attempts++;
+        if (settings["DISABLE_GENRE_RECOMMENDATIONS"] !== "true") {
+          const featuredData = await getRecommendations(filteredLibraries);
+          setFeatured(featuredData);
+        } else {
+          setFeatured([]);
         }
 
-        if (!randomItemData) return;
+        if (settings["DISABLE_HERO_DISPLAY"] !== "true") {
+          let randomItemData = await getRandomItem(filteredLibraries);
+          let attempts = 0;
+          while (!randomItemData && attempts < 15) {
+            randomItemData = await getRandomItem(filteredLibraries);
+            attempts++;
+          }
 
-        const data = await getLibraryMeta(randomItemData?.ratingKey as string);
-        setRandomItem(data);
+          if (randomItemData) {
+            const data = await getLibraryMeta(randomItemData?.ratingKey as string);
+            setRandomItem(data);
+          } else {
+            setRandomItem(null);
+          }
+        } else {
+          setRandomItem(null);
+        }
       } catch (error) {
         console.error("Error fetching data", error);
       } finally {
@@ -100,7 +110,9 @@ export default function Home() {
         pt: "-64px",
       }}
     >
-      {randomItem && <HeroDisplay item={randomItem} />}
+      {settings["DISABLE_HERO_DISPLAY"] !== "true" && randomItem && (
+        <HeroDisplay item={randomItem} />
+      )}
       <Box
         sx={{
           width: "100%",
@@ -110,7 +122,10 @@ export default function Home() {
           alignItems: "flex-start",
           justifyContent: "flex-start",
           pb: 8,
-          mt: randomItem ? "-20vh" : "80px",
+          mt:
+            settings["DISABLE_HERO_DISPLAY"] !== "true" && randomItem
+              ? "-20vh"
+              : "80px",
           zIndex: 1,
         }}
       >
@@ -229,22 +244,27 @@ export default function Home() {
             gap: 8,
           }}
         >
-          <MovieItemSlider
-            title="Continue Watching"
-            dir="/library/onDeck"
-            link="/library/onDeck"
-          />
-
-          {watchListCache && watchListCache.length > 0 && (
+          {settings["DISABLE_CONTINUE_WATCHING"] !== "true" && (
             <MovieItemSlider
-              title="Watchlist"
-              data={watchListCache}
-              plexTvSource={true}
-              link="/plextv/watchlist"
+              title="Continue Watching"
+              dir="/library/onDeck"
+              link="/library/onDeck"
             />
           )}
 
-          {featured &&
+          {settings["DISABLE_WATCHLIST"] !== "true" &&
+            watchListCache &&
+            watchListCache.length > 0 && (
+              <MovieItemSlider
+                title="Watchlist"
+                data={watchListCache}
+                plexTvSource={true}
+                link="/plextv/watchlist"
+              />
+            )}
+
+          {settings["DISABLE_GENRE_RECOMMENDATIONS"] !== "true" &&
+            featured &&
             featured.map((item, index) => (
               <MovieItemSlider
                 key={index}
