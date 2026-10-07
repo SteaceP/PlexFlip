@@ -187,32 +187,48 @@ export default function Login() {
     }
 
     try {
-      const res = await getPin();
-      if (!res.id || !res.code) {
+      // Strong PIN: used for the app.plex.tv/auth browser flow. Plex only reliably links
+      // strong PINs from that page; with short PINs, social logins (Google) fail with
+      // "We were unable to complete this request".
+      // Short PIN: only used for the 4-letter code shown for plex.tv/link.
+      const [authPin, linkPin] = await Promise.all([
+        getPin(true),
+        getPin(false).catch(() => null),
+      ]);
+      if (!authPin.id || !authPin.code) {
         setError("Failed to generate login PIN from Plex. Please try again.");
         return;
       }
 
-      const currentPin = { id: res.id, code: res.code };
-      setPinData(currentPin);
+      if (linkPin?.id && linkPin?.code) {
+        setPinData({ id: linkPin.id, code: linkPin.code });
+      } else {
+        setPinData(null);
+      }
 
-      // Register PIN and clientID with local backend
+      const pinIDs = [String(authPin.id), ...(linkPin?.id ? [String(linkPin.id)] : [])];
+
+      // Register PINs and clientID with local backend
       try {
         const backendURL = getBackendURL();
-        await fetch(backendURL ? `${backendURL}/api/auth-pin` : "/api/auth-pin", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ pinID: String(res.id), clientID }),
-        });
+        await Promise.all(
+          pinIDs.map((pinID) =>
+            fetch(backendURL ? `${backendURL}/api/auth-pin` : "/api/auth-pin", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ pinID, clientID }),
+            })
+          )
+        );
       } catch (pinRegErr) {
         console.warn("Could not register PIN with backend:", pinRegErr);
       }
 
-      const forwardUrl = `${window.location.origin}/login?pinID=${res.id}&code=${res.code}&clientID=${encodeURIComponent(clientID)}&language=en`;
+      const forwardUrl = `${window.location.origin}/login?pinID=${authPin.id}&clientID=${encodeURIComponent(clientID)}&language=en`;
       const generatedUrl = `https://app.plex.tv/auth/#!?clientID=${encodeURIComponent(
         clientID
       )}&code=${encodeURIComponent(
-        res.code
+        authPin.code
       )}&context[device][product]=Nevu&context[device][version]=0.1.0&context[device][platform]=${encodeURIComponent(
         getBrowserName()
       )}&context[device][platformVersion]=Desktop&context[device][device]=Desktop&context[device][model]=bundled&context[device][layout]=desktop&context[device][protocol]=${window.location.protocol.replace(
@@ -222,19 +238,22 @@ export default function Login() {
 
       setAuthUrl(generatedUrl);
 
-      // Start polling Plex API for token resolution
+      // Start polling Plex API for token resolution (either PIN may be linked)
       pollIntervalRef.current = setInterval(async () => {
         if (isCompletingRef.current) return;
-        try {
-          const checkRes = await getAccessToken(String(res.id), clientID);
-          if (checkRes && checkRes.authToken) {
-            stopPolling();
-            await completeLogin(checkRes.authToken);
+        for (const pinID of pinIDs) {
+          try {
+            const checkRes = await getAccessToken(pinID, clientID as string);
+            if (checkRes && checkRes.authToken) {
+              stopPolling();
+              await completeLogin(checkRes.authToken);
+              return;
+            }
+          } catch (pollErr) {
+            // ignore transient poll errors while waiting for user sign-in
           }
-        } catch (pollErr) {
-          // ignore transient poll errors while waiting for user sign-in
         }
-      }, 1500);
+      }, 2000);
     } catch (err: any) {
       console.error("Failed to get PIN:", err);
       setError("Failed to connect to Plex authentication servers. Check your internet connection.");
@@ -273,8 +292,16 @@ export default function Login() {
           if (res && res.authToken) {
             await completeLogin(res.authToken);
           } else {
-            setError("Login was not approved. Please try signing in again.");
+            setError(
+              "Plex did not finish linking Nevu to your account. Go back to the Nevu app and click Continue again. You are probably signed in to Plex in this browser now, so it should only take one click."
+            );
             setIsCompleting(false);
+            try {
+              const backendURL = getBackendURL();
+              await fetch(backendURL ? `${backendURL}/api/auth-focus` : "/api/auth-focus", {
+                method: "POST",
+              });
+            } catch (focusErr) {}
           }
         } catch (e: any) {
           console.error("Callback getAccessToken error:", e);
@@ -502,7 +529,7 @@ export default function Login() {
               variant="contained"
               fullWidth
               onClick={handleOpenBrowser}
-              disabled={!pinData}
+              disabled={!authUrl}
               startIcon={<GoogleSvgIcon />}
               sx={{
                 py: 1.4,
@@ -529,7 +556,7 @@ export default function Login() {
               variant="contained"
               fullWidth
               onClick={handleOpenBrowser}
-              disabled={!pinData}
+              disabled={!authUrl}
               startIcon={<AppleIcon sx={{ color: "#FFFFFF" }} />}
               sx={{
                 py: 1.4,
@@ -557,7 +584,7 @@ export default function Login() {
               variant="outlined"
               fullWidth
               onClick={handleOpenBrowser}
-              disabled={!pinData}
+              disabled={!authUrl}
               startIcon={<EmailIcon sx={{ color: "#E5A00D" }} />}
               sx={{
                 py: 1.3,
@@ -675,7 +702,7 @@ export default function Login() {
               <Button
                 size="small"
                 onClick={handleOpenBrowser}
-                disabled={!pinData}
+                disabled={!authUrl}
                 startIcon={<OpenInNewIcon fontSize="small" />}
                 sx={{
                   color: "#94A3B8",
@@ -692,7 +719,7 @@ export default function Login() {
               <Button
                 size="small"
                 onClick={handleContinueInApp}
-                disabled={!pinData}
+                disabled={!authUrl}
                 sx={{
                   color: "#94A3B8",
                   textTransform: "none",
