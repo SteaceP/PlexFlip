@@ -51,7 +51,13 @@ func openBrowserOS(targetURL string) error {
 	var cmd *exec.Cmd
 	switch runtime.GOOS {
 	case "linux":
-		cmd = exec.Command("xdg-open", targetURL)
+		if _, err := exec.LookPath("xdg-open"); err == nil {
+			cmd = exec.Command("xdg-open", targetURL)
+		} else if _, err := exec.LookPath("gio"); err == nil {
+			cmd = exec.Command("gio", "open", targetURL)
+		} else {
+			cmd = exec.Command("x-www-browser", targetURL)
+		}
 	case "darwin":
 		cmd = exec.Command("open", targetURL)
 	case "windows":
@@ -59,7 +65,13 @@ func openBrowserOS(targetURL string) error {
 	default:
 		return fmt.Errorf("unsupported platform: %s", runtime.GOOS)
 	}
-	return cmd.Start()
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+	go func() {
+		_ = cmd.Wait()
+	}()
+	return nil
 }
 
 func isHeadlessMode() bool {

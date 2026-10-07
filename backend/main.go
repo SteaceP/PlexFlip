@@ -398,6 +398,12 @@ func (a *ServerApp) buildRouter() http.Handler {
 			return
 		}
 
+		// Don't serve SPA fallback on /wails/ paths
+		if strings.HasPrefix(path, "/wails/") {
+			http.NotFound(w, r)
+			return
+		}
+
 		// Static files & SPA fallback
 		a.serveStaticOrSPA(w, r)
 	})

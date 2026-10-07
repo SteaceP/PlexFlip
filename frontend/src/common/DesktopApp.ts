@@ -21,34 +21,32 @@ export function isDesktopApp(): boolean {
 }
 
 export async function openExternalURL(url: string): Promise<boolean> {
-    // 1. Try Wails v3 binding
-    try {
-        if (typeof (window as any)._wails !== "undefined") {
-            await WailsOpenURL(url);
-            return true;
-        }
-    } catch (err) {
-        console.warn("Wails OpenURL call failed, trying backend endpoint:", err);
-    }
+    console.log("[DesktopApp] openExternalURL requesting browser for:", url);
 
-    // 2. Try Go backend /api/open-browser endpoint
+    // 1. Primary: Use our Go backend /api/open-browser endpoint
     try {
-        const res = await fetch(`${getBackendURL()}/api/open-browser`, {
+        const backendURL = getBackendURL();
+        const endpoint = backendURL ? `${backendURL}/api/open-browser` : "/api/open-browser";
+        const res = await fetch(endpoint, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ url }),
         });
-        if (res.ok) return true;
+        if (res.ok) {
+            console.log("[DesktopApp] URL opened successfully via backend /api/open-browser");
+            return true;
+        }
+        console.warn("[DesktopApp] Backend returned status", res.status);
     } catch (err) {
-        console.warn("Backend open-browser endpoint failed:", err);
+        console.warn("[DesktopApp] Backend /api/open-browser fetch failed:", err);
     }
 
-    // 3. Fallback to window.open in browser
+    // 2. Fallback: window.open in browser
     try {
         const opened = window.open(url, "_blank", "noopener,noreferrer");
         if (opened) return true;
     } catch (err) {
-        console.warn("window.open failed:", err);
+        console.warn("[DesktopApp] window.open failed:", err);
     }
 
     return false;
