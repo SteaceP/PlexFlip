@@ -224,7 +224,6 @@ export default function Login() {
         console.warn("Could not register PIN with backend:", pinRegErr);
       }
 
-      const forwardUrl = `${window.location.origin}/login?pinID=${authPin.id}&clientID=${encodeURIComponent(clientID)}&language=en`;
       const generatedUrl = `https://app.plex.tv/auth/#!?clientID=${encodeURIComponent(
         clientID
       )}&code=${encodeURIComponent(
@@ -234,7 +233,7 @@ export default function Login() {
       )}&context[device][platformVersion]=Desktop&context[device][device]=Desktop&context[device][model]=bundled&context[device][layout]=desktop&context[device][protocol]=${window.location.protocol.replace(
         ":",
         ""
-      )}&forwardUrl=${encodeURIComponent(forwardUrl)}&language=en`;
+      )}&language=en`;
 
       setAuthUrl(generatedUrl);
 
@@ -632,15 +631,15 @@ export default function Login() {
             <Paper
               elevation={0}
               sx={{
-                p: 2,
+                p: 2.5,
                 borderRadius: "16px",
-                background: "rgba(255, 255, 255, 0.03)",
-                border: "1px dashed rgba(255, 255, 255, 0.15)",
+                background: "rgba(229, 160, 13, 0.05)",
+                border: "1px solid rgba(229, 160, 13, 0.25)",
                 textAlign: "center",
               }}
             >
-              <Typography variant="caption" sx={{ color: "#94A3B8", display: "block", mb: 0.8 }}>
-                Visit{" "}
+              <Typography variant="caption" sx={{ color: "#CBD5E1", display: "block", mb: 1, fontWeight: 500 }}>
+                Link via your Plex account at{" "}
                 <Box
                   component="span"
                   onClick={() => openExternalURL("https://plex.tv/link")}
@@ -652,18 +651,18 @@ export default function Login() {
                   }}
                 >
                   plex.tv/link
-                </Box>{" "}
-                and enter code:
+                </Box>
+                :
               </Typography>
 
-              <Stack direction="row" alignItems="center" justifyContent="center" spacing={1.5}>
+              <Stack direction="row" alignItems="center" justifyContent="center" spacing={1.5} sx={{ mb: 1.5 }}>
                 <Typography
                   sx={{
                     fontFamily: "monospace",
-                    fontSize: "2rem",
-                    fontWeight: 800,
-                    letterSpacing: "0.25em",
-                    color: "#F8FAFC",
+                    fontSize: "2.2rem",
+                    fontWeight: 900,
+                    letterSpacing: "0.28em",
+                    color: "#FBBF24",
                   }}
                 >
                   {pinData?.code || "••••"}
@@ -673,12 +672,41 @@ export default function Login() {
                     size="small"
                     onClick={handleCopyCode}
                     disabled={!pinData?.code}
-                    sx={{ color: copied ? "#10B981" : "#94A3B8" }}
+                    sx={{ color: copied ? "#10B981" : "#E5A00D" }}
                   >
                     {copied ? <CheckIcon fontSize="small" /> : <ContentCopyIcon fontSize="small" />}
                   </IconButton>
                 </Tooltip>
               </Stack>
+
+              <Button
+                variant="contained"
+                fullWidth
+                size="medium"
+                onClick={async () => {
+                  if (pinData?.code) {
+                    navigator.clipboard.writeText(pinData.code);
+                    setCopied(true);
+                  }
+                  await openExternalURL("https://plex.tv/link");
+                }}
+                disabled={!pinData?.code}
+                startIcon={<OpenInNewIcon fontSize="small" />}
+                sx={{
+                  py: 1.1,
+                  borderRadius: "12px",
+                  textTransform: "none",
+                  fontWeight: 700,
+                  fontSize: "0.92rem",
+                  background: "linear-gradient(135deg, #E5A00D 0%, #D97706 100%)",
+                  color: "#000000",
+                  "&:hover": {
+                    background: "linear-gradient(135deg, #F59E0B 0%, #D97706 100%)",
+                  },
+                }}
+              >
+                {copied ? "Code Copied! Open plex.tv/link" : "Copy Code & Open plex.tv/link"}
+              </Button>
             </Paper>
 
             {/* Waiting Status */}
