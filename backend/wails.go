@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"os/signal"
 	"runtime"
 	"syscall"
@@ -37,6 +38,28 @@ func (s *DesktopService) ToggleFullscreen() {
 			win.ToggleFullscreen()
 		}
 	}
+}
+
+func (s *DesktopService) OpenURL(targetURL string) error {
+	if s.app != nil && s.app.Browser != nil {
+		return s.app.Browser.OpenURL(targetURL)
+	}
+	return openBrowserOS(targetURL)
+}
+
+func openBrowserOS(targetURL string) error {
+	var cmd *exec.Cmd
+	switch runtime.GOOS {
+	case "linux":
+		cmd = exec.Command("xdg-open", targetURL)
+	case "darwin":
+		cmd = exec.Command("open", targetURL)
+	case "windows":
+		cmd = exec.Command("rundll32", "url.dll,FileProtocolHandler", targetURL)
+	default:
+		return fmt.Errorf("unsupported platform: %s", runtime.GOOS)
+	}
+	return cmd.Start()
 }
 
 func isHeadlessMode() bool {

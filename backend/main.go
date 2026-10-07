@@ -393,11 +393,52 @@ func (a *ServerApp) buildRouter() http.Handler {
 				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			}
 			return
+		case (path == "/api/open-browser" || path == "/open-browser") && (r.Method == http.MethodPost || r.Method == http.MethodGet):
+			a.handleOpenBrowser(w, r)
+			return
 		}
 
 		// Static files & SPA fallback
 		a.serveStaticOrSPA(w, r)
 	})
+}
+
+func (a *ServerApp) handleOpenBrowser(w http.ResponseWriter, r *http.Request) {
+	var targetURL string
+	if r.Method == http.MethodGet {
+		targetURL = r.URL.Query().Get("url")
+	} else {
+		var req struct {
+			URL string `json:"url"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err == nil && req.URL != "" {
+			targetURL = req.URL
+		} else {
+			targetURL = r.URL.Query().Get("url")
+		}
+	}
+
+	if targetURL == "" {
+		http.Error(w, "Missing url parameter", http.StatusBadRequest)
+		return
+	}
+
+	parsed, err := url.Parse(targetURL)
+	if err != nil || (parsed.Scheme != "http" && parsed.Scheme != "https") {
+		http.Error(w, "Invalid URL scheme: only http and https are allowed", http.StatusBadRequest)
+		return
+	}
+
+	log.Printf("Opening external browser URL: %s", targetURL)
+	if err := openBrowserOS(targetURL); err != nil {
+		log.Printf("Failed to open browser: %v", err)
+		http.Error(w, fmt.Sprintf("Failed to open browser: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]bool{"success": true})
 }
 
 func (a *ServerApp) handleStatus(w http.ResponseWriter, _ *http.Request) {
