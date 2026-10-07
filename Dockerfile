@@ -22,7 +22,7 @@ RUN go mod download
 COPY backend/ ./
 # Embed built frontend assets into the Go binary
 COPY --from=frontend-builder /src/frontend/build/ ./www/
-RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o /app/nevu .
+RUN CGO_ENABLED=0 go build -tags server,production -ldflags="-s -w" -o /app/nevu .
 
 # Stage 3: Runner stage
 FROM debian:bookworm-slim AS runner

@@ -86,29 +86,79 @@ docker-compose up -d
 
 Pull requests are welcome for any feature or a bug fix. For major changes, please open an issue first to discuss what you would like to change.
 
-## Building Standalone Binary
+## Wails v3 Desktop Application
 
-You can compile the frontend directly into the Go binary to create a single, self-contained executable:
+Nevu is packaged as a native desktop application using **Wails v3**.
+
+### Desktop Development
+Run Nevu in Wails v3 dev mode with live reload:
 
 ```bash
-# Using Make
+# Using Wails CLI
+wails3 dev
+
+# Or using Make
+make wails-dev
+
+# Or using pnpm
+pnpm run wails:dev
+```
+
+### Building Desktop Binary
+
+```bash
+# Using Wails CLI (runs bindings generation, icon generation, frontend build, and Go linking)
+wails3 build
+
+# Or using Make
 make build
 
 # Or using pnpm
 pnpm run build
 ```
 
-The resulting standalone binary will be generated at `bin/nevu`.
+The resulting native desktop executable is created at `bin/nevu`.
 
-Run it directly with:
+Run it directly on your desktop:
 
 ```bash
 PLEX_SERVER=http://your-plex-server:32400 ./bin/nevu
 ```
 
-## Development
+When run in a desktop environment (X11 / Wayland), Nevu launches as a dedicated desktop window.
 
-To develop you need 2 terminals for the frontend and backend of Nevu:
+### Headless & Server Mode
+
+If you want to run Nevu without a GUI (for example on a headless server, in Docker, or via SSH):
+
+- **Automatic headless detection**: If no display server is available (`DISPLAY` and `WAYLAND_DISPLAY` unset), Nevu automatically runs in server mode.
+- **Explicit flag/env variable**: Pass `--server` (or `HEADLESS=true`):
+  ```bash
+  ./bin/nevu --server
+  # or
+  HEADLESS=true ./bin/nevu
+  ```
+- **Dedicated server build (no GUI libraries required)**:
+  ```bash
+  make build-server
+  # or
+  wails3 task build:server
+  ```
+  Produces `bin/nevu-server`.
+
+### Desktop Packaging
+
+Generate native packages (such as Linux AppImage, `.deb`, `.rpm`):
+
+```bash
+wails3 package
+# or
+make wails-package
+```
+
+## Development (Classic Mode)
+
+If you prefer testing frontend and backend in separate browser terminals:
 
 ```bash
 # Terminal 1 (Frontend)
@@ -120,7 +170,8 @@ PLEX_SERVER=http://your-plex-server:32400 go run .
 ```
 
 You can also use Make targets:
-- `make dev-frontend`
-- `make dev-backend`
-- `make test`
+- `make dev-frontend` - Run React development server
+- `make dev-backend` - Run Go backend server
+- `make test` - Run backend test suite
+- `make clean` - Clean build artifacts
 

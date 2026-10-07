@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MsixPackagingToolTemplate
+    xmlns="http://schemas.microsoft.com/msix/packaging/msixpackagingtool/template/2022">
+    <Settings
+        AllowTelemetry="false"
+        ApplyACLsToPackageFiles="true"
+        GenerateCommandLineFile="true"
+        AllowPromptForPassword="false">
+    </Settings>
+    <Installer
+        Path="nevu"
+        Arguments=""
+        InstallLocation="C:\Program Files\Ipmake\Nevu">
+    </Installer>
+    <PackageInformation
+        PackageName="Nevu"
+        PackageDisplayName="Nevu"
+        PublisherName="CN=Ipmake"
+        PublisherDisplayName="Ipmake"
+        Version="0.1.0.0"
+        PackageDescription="Nevu Plex Client">
+        <Capabilities>
+            <Capability Name="runFullTrust" />
+            
+        </Capabilities>
+        <Applications>
+            <Application
+                Id="com.ipmake.nevu"
+                Description="Nevu Plex Client"
+                DisplayName="Nevu"
+                ExecutableName="nevu"
+                EntryPoint="Windows.FullTrustApplication">
+                
+            </Application>
+        </Applications>
+        <Resources>
+            <Resource Language="en-us" />
+        </Resources>
+        <Dependencies>
+            <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.19041.0" />
+        </Dependencies>
+        <Properties>
+            <Framework>false</Framework>
+            <DisplayName>Nevu</DisplayName>
+            <PublisherDisplayName>Ipmake</PublisherDisplayName>
+            <Description>Nevu Plex Client</Description>
+            <Logo>Assets\AppIcon.png</Logo>
+        </Properties>
+    </PackageInformation>
+    <SaveLocation PackagePath="nevu.msix" />
+    <PackageIntegrity>
+        <CertificatePath></CertificatePath>
+    </PackageIntegrity>
+</MsixPackagingToolTemplate>
