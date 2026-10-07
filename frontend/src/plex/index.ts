@@ -268,11 +268,10 @@ export async function getAccessToken(pin: string, clientIDOverride?: string): Pr
  *
  * @throws {Error} Throws an error if the request fails.
  */
-export async function getPin(strong: boolean = false): Promise<Plex.TokenData> {
+export async function getPin(): Promise<Plex.TokenData> {
     const res = await axios.post(`https://plex.tv/api/v2/pins?${queryBuilder({
-        ...(strong ? { strong: "true" } : {}),
         "X-Plex-Client-Identifier": localStorage.getItem("clientID"),
-        "X-Plex-Product": "NEVU"
+        "X-Plex-Product": "Nevu"
     })}`, undefined, {
         headers: {
             accept: "application/json",

@@ -187,72 +187,47 @@ export default function Login() {
     }
 
     try {
-      // Strong PIN: used for the app.plex.tv/auth browser flow. Plex only reliably links
-      // strong PINs from that page; with short PINs, social logins (Google) fail with
-      // "We were unable to complete this request".
-      // Short PIN: only used for the 4-letter code shown for plex.tv/link.
-      const [authPin, linkPin] = await Promise.all([
-        getPin(true),
-        getPin(false).catch(() => null),
-      ]);
-      if (!authPin.id || !authPin.code) {
+      const pin = await getPin();
+      if (!pin.id || !pin.code) {
         setError("Failed to generate login PIN from Plex. Please try again.");
         return;
       }
 
-      if (linkPin?.id && linkPin?.code) {
-        setPinData({ id: linkPin.id, code: linkPin.code });
-      } else {
-        setPinData(null);
-      }
+      setPinData({ id: pin.id, code: pin.code });
 
-      const pinIDs = [String(authPin.id), ...(linkPin?.id ? [String(linkPin.id)] : [])];
-
-      // Register PINs and clientID with local backend
+      // Register PIN and clientID with local backend
       try {
         const backendURL = getBackendURL();
-        await Promise.all(
-          pinIDs.map((pinID) =>
-            fetch(backendURL ? `${backendURL}/api/auth-pin` : "/api/auth-pin", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ pinID, clientID }),
-            })
-          )
-        );
+        await fetch(backendURL ? `${backendURL}/api/auth-pin` : "/api/auth-pin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pinID: String(pin.id), clientID }),
+        });
       } catch (pinRegErr) {
         console.warn("Could not register PIN with backend:", pinRegErr);
       }
 
-      const generatedUrl = `https://app.plex.tv/auth/#!?clientID=${encodeURIComponent(
+      const generatedUrl = `https://app.plex.tv/auth#?clientID=${encodeURIComponent(
         clientID
       )}&code=${encodeURIComponent(
-        authPin.code
-      )}&context[device][product]=Nevu&context[device][version]=0.1.0&context[device][platform]=${encodeURIComponent(
-        getBrowserName()
-      )}&context[device][platformVersion]=Desktop&context[device][device]=Desktop&context[device][model]=bundled&context[device][layout]=desktop&context[device][protocol]=${window.location.protocol.replace(
-        ":",
-        ""
-      )}&language=en`;
+        pin.code
+      )}&context[device][product]=Nevu&context[device][version]=0.1.0&context[device][platform]=Nevu%20Desktop&context[device][device]=Desktop`;
 
       setAuthUrl(generatedUrl);
 
-      // Start polling Plex API for token resolution (either PIN may be linked)
+      // Start polling Plex API for token resolution
       pollIntervalRef.current = setInterval(async () => {
         if (isCompletingRef.current) return;
-        for (const pinID of pinIDs) {
-          try {
-            const checkRes = await getAccessToken(pinID, clientID as string);
-            if (checkRes && checkRes.authToken) {
-              stopPolling();
-              await completeLogin(checkRes.authToken);
-              return;
-            }
-          } catch (pollErr) {
-            // ignore transient poll errors while waiting for user sign-in
+        try {
+          const checkRes = await getAccessToken(String(pin.id), clientID as string);
+          if (checkRes && checkRes.authToken) {
+            stopPolling();
+            await completeLogin(checkRes.authToken);
           }
+        } catch (pollErr) {
+          // ignore transient poll errors while waiting for user sign-in
         }
-      }, 2000);
+      }, 1500);
     } catch (err: any) {
       console.error("Failed to get PIN:", err);
       setError("Failed to connect to Plex authentication servers. Check your internet connection.");
