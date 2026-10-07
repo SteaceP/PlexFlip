@@ -1,5 +1,5 @@
 #!/bin/bash
+set -e
 
-npx prisma db push
-# Run the Node.js application
-node .
+# Run the Go backend
+exec go run .

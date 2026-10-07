@@ -97,5 +97,5 @@ npm start
 
 # Terminal 2
 cd backend
-PLEX_SERVER=http://plex-server:32400 npm start
+PLEX_SERVER=http://plex-server:32400 go run .
 ```
