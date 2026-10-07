@@ -25,8 +25,12 @@ yarn-debug.log*
 yarn-error.log*
 
 
-# exclude everything in the www folder
+# exclude everything in the www folder except .gitkeep
 /backend/www/*
+!/backend/www/.gitkeep
+
+# build output
+/bin/
 
 build
 /data

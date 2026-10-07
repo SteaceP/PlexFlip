@@ -12,7 +12,6 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -90,8 +89,8 @@ func main() {
 	}
 	app.remoteServer = InitRemoteServer("*")
 
-	// Determine static www directory
-	app.resolveWWWDir()
+	// Initialize static frontend (embedded or disk)
+	app.initStaticServing()
 
 	// Background startup checks & validation
 	ctx, cancel := context.WithCancel(context.Background())
@@ -159,21 +158,6 @@ func (a *ServerApp) initEnv() {
 	a.disableGlobalReviews = os.Getenv("DISABLE_GLOBAL_REVIEWS") == "true"
 }
 
-func (a *ServerApp) resolveWWWDir() {
-	candidates := []string{
-		"www",
-		"/app/www",
-		"../frontend/build",
-		"frontend/build",
-	}
-	for _, cand := range candidates {
-		if stat, err := os.Stat(cand); err == nil && stat.IsDir() {
-			a.wwwDir = cand
-			return
-		}
-	}
-	a.wwwDir = "www"
-}
 
 func (a *ServerApp) setStatus(ready, isErr bool, msg string) {
 	a.statusMu.Lock()
@@ -460,27 +444,4 @@ func (a *ServerApp) handleUserOptions(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 }
 
-func (a *ServerApp) serveStaticOrSPA(w http.ResponseWriter, r *http.Request) {
-	if a.wwwDir == "" {
-		http.NotFound(w, r)
-		return
-	}
 
-	cleanPath := filepath.Clean(r.URL.Path)
-	targetFilePath := filepath.Join(a.wwwDir, cleanPath)
-
-	info, err := os.Stat(targetFilePath)
-	if err == nil && !info.IsDir() {
-		http.ServeFile(w, r, targetFilePath)
-		return
-	}
-
-	// Fallback to index.html for SPA routes
-	indexPath := filepath.Join(a.wwwDir, "index.html")
-	if _, err := os.Stat(indexPath); err == nil {
-		http.ServeFile(w, r, indexPath)
-		return
-	}
-
-	http.NotFound(w, r)
-}

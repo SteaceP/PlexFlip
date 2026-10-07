@@ -86,16 +86,41 @@ docker-compose up -d
 
 Pull requests are welcome for any feature or a bug fix. For major changes, please open an issue first to discuss what you would like to change.
 
-## Development
+## Building Standalone Binary
 
-To develop you need 2 terminals for the front and the backend of Nevu
+You can compile the frontend directly into the Go binary to create a single, self-contained executable:
 
 ```bash
-# Terminal 1
-cd frontend
-npm start
+# Using Make
+make build
 
-# Terminal 2
-cd backend
-PLEX_SERVER=http://plex-server:32400 go run .
+# Or using pnpm
+pnpm run build
 ```
+
+The resulting standalone binary will be generated at `bin/nevu`.
+
+Run it directly with:
+
+```bash
+PLEX_SERVER=http://your-plex-server:32400 ./bin/nevu
+```
+
+## Development
+
+To develop you need 2 terminals for the frontend and backend of Nevu:
+
+```bash
+# Terminal 1 (Frontend)
+pnpm --dir frontend start
+
+# Terminal 2 (Backend)
+cd backend
+PLEX_SERVER=http://your-plex-server:32400 go run .
+```
+
+You can also use Make targets:
+- `make dev-frontend`
+- `make dev-backend`
+- `make test`
+

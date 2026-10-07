@@ -2,7 +2,8 @@ node_modules
 # Keep environment variables out of version control
 .env
 /data
-/www
+/www/*
+!/www/.gitkeep
 nevu-backend
 nevu
 backend

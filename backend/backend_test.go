@@ -252,3 +252,116 @@ func TestParseTime(t *testing.T) {
 		t.Fatalf("Failed to parse RFC3339 timestamp")
 	}
 }
+
+func TestStaticServing_Disk(t *testing.T) {
+	t.Setenv("DEV_STATIC", "true")
+
+	tmpDir, err := os.MkdirTemp("", "nevu_static_test_*")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	if err := os.WriteFile(tmpDir+"/index.html", []byte("<!doctype html><html><body>Nevu SPA</body></html>"), 0644); err != nil {
+		t.Fatalf("Failed to write index.html: %v", err)
+	}
+	if err := os.MkdirAll(tmpDir+"/static", 0755); err != nil {
+		t.Fatalf("Failed to create static dir: %v", err)
+	}
+	if err := os.WriteFile(tmpDir+"/static/app.js", []byte("console.log('app');"), 0644); err != nil {
+		t.Fatalf("Failed to write app.js: %v", err)
+	}
+
+	app := &ServerApp{
+		wwwDir: tmpDir,
+	}
+	handler := app.buildRouter()
+
+	// 1. Root route
+	req := httptest.NewRequest("GET", "/", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK || !bytes.Contains(rec.Body.Bytes(), []byte("Nevu SPA")) {
+		t.Fatalf("Root route failed: %d, body: %s", rec.Code, rec.Body.String())
+	}
+
+	// 2. Exact asset
+	req = httptest.NewRequest("GET", "/static/app.js", nil)
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK || !bytes.Contains(rec.Body.Bytes(), []byte("console.log('app');")) {
+		t.Fatalf("Static asset route failed: %d, body: %s", rec.Code, rec.Body.String())
+	}
+
+	// 3. SPA route fallback
+	req = httptest.NewRequest("GET", "/browse/recommendations", nil)
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK || !bytes.Contains(rec.Body.Bytes(), []byte("Nevu SPA")) {
+		t.Fatalf("SPA route fallback failed: %d, body: %s", rec.Code, rec.Body.String())
+	}
+
+	// 4. Missing asset with extension should 404
+	req = httptest.NewRequest("GET", "/static/missing.js", nil)
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("Missing asset expected 404, got: %d", rec.Code)
+	}
+}
+
+func TestStaticServing_FS(t *testing.T) {
+	app := &ServerApp{}
+
+	tmpDir, err := os.MkdirTemp("", "nevu_fs_test_*")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	if err := os.WriteFile(tmpDir+"/index.html", []byte("<!doctype html><html><body>Embedded SPA</body></html>"), 0644); err != nil {
+		t.Fatalf("Failed to write index.html: %v", err)
+	}
+	if err := os.MkdirAll(tmpDir+"/static", 0755); err != nil {
+		t.Fatalf("Failed to create static dir: %v", err)
+	}
+	if err := os.WriteFile(tmpDir+"/static/bundle.js", []byte("console.log('bundle');"), 0644); err != nil {
+		t.Fatalf("Failed to write bundle.js: %v", err)
+	}
+
+	fsys := os.DirFS(tmpDir)
+
+	// Test serveFromFS
+	// 1. Root route
+	req := httptest.NewRequest("GET", "/", nil)
+	rec := httptest.NewRecorder()
+	app.serveFromFS(fsys, rec, req)
+	if rec.Code != http.StatusOK || !bytes.Contains(rec.Body.Bytes(), []byte("Embedded SPA")) {
+		t.Fatalf("FS root route failed: %d, body: %s", rec.Code, rec.Body.String())
+	}
+
+	// 2. Exact asset
+	req = httptest.NewRequest("GET", "/static/bundle.js", nil)
+	rec = httptest.NewRecorder()
+	app.serveFromFS(fsys, rec, req)
+	if rec.Code != http.StatusOK || !bytes.Contains(rec.Body.Bytes(), []byte("console.log('bundle');")) {
+		t.Fatalf("FS static asset failed: %d, body: %s", rec.Code, rec.Body.String())
+	}
+
+	// 3. SPA route fallback
+	req = httptest.NewRequest("GET", "/settings/experience", nil)
+	rec = httptest.NewRecorder()
+	app.serveFromFS(fsys, rec, req)
+	if rec.Code != http.StatusOK || !bytes.Contains(rec.Body.Bytes(), []byte("Embedded SPA")) {
+		t.Fatalf("FS SPA fallback failed: %d, body: %s", rec.Code, rec.Body.String())
+	}
+
+	// 4. Missing asset with extension should 404
+	req = httptest.NewRequest("GET", "/static/missing.css", nil)
+	rec = httptest.NewRecorder()
+	app.serveFromFS(fsys, rec, req)
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("FS missing asset expected 404, got: %d", rec.Code)
+	}
+}
+
