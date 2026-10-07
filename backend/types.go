@@ -6,15 +6,18 @@ import (
 
 // Status represents the server readiness and health status.
 type Status struct {
-	Ready   bool   `json:"ready"`
-	Error   bool   `json:"error"`
-	Message string `json:"message"`
+	Ready      bool   `json:"ready"`
+	Error      bool   `json:"error"`
+	Message    string `json:"message"`
+	PlexServer string `json:"plexServer,omitempty"`
+	Configured bool   `json:"configured"`
 }
 
 // ConfigResponse represents the response for /config endpoint.
 type ConfigResponse struct {
 	PlexServer   string     `json:"PLEX_SERVER"`
 	DeploymentID string     `json:"DEPLOYMENTID"`
+	Configured   bool       `json:"CONFIGURED"`
 	Config       ConfigOpts `json:"CONFIG"`
 }
 

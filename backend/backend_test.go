@@ -146,7 +146,7 @@ func TestServerApp_StatusAndConfigEndpoints(t *testing.T) {
 		db:               db,
 		reviewsHandler:   NewReviewsHandler(db, true),
 	}
-	app.setStatus(true, false, "OK")
+	app.setStatus(true, false, "OK", true)
 
 	handler := app.buildRouter()
 
@@ -362,6 +362,181 @@ func TestStaticServing_FS(t *testing.T) {
 	app.serveFromFS(fsys, rec, req)
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("FS missing asset expected 404, got: %d", rec.Code)
+	}
+}
+
+func TestDatabase_ServerConfig(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	// Initial get should be empty
+	val, err := db.GetServerConfig("plex_server")
+	if err != nil {
+		t.Fatalf("GetServerConfig failed: %v", err)
+	}
+	if val != "" {
+		t.Fatalf("Expected empty string, got %s", val)
+	}
+
+	// Set server config
+	if err := db.SetServerConfig("plex_server", "http://192.168.2.123:32400"); err != nil {
+		t.Fatalf("SetServerConfig failed: %v", err)
+	}
+
+	// Retrieve updated
+	val, err = db.GetServerConfig("plex_server")
+	if err != nil {
+		t.Fatalf("GetServerConfig failed: %v", err)
+	}
+	if val != "http://192.168.2.123:32400" {
+		t.Fatalf("Expected 'http://192.168.2.123:32400', got %s", val)
+	}
+
+	// Update existing
+	if err := db.SetServerConfig("plex_server", "http://localhost:32400"); err != nil {
+		t.Fatalf("SetServerConfig update failed: %v", err)
+	}
+	val, err = db.GetServerConfig("plex_server")
+	if err != nil || val != "http://localhost:32400" {
+		t.Fatalf("Expected 'http://localhost:32400', got %s", val)
+	}
+}
+
+func TestNormalizePlexURL(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+		hasErr   bool
+	}{
+		{"http://192.168.1.50:32400", "http://192.168.1.50:32400", false},
+		{"http://192.168.1.50:32400/", "http://192.168.1.50:32400", false},
+		{"192.168.1.50:32400", "http://192.168.1.50:32400", false},
+		{"https://plex.example.com", "https://plex.example.com", false},
+		{"https://plex.example.com/", "https://plex.example.com", false},
+		{"", "", true},
+		{"http://", "", true},
+		{"http://plex.com/some/path", "", true},
+	}
+
+	for _, tc := range tests {
+		res, err := normalizePlexURL(tc.input)
+		if tc.hasErr {
+			if err == nil {
+				t.Fatalf("Expected error for %q, got %q", tc.input, res)
+			}
+		} else {
+			if err != nil {
+				t.Fatalf("Unexpected error for %q: %v", tc.input, err)
+			}
+			if res != tc.expected {
+				t.Fatalf("For %q, expected %q, got %q", tc.input, tc.expected, res)
+			}
+		}
+	}
+}
+
+func TestProxyService_DynamicUpdate(t *testing.T) {
+	// Create with empty server
+	svc, err := NewProxyService("", false, false)
+	if err != nil {
+		t.Fatalf("NewProxyService with empty URL failed: %v", err)
+	}
+
+	// Attempting to proxy when unconfigured should return 503
+	req := httptest.NewRequest("GET", "/dynproxy/status", nil)
+	rec := httptest.NewRecorder()
+	svc.ServeDynProxy(rec, req)
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Fatalf("Expected 503 for unconfigured ServeDynProxy, got %d", rec.Code)
+	}
+
+	// Update target
+	if err := svc.UpdateTarget("http://127.0.0.1:32400"); err != nil {
+		t.Fatalf("UpdateTarget failed: %v", err)
+	}
+	server, parsed := svc.GetTarget()
+	if server != "http://127.0.0.1:32400" || parsed == nil || parsed.Host != "127.0.0.1:32400" {
+		t.Fatalf("Unexpected target after update: %s, %+v", server, parsed)
+	}
+}
+
+func TestServerApp_PlexServerConfigurationEndpoints(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	// Mock upstream Plex server responding to /identity
+	plexMock := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/identity" {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`{"MediaContainer":{"machineIdentifier":"test-machine-123"}}`))
+			return
+		}
+		http.NotFound(w, r)
+	}))
+	defer plexMock.Close()
+
+	proxySvc, _ := NewProxyService("", false, false)
+	app := &ServerApp{
+		deploymentID: "test-deploy",
+		checkTrigger: make(chan struct{}, 1),
+		db:           db,
+		proxyService: proxySvc,
+	}
+	app.setStatus(false, true, "Plex Media Server address is not configured.", false)
+
+	handler := app.buildRouter()
+
+	// Check status initially unconfigured
+	req := httptest.NewRequest("GET", "/status", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	var st Status
+	json.Unmarshal(rec.Body.Bytes(), &st)
+	if st.Configured || st.Ready {
+		t.Fatalf("Expected unconfigured status initially, got %+v", st)
+	}
+
+	// Test POST /config/test-plex-server with mock server
+	testBody, _ := json.Marshal(map[string]string{
+		"plexServer": plexMock.URL,
+	})
+	req = httptest.NewRequest("POST", "/config/test-plex-server", bytes.NewReader(testBody))
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("Expected 200 from test endpoint, got %d (body: %s)", rec.Code, rec.Body.String())
+	}
+
+	// Test POST /config/plex-server to set server address
+	setBody, _ := json.Marshal(map[string]any{
+		"plexServer": plexMock.URL,
+	})
+	req = httptest.NewRequest("POST", "/config/plex-server", bytes.NewReader(setBody))
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("Expected 200 from set endpoint, got %d (body: %s)", rec.Code, rec.Body.String())
+	}
+
+	// Verify server was persisted to DB
+	saved, err := db.GetServerConfig("plex_server")
+	if err != nil || saved != plexMock.URL {
+		t.Fatalf("Expected DB to have %s, got %s (err: %v)", plexMock.URL, saved, err)
+	}
+
+	// Verify in-memory state updated
+	if app.getPlexServer() != plexMock.URL {
+		t.Fatalf("Expected in-memory plexServer to be %s, got %s", plexMock.URL, app.getPlexServer())
+	}
+
+	// Verify GET /config reflects configured state
+	req = httptest.NewRequest("GET", "/config", nil)
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	var cfg ConfigResponse
+	json.Unmarshal(rec.Body.Bytes(), &cfg)
+	if !cfg.Configured || cfg.PlexServer != plexMock.URL {
+		t.Fatalf("Unexpected /config response: %+v", cfg)
 	}
 }
 

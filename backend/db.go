@@ -81,6 +81,11 @@ func initDB() (*Database, error) {
 		PRIMARY KEY (itemID, userID),
 		FOREIGN KEY (userID) REFERENCES NevuReviewsLocalUsers(id) ON DELETE CASCADE
 	);
+
+	CREATE TABLE IF NOT EXISTS ServerConfig (
+		key TEXT NOT NULL PRIMARY KEY,
+		value TEXT NOT NULL
+	);
 	`
 
 	if _, err := db.Exec(schema); err != nil {
@@ -92,6 +97,25 @@ func initDB() (*Database, error) {
 
 func (d *Database) Close() error {
 	return d.db.Close()
+}
+
+func (d *Database) GetServerConfig(key string) (string, error) {
+	var val string
+	err := d.db.QueryRow("SELECT value FROM ServerConfig WHERE key = ?", key).Scan(&val)
+	if err == sql.ErrNoRows {
+		return "", nil
+	}
+	return val, err
+}
+
+func (d *Database) SetServerConfig(key, value string) error {
+	query := `
+	INSERT INTO ServerConfig (key, value)
+	VALUES (?, ?)
+	ON CONFLICT(key) DO UPDATE SET value = excluded.value
+	`
+	_, err := d.db.Exec(query, key, value)
+	return err
 }
 
 func (d *Database) GetUserOptions(userUID string) ([]UserOption, error) {

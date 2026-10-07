@@ -29,6 +29,8 @@ type ServerApp struct {
 	statusMu             sync.RWMutex
 	deploymentID         string
 	plexServer           string
+	plexServerMu         sync.RWMutex
+	checkTrigger         chan struct{}
 	disableTLSVerify     bool
 	disableNevuSync      bool
 	disableRequestLog    bool
@@ -53,6 +55,7 @@ func main() {
 
 	app := &ServerApp{
 		deploymentID: deploymentID,
+		checkTrigger: make(chan struct{}, 1),
 		status: Status{
 			Ready:   false,
 			Error:   false,
@@ -70,11 +73,19 @@ func main() {
 	defer db.Close()
 	app.db = db
 
+	// If PLEX_SERVER wasn't set by environment variable, check the database
+	if app.getPlexServer() == "" {
+		if savedServer, err := db.GetServerConfig("plex_server"); err == nil && savedServer != "" {
+			app.setPlexServer(savedServer)
+			log.Printf("Loaded Plex server address from database: %s", savedServer)
+		}
+	}
+
 	// Initialize Plex client
 	initPlexClient(app.disableTLSVerify)
 
 	// Initialize Proxy Service
-	proxySvc, err := NewProxyService(app.plexServer, app.disableTLSVerify, !app.disableRequestLog)
+	proxySvc, err := NewProxyService(app.getPlexServer(), app.disableTLSVerify, !app.disableRequestLog)
 	if err != nil {
 		log.Printf("Proxy service init warning: %v", err)
 	}
@@ -99,7 +110,7 @@ func main() {
 	go app.runStartupChecks(ctx)
 
 	// Start UDP discovery
-	go StartDiscovery(ctx, app.port, app.deploymentID, app.plexServer)
+	go StartDiscovery(ctx, app.port, app.deploymentID, app.getPlexServer)
 
 	// Build HTTP router
 	handler := app.buildRouter()
@@ -159,12 +170,33 @@ func (a *ServerApp) initEnv() {
 }
 
 
-func (a *ServerApp) setStatus(ready, isErr bool, msg string) {
+func (a *ServerApp) getPlexServer() string {
+	a.plexServerMu.RLock()
+	defer a.plexServerMu.RUnlock()
+	return a.plexServer
+}
+
+func (a *ServerApp) setPlexServer(server string) {
+	a.plexServerMu.Lock()
+	a.plexServer = server
+	a.plexServerMu.Unlock()
+}
+
+func (a *ServerApp) triggerCheck() {
+	select {
+	case a.checkTrigger <- struct{}{}:
+	default:
+	}
+}
+
+func (a *ServerApp) setStatus(ready, isErr bool, msg string, configured bool) {
 	a.statusMu.Lock()
 	defer a.statusMu.Unlock()
 	a.status.Ready = ready
 	a.status.Error = isErr
 	a.status.Message = msg
+	a.status.PlexServer = a.getPlexServer()
+	a.status.Configured = configured
 }
 
 func (a *ServerApp) getStatus() Status {
@@ -177,28 +209,14 @@ func (a *ServerApp) runStartupChecks(ctx context.Context) {
 	if os.Getenv("PROXY_PLEX_SERVER") != "" {
 		msg := "PROXY_PLEX_SERVER environment variable is deprecated. \nPlease use PLEX_SERVER instead"
 		log.Println(msg)
-		a.setStatus(false, true, msg)
+		a.setStatus(false, true, msg, false)
 		return
 	}
 
 	if os.Getenv("DISABLE_PROXY") != "" {
 		msg := "DISABLE_PROXY environment variable is deprecated. \nPlease remove it from your environment variables"
 		log.Println(msg)
-		a.setStatus(false, true, msg)
-		return
-	}
-
-	if a.plexServer == "" {
-		msg := "PLEX_SERVER environment variable not set"
-		log.Println(msg)
-		a.setStatus(false, true, msg)
-		return
-	}
-
-	if !plexServerRegex.MatchString(a.plexServer) {
-		msg := "Invalid PLEX_SERVER environment variable. \nThe URL must start with http:// or https:// and must not end with a /"
-		log.Println(msg)
-		a.setStatus(false, true, msg)
+		a.setStatus(false, true, msg, false)
 		return
 	}
 
@@ -213,36 +231,68 @@ func (a *ServerApp) runStartupChecks(ctx context.Context) {
 	}
 
 	for {
-		select {
-		case <-ctx.Done():
-			return
-		default:
+		serverURL := a.getPlexServer()
+		if serverURL == "" {
+			msg := "Plex Media Server address is not configured. Please enter your Plex server address below."
+			a.setStatus(false, true, msg, false)
+			log.Println("Plex server address is not configured. Waiting for configuration via UI...")
+			select {
+			case <-ctx.Done():
+				return
+			case <-a.checkTrigger:
+				continue
+			}
 		}
 
-		targetURL := a.plexServer + "/identity"
+		if !plexServerRegex.MatchString(serverURL) {
+			msg := "Invalid Plex server URL. The URL must start with http:// or https:// and must not end with a /"
+			log.Println(msg)
+			a.setStatus(false, true, msg, true)
+			select {
+			case <-ctx.Done():
+				return
+			case <-a.checkTrigger:
+				continue
+			case <-time.After(5 * time.Second):
+				continue
+			}
+		}
+
+		targetURL := serverURL + "/identity"
 		req, err := http.NewRequestWithContext(ctx, "GET", targetURL, nil)
 		if err == nil {
 			resp, err := client.Do(req)
 			if err == nil && resp.StatusCode == http.StatusOK {
 				resp.Body.Close()
-				a.setStatus(true, false, "OK")
-				return
+				a.setStatus(true, false, "OK", true)
+				log.Printf("Successfully connected to Plex server at %s", serverURL)
+
+				// Connected. Wait for server address change trigger or context done
+				select {
+				case <-ctx.Done():
+					return
+				case <-a.checkTrigger:
+					continue
+				}
 			}
 			if resp != nil {
 				resp.Body.Close()
 			}
 			if err != nil {
-				log.Printf("Error reaching PLEX_SERVER: %v", err)
+				log.Printf("Error reaching PLEX_SERVER (%s): %v", serverURL, err)
 			}
 		}
 
-		a.setStatus(false, true, "Proxy cannot reach PLEX_SERVER")
-		log.Println("Proxy cannot reach PLEX_SERVER, retrying in 3 seconds...")
+		a.setStatus(false, true, fmt.Sprintf("Proxy cannot reach PLEX_SERVER (%s)", serverURL), true)
+		log.Printf("Proxy cannot reach PLEX_SERVER (%s), retrying in 3 seconds...", serverURL)
 
 		select {
 		case <-ctx.Done():
 			return
+		case <-a.checkTrigger:
+			continue
 		case <-time.After(3 * time.Second):
+			continue
 		}
 	}
 }
@@ -315,6 +365,14 @@ func (a *ServerApp) buildRouter() http.Handler {
 			a.handleConfig(w, r)
 			return
 
+		case path == "/config/plex-server" && r.Method == http.MethodPost:
+			a.handleSetPlexServer(w, r)
+			return
+
+		case path == "/config/test-plex-server" && r.Method == http.MethodPost:
+			a.handleTestPlexServer(w, r)
+			return
+
 		case strings.HasPrefix(path, "/user/options"):
 			a.handleUserOptions(w, r)
 			return
@@ -361,12 +419,169 @@ func (a *ServerApp) handleStatus(w http.ResponseWriter, _ *http.Request) {
 func (a *ServerApp) handleConfig(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(ConfigResponse{
-		PlexServer:   a.plexServer,
+		PlexServer:   a.getPlexServer(),
 		DeploymentID: a.deploymentID,
+		Configured:   a.getPlexServer() != "",
 		Config: ConfigOpts{
 			DisableProxy:    false,
 			DisableNevuSync: a.disableNevuSync,
 		},
+	})
+}
+
+func normalizePlexURL(raw string) (string, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return "", fmt.Errorf("Plex server address cannot be empty")
+	}
+
+	// If missing scheme, default to http://
+	if !strings.HasPrefix(raw, "http://") && !strings.HasPrefix(raw, "https://") {
+		raw = "http://" + raw
+	}
+
+	// Remove trailing slashes
+	raw = strings.TrimRight(raw, "/")
+
+	parsed, err := url.Parse(raw)
+	if err != nil || parsed.Host == "" {
+		return "", fmt.Errorf("invalid server URL format")
+	}
+
+	if !plexServerRegex.MatchString(raw) {
+		return "", fmt.Errorf("invalid server URL. The URL must start with http:// or https:// and must not end with a /")
+	}
+
+	return raw, nil
+}
+
+func (a *ServerApp) handleTestPlexServer(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		PlexServer string `json:"plexServer"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]any{"ok": false, "error": "Invalid request body"})
+		return
+	}
+
+	normURL, err := normalizePlexURL(body.PlexServer)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+
+	client := &http.Client{Timeout: 5 * time.Second}
+	if a.disableTLSVerify {
+		client.Transport = &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+	}
+
+	resp, err := client.Get(normURL + "/identity")
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]any{
+			"ok":    false,
+			"error": fmt.Sprintf("Failed to reach Plex server at %s: %v", normURL, err),
+		})
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]any{
+			"ok":    false,
+			"error": fmt.Sprintf("Plex server responded with status %d", resp.StatusCode),
+		})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{
+		"ok":         true,
+		"message":    fmt.Sprintf("Successfully reached Plex server at %s", normURL),
+		"plexServer": normURL,
+	})
+}
+
+func (a *ServerApp) handleSetPlexServer(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		PlexServer string `json:"plexServer"`
+		Force      bool   `json:"force"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]any{"ok": false, "error": "Invalid request body"})
+		return
+	}
+
+	normURL, err := normalizePlexURL(body.PlexServer)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+
+	if !body.Force {
+		client := &http.Client{Timeout: 5 * time.Second}
+		if a.disableTLSVerify {
+			client.Transport = &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			}
+		}
+
+		resp, err := client.Get(normURL + "/identity")
+		if err != nil {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]any{
+				"ok":    false,
+				"error": fmt.Sprintf("Could not connect to Plex server at %s: %v", normURL, err),
+			})
+			return
+		}
+		resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]any{
+				"ok":    false,
+				"error": fmt.Sprintf("Plex server responded with status %d", resp.StatusCode),
+			})
+			return
+		}
+	}
+
+	if a.db != nil {
+		if err := a.db.SetServerConfig("plex_server", normURL); err != nil {
+			log.Printf("Failed to persist plex server address to DB: %v", err)
+			http.Error(w, "Failed to save configuration", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	a.setPlexServer(normURL)
+	if a.proxyService != nil {
+		a.proxyService.UpdateTarget(normURL)
+	}
+
+	a.triggerCheck()
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{
+		"ok":         true,
+		"message":    fmt.Sprintf("Plex server updated to %s", normURL),
+		"plexServer": normURL,
 	})
 }
 

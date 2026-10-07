@@ -13,10 +13,12 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 )
 
 type ProxyService struct {
+	mu               sync.RWMutex
 	plexServer       string
 	plexParsedURL    *url.URL
 	disableTLSVerify bool
@@ -41,10 +43,37 @@ func getClientIP(r *http.Request) string {
 	return strings.ReplaceAll(ip, "::ffff:", "")
 }
 
-func NewProxyService(plexServer string, disableTLSVerify, logRequests bool) (*ProxyService, error) {
-	parsed, err := url.Parse(plexServer)
+func (p *ProxyService) GetTarget() (string, *url.URL) {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.plexServer, p.plexParsedURL
+}
+
+func (p *ProxyService) UpdateTarget(newServer string) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if newServer == "" {
+		p.plexServer = ""
+		p.plexParsedURL = nil
+		return nil
+	}
+	parsed, err := url.Parse(newServer)
 	if err != nil {
-		return nil, fmt.Errorf("invalid PLEX_SERVER URL: %w", err)
+		return fmt.Errorf("invalid PLEX_SERVER URL: %w", err)
+	}
+	p.plexServer = newServer
+	p.plexParsedURL = parsed
+	return nil
+}
+
+func NewProxyService(plexServer string, disableTLSVerify, logRequests bool) (*ProxyService, error) {
+	var parsed *url.URL
+	var err error
+	if plexServer != "" {
+		parsed, err = url.Parse(plexServer)
+		if err != nil {
+			return nil, fmt.Errorf("invalid PLEX_SERVER URL: %w", err)
+		}
 	}
 
 	transport := &http.Transport{
@@ -65,18 +94,31 @@ func NewProxyService(plexServer string, disableTLSVerify, logRequests bool) (*Pr
 		Timeout:   0, // No timeout for streaming proxy requests
 	}
 
+	p := &ProxyService{
+		plexServer:       plexServer,
+		plexParsedURL:    parsed,
+		disableTLSVerify: disableTLSVerify,
+		httpClient:       client,
+		logRequests:      logRequests,
+	}
+
 	revProxy := &httputil.ReverseProxy{
 		Transport:     transport,
 		FlushInterval: -1, // Flush streaming chunks immediately to the video player
 		Director: func(req *http.Request) {
+			_, currentParsed := p.GetTarget()
+			if currentParsed == nil {
+				return
+			}
+
 			reqURI := req.URL.RequestURI()
 			subpath := strings.TrimPrefix(reqURI, "/dynproxy")
 			if subpath == "" {
 				subpath = "/"
 			}
 
-			req.URL.Scheme = parsed.Scheme
-			req.URL.Host = parsed.Host
+			req.URL.Scheme = currentParsed.Scheme
+			req.URL.Host = currentParsed.Host
 
 			if targetParsed, err := url.Parse(subpath); err == nil {
 				req.URL.Path = targetParsed.Path
@@ -86,7 +128,7 @@ func NewProxyService(plexServer string, disableTLSVerify, logRequests bool) (*Pr
 				req.URL.Path = subpath
 			}
 
-			req.Host = parsed.Host
+			req.Host = currentParsed.Host
 
 			// Strip cookies
 			req.Header.Del("Cookie")
@@ -103,10 +145,15 @@ func NewProxyService(plexServer string, disableTLSVerify, logRequests bool) (*Pr
 			resp.Header.Del("Access-Control-Allow-Headers")
 			resp.Header.Del("Access-Control-Expose-Headers")
 
+			_, currentParsed := p.GetTarget()
+			if currentParsed == nil {
+				return nil
+			}
+
 			// Rewrite Location header on redirects so the browser routes subsequent segments through /dynproxy
 			if loc := resp.Header.Get("Location"); loc != "" {
 				if u, err := url.Parse(loc); err == nil {
-					if u.Host == "" || u.Host == parsed.Host {
+					if u.Host == "" || u.Host == currentParsed.Host {
 						newPath := u.Path
 						if !strings.HasPrefix(newPath, "/dynproxy") {
 							newPath = "/dynproxy" + newPath
@@ -130,18 +177,17 @@ func NewProxyService(plexServer string, disableTLSVerify, logRequests bool) (*Pr
 		},
 	}
 
-	return &ProxyService{
-		plexServer:       plexServer,
-		plexParsedURL:    parsed,
-		disableTLSVerify: disableTLSVerify,
-		httpClient:       client,
-		reverseProxy:     revProxy,
-		logRequests:      logRequests,
-	}, nil
+	p.reverseProxy = revProxy
+	return p, nil
 }
 
 // ServeDynProxy handles /dynproxy/* requests.
 func (p *ProxyService) ServeDynProxy(w http.ResponseWriter, r *http.Request) {
+	server, _ := p.GetTarget()
+	if server == "" {
+		http.Error(w, "Plex server is not configured. Please configure it in settings.", http.StatusServiceUnavailable)
+		return
+	}
 	p.reverseProxy.ServeHTTP(w, r)
 }
 
@@ -179,7 +225,13 @@ func (p *ProxyService) HandlePostProxy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	targetURL := p.plexServer + reqBody.URL
+	server, _ := p.GetTarget()
+	if server == "" {
+		http.Error(w, "Plex server is not configured. Please configure it in settings.", http.StatusServiceUnavailable)
+		return
+	}
+
+	targetURL := server + reqBody.URL
 
 	var bodyReader io.Reader
 	if reqBody.Data != nil {
@@ -262,7 +314,13 @@ func (p *ProxyService) HandleGetProxy(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	targetURL := p.plexServer + urlParam
+	server, _ := p.GetTarget()
+	if server == "" {
+		http.Error(w, "Plex server is not configured. Please configure it in settings.", http.StatusServiceUnavailable)
+		return
+	}
+
+	targetURL := server + urlParam
 	if len(targetQuery) > 0 {
 		if strings.Contains(targetURL, "?") {
 			targetURL += "&" + targetQuery.Encode()

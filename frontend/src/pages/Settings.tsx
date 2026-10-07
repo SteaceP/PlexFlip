@@ -2,6 +2,7 @@ import { Box, CircularProgress, Typography } from "@mui/material";
 import React from "react";
 import { Link, Route, Routes, useLocation } from "react-router-dom";
 import SettingsInfo from "./settings/SettingsInfo";
+import SettingsServer from "./settings/SettingsServer";
 import SettingsPlayback from "./settings/SettingsPlayback";
 import { useUserSettings } from "../states/UserSettingsState";
 import SettingsRecommendations from "./settings/SettingsRecommendations";
@@ -53,6 +54,7 @@ function Settings() {
       >
         <SettingsDivider title="General" />
         <SettingsItem title="About" link="/settings/info" />
+        <SettingsItem title="Plex Server" link="/settings/server" />
         <SettingsDivider title="Experience" />
         <SettingsItem title="Playback" link="/settings/experience-playback" />
         <SettingsItem title="Recommendations" link="/settings/experience-recommendations" />
@@ -76,6 +78,7 @@ function Settings() {
       >
         <Routes>
           <Route path="/info" element={<SettingsInfo />} />
+          <Route path="/server" element={<SettingsServer />} />
 
           <Route path="/experience-playback" element={<SettingsPlayback />} />
           <Route path="/experience-recommendations" element={<SettingsRecommendations />} />

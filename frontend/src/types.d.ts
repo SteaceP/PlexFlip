@@ -10,11 +10,14 @@ declare namespace PerPlexed {
         ready: boolean;
         error: boolean;
         message: string;
+        plexServer?: string;
+        configured?: boolean;
     }
 
     interface Config {
         PLEX_SERVER: string;
         DEPLOYMENTID: string;
+        CONFIGURED?: boolean;
         CONFIG: ConfigOptions
     }
 
