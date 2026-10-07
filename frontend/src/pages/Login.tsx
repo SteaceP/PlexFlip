@@ -17,7 +17,7 @@ import { getBrowserName, queryBuilder } from "../plex/QuickFunctions";
 import { useSearchParams } from "react-router-dom";
 import { getAccessToken, getPin } from "../plex";
 import axios from "axios";
-import { ProxiedRequest } from "../backendURL";
+import { ProxiedRequest, getBackendURL } from "../backendURL";
 import { XMLParser } from "fast-xml-parser";
 import { isDesktopApp, openExternalURL } from "../common/DesktopApp";
 import AppleIcon from "@mui/icons-material/Apple";
@@ -113,26 +113,45 @@ export default function Login() {
 
       let targetServer: any = null;
       const devices = sharedServers?.MediaContainer?.Device;
+      const deviceList: any[] = Array.isArray(devices) ? devices : devices ? [devices] : [];
 
-      if (sharedServers?.MediaContainer?.size === 1) {
-        targetServer = devices;
-      } else if (Array.isArray(devices)) {
-        targetServer = devices.find(
+      if (serverID) {
+        targetServer = deviceList.find(
           (server: any) => server.clientIdentifier === serverID
         );
-      } else if (devices && devices.clientIdentifier === serverID) {
-        targetServer = devices;
+      }
+      if (!targetServer) {
+        targetServer = deviceList.find(
+          (server: any) =>
+            typeof server.provides === "string" &&
+            server.provides.includes("server") &&
+            Boolean(server.accessToken)
+        );
+      }
+      if (!targetServer && deviceList.length > 0) {
+        targetServer = deviceList.find((server: any) => Boolean(server.accessToken));
       }
 
-      if (!targetServer || !targetServer.accessToken) {
-        setError("You do not have access to this server.");
-        isCompletingRef.current = false;
-        setIsCompleting(false);
-        return false;
-      }
+      const effectiveAccessToken = targetServer?.accessToken || authToken;
 
-      localStorage.setItem("accessToken", targetServer.accessToken);
+      localStorage.setItem("accessToken", effectiveAccessToken);
       localStorage.setItem("accAccessToken", authToken);
+
+      // Notify backend that auth is complete to focus desktop window
+      try {
+        const backendURL = getBackendURL();
+        await fetch(backendURL ? `${backendURL}/api/auth-complete` : "/api/auth-complete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            authToken,
+            accessToken: effectiveAccessToken,
+            serverID: serverID || "",
+          }),
+        });
+      } catch (postErr) {
+        console.warn("Failed to notify backend of auth completion:", postErr);
+      }
 
       if (isDesktopApp()) {
         window.location.href = "/";
@@ -140,6 +159,12 @@ export default function Login() {
         // If this page was opened as a redirect callback in an external browser
         setBrowserCallbackComplete(true);
         setIsCompleting(false);
+        // Attempt to close the browser tab after short delay
+        setTimeout(() => {
+          try {
+            window.close();
+          } catch (e) {}
+        }, 2000);
       }
       return true;
     } catch (e: any) {
@@ -171,7 +196,19 @@ export default function Login() {
       const currentPin = { id: res.id, code: res.code };
       setPinData(currentPin);
 
-      const forwardUrl = `${window.location.origin}/login?pinID=${res.id}&code=${res.code}&language=en`;
+      // Register PIN and clientID with local backend
+      try {
+        const backendURL = getBackendURL();
+        await fetch(backendURL ? `${backendURL}/api/auth-pin` : "/api/auth-pin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pinID: String(res.id), clientID }),
+        });
+      } catch (pinRegErr) {
+        console.warn("Could not register PIN with backend:", pinRegErr);
+      }
+
+      const forwardUrl = `${window.location.origin}/login?pinID=${res.id}&code=${res.code}&clientID=${encodeURIComponent(clientID)}&language=en`;
       const generatedUrl = `https://app.plex.tv/auth/#!?clientID=${encodeURIComponent(
         clientID
       )}&code=${encodeURIComponent(
@@ -189,7 +226,7 @@ export default function Login() {
       pollIntervalRef.current = setInterval(async () => {
         if (isCompletingRef.current) return;
         try {
-          const checkRes = await getAccessToken(String(res.id));
+          const checkRes = await getAccessToken(String(res.id), clientID);
           if (checkRes && checkRes.authToken) {
             stopPolling();
             await completeLogin(checkRes.authToken);
@@ -208,10 +245,31 @@ export default function Login() {
     // Case 1: Browser redirected back with pinID query parameter
     if (query.has("pinID")) {
       const pinID = query.get("pinID") as string;
+      let clientID = query.get("clientID") || localStorage.getItem("clientID") || "";
+
       (async () => {
         try {
           setIsCompleting(true);
-          const res = await getAccessToken(pinID);
+
+          if (!clientID) {
+            try {
+              const backendURL = getBackendURL();
+              const pinRes = await axios.get(
+                `${backendURL ? `${backendURL}/api/auth-pin` : "/api/auth-pin"}?pinID=${encodeURIComponent(pinID)}`
+              );
+              if (pinRes.data?.clientID) {
+                clientID = pinRes.data.clientID;
+              }
+            } catch (pinErr) {
+              console.warn("Failed to retrieve clientID from backend:", pinErr);
+            }
+          }
+
+          if (clientID) {
+            localStorage.setItem("clientID", clientID);
+          }
+
+          const res = await getAccessToken(pinID, clientID);
           if (res && res.authToken) {
             await completeLogin(res.authToken);
           } else {
@@ -262,6 +320,18 @@ export default function Login() {
 
   // If this tab was the browser window completing auth:
   if (browserCallbackComplete) {
+    const handleReturnToApp = async () => {
+      try {
+        const backendURL = getBackendURL();
+        await fetch(backendURL ? `${backendURL}/api/auth-focus` : "/api/auth-focus", {
+          method: "POST",
+        });
+      } catch (e) {}
+      try {
+        window.close();
+      } catch (e) {}
+    };
+
     return (
       <Box
         sx={{
@@ -277,38 +347,75 @@ export default function Login() {
           sx={{
             maxWidth: 480,
             width: "100%",
-            p: 4,
+            p: 4.5,
             textAlign: "center",
-            background: "rgba(18, 24, 38, 0.85)",
-            backdropFilter: "blur(20px)",
-            borderRadius: "20px",
-            border: "1px solid rgba(99, 102, 241, 0.25)",
-            boxShadow: "0 20px 40px rgba(0, 0, 0, 0.6)",
+            background: "rgba(18, 24, 38, 0.9)",
+            backdropFilter: "blur(24px)",
+            borderRadius: "24px",
+            border: "1px solid rgba(99, 102, 241, 0.3)",
+            boxShadow: "0 25px 50px rgba(0, 0, 0, 0.7), 0 0 30px rgba(99, 102, 241, 0.2)",
           }}
         >
-          <CheckCircleOutlineIcon sx={{ fontSize: 72, color: "#10B981", mb: 2 }} />
-          <Typography variant="h5" sx={{ fontWeight: 800, mb: 1, color: "#F4F8FF" }}>
-            Sign-in Successful!
-          </Typography>
-          <Typography variant="body1" sx={{ color: "#94A3B8", mb: 4, lineHeight: 1.6 }}>
-            Your Plex account has been successfully linked. You can close this browser tab and return to the Nevu application.
-          </Typography>
-          <Button
-            variant="contained"
-            fullWidth
-            onClick={() => {
-              window.location.href = "/";
-            }}
+          <Box
             sx={{
-              py: 1.5,
-              fontWeight: 700,
-              textTransform: "none",
-              borderRadius: "12px",
-              background: "linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)",
+              width: 80,
+              height: 80,
+              borderRadius: "50%",
+              background: "rgba(16, 185, 129, 0.15)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 20px auto",
+              border: "1px solid rgba(16, 185, 129, 0.3)",
             }}
           >
-            Continue in Web App
-          </Button>
+            <CheckCircleOutlineIcon sx={{ fontSize: 52, color: "#10B981" }} />
+          </Box>
+          <Typography variant="h5" sx={{ fontWeight: 800, mb: 1, color: "#F8FAFC" }}>
+            Sign-in Successful!
+          </Typography>
+          <Typography variant="body1" sx={{ color: "#94A3B8", mb: 3.5, lineHeight: 1.6 }}>
+            Your Plex account has been linked. You can safely close this browser window and return to Nevu.
+          </Typography>
+
+          <Stack spacing={1.5}>
+            <Button
+              variant="contained"
+              fullWidth
+              onClick={handleReturnToApp}
+              sx={{
+                py: 1.6,
+                fontWeight: 700,
+                textTransform: "none",
+                borderRadius: "14px",
+                fontSize: "1rem",
+                background: "linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)",
+                boxShadow: "0 8px 20px rgba(99, 102, 241, 0.35)",
+                "&:hover": {
+                  background: "linear-gradient(135deg, #4F46E5 0%, #4338CA 100%)",
+                },
+              }}
+            >
+              Return to Nevu Desktop App
+            </Button>
+
+            <Button
+              variant="text"
+              fullWidth
+              onClick={() => {
+                window.location.href = "/";
+              }}
+              sx={{
+                py: 1,
+                color: "#94A3B8",
+                fontWeight: 600,
+                textTransform: "none",
+                "&:hover": { color: "#F8FAFC" },
+              }}
+            >
+              Or continue in this web browser
+            </Button>
+          </Stack>
         </Card>
       </Box>
     );

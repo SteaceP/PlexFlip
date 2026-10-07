@@ -540,3 +540,70 @@ func TestServerApp_PlexServerConfigurationEndpoints(t *testing.T) {
 	}
 }
 
+func TestServerApp_AuthEndpoints(t *testing.T) {
+	app := &ServerApp{
+		deploymentID:    "test-auth",
+		pendingAuthPins: make(map[string]string),
+	}
+	handler := app.buildRouter()
+
+	// 1. Test POST /api/auth-pin to register PIN
+	pinBody, _ := json.Marshal(map[string]string{
+		"pinID":    "123456",
+		"clientID": "nevu-client-test",
+	})
+	req := httptest.NewRequest("POST", "/api/auth-pin", bytes.NewReader(pinBody))
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("Expected 200 from POST /api/auth-pin, got %d", rec.Code)
+	}
+
+	// 2. Test GET /api/auth-pin with pinID
+	req = httptest.NewRequest("GET", "/api/auth-pin?pinID=123456", nil)
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("Expected 200 from GET /api/auth-pin, got %d", rec.Code)
+	}
+	var res map[string]string
+	json.Unmarshal(rec.Body.Bytes(), &res)
+	if res["clientID"] != "nevu-client-test" {
+		t.Fatalf("Expected clientID nevu-client-test, got %q", res["clientID"])
+	}
+
+	// 3. Test GET /api/auth-pin with fallback (no pinID parameter)
+	req = httptest.NewRequest("GET", "/api/auth-pin", nil)
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("Expected 200 from GET /api/auth-pin, got %d", rec.Code)
+	}
+	res = nil
+	json.Unmarshal(rec.Body.Bytes(), &res)
+	if res["clientID"] != "nevu-client-test" {
+		t.Fatalf("Expected fallback clientID nevu-client-test, got %q", res["clientID"])
+	}
+
+	// 4. Test POST /api/auth-complete
+	completeBody, _ := json.Marshal(map[string]string{
+		"authToken":   "auth-tok-123",
+		"accessToken": "acc-tok-456",
+		"serverID":    "machine-abc",
+	})
+	req = httptest.NewRequest("POST", "/api/auth-complete", bytes.NewReader(completeBody))
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("Expected 200 from POST /api/auth-complete, got %d", rec.Code)
+	}
+
+	// 5. Test POST /api/auth-focus
+	req = httptest.NewRequest("POST", "/api/auth-focus", nil)
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("Expected 200 from POST /api/auth-focus, got %d", rec.Code)
+	}
+}
+

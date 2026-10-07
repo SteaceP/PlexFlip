@@ -16,6 +16,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
 var (
@@ -41,6 +43,11 @@ type ServerApp struct {
 	reviewsHandler       *ReviewsHandler
 	syncServer           *SyncServer
 	remoteServer         *RemoteServer
+	wailsApp             *application.App
+	wailsMu              sync.RWMutex
+	pendingAuthMu        sync.RWMutex
+	pendingAuthPins      map[string]string
+	lastClientID         string
 }
 
 func main() {
@@ -52,8 +59,9 @@ func main() {
 	log.Printf("Deployment ID: %s", deploymentID)
 
 	app := &ServerApp{
-		deploymentID: deploymentID,
-		checkTrigger: make(chan struct{}, 1),
+		deploymentID:    deploymentID,
+		checkTrigger:    make(chan struct{}, 1),
+		pendingAuthPins: make(map[string]string),
 		status: Status{
 			Ready:   false,
 			Error:   false,
@@ -396,6 +404,18 @@ func (a *ServerApp) buildRouter() http.Handler {
 		case (path == "/api/open-browser" || path == "/open-browser") && (r.Method == http.MethodPost || r.Method == http.MethodGet):
 			a.handleOpenBrowser(w, r)
 			return
+
+		case path == "/api/auth-pin":
+			a.handleAuthPin(w, r)
+			return
+
+		case path == "/api/auth-complete":
+			a.handleAuthComplete(w, r)
+			return
+
+		case path == "/api/auth-focus":
+			a.handleAuthFocus(w, r)
+			return
 		}
 
 		// Don't serve SPA fallback on /wails/ paths
@@ -407,6 +427,78 @@ func (a *ServerApp) buildRouter() http.Handler {
 		// Static files & SPA fallback
 		a.serveStaticOrSPA(w, r)
 	})
+}
+
+func (a *ServerApp) handleAuthPin(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		var req struct {
+			PinID    string `json:"pinID"`
+			ClientID string `json:"clientID"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err == nil && req.ClientID != "" {
+			a.pendingAuthMu.Lock()
+			if req.PinID != "" {
+				a.pendingAuthPins[req.PinID] = req.ClientID
+			}
+			a.lastClientID = req.ClientID
+			a.pendingAuthMu.Unlock()
+			log.Printf("Registered pending auth PIN %s with clientID %s", req.PinID, req.ClientID)
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]bool{"ok": true})
+			return
+		}
+		http.Error(w, "Invalid payload", http.StatusBadRequest)
+		return
+	}
+
+	if r.Method == http.MethodGet {
+		pinID := r.URL.Query().Get("pinID")
+		a.pendingAuthMu.RLock()
+		clientID := ""
+		if pinID != "" {
+			clientID = a.pendingAuthPins[pinID]
+		}
+		if clientID == "" {
+			clientID = a.lastClientID
+		}
+		a.pendingAuthMu.RUnlock()
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"clientID": clientID})
+		return
+	}
+
+	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+}
+
+func (a *ServerApp) handleAuthComplete(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req struct {
+		AuthToken   string `json:"authToken"`
+		AccessToken string `json:"accessToken"`
+		ServerID    string `json:"serverID"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid payload", http.StatusBadRequest)
+		return
+	}
+
+	log.Printf("Auth complete notification received (serverID=%s)", req.ServerID)
+
+	// Inject auth tokens into main desktop window and bring to front
+	a.injectAuthAndFocus(req.AccessToken, req.AuthToken)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]bool{"ok": true})
+}
+
+func (a *ServerApp) handleAuthFocus(w http.ResponseWriter, r *http.Request) {
+	a.focusMainWindow()
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]bool{"ok": true})
 }
 
 func (a *ServerApp) handleOpenBrowser(w http.ResponseWriter, r *http.Request) {

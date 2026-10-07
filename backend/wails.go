@@ -40,6 +40,17 @@ func (s *DesktopService) ToggleFullscreen() {
 	}
 }
 
+func (s *DesktopService) Focus() {
+	if s.app != nil {
+		if win, ok := s.app.Window.GetByName("main"); ok && win != nil {
+			win.UnMinimise()
+			win.Restore()
+			win.Show()
+			win.Focus()
+		}
+	}
+}
+
 func (s *DesktopService) OpenURL(targetURL string) error {
 	if s.app != nil && s.app.Browser != nil {
 		return s.app.Browser.OpenURL(targetURL)
@@ -122,6 +133,7 @@ func (a *ServerApp) runLifecycle(server *http.Server, cancel context.CancelFunc)
 		},
 	})
 	desktopSvc.app = wailsApp
+	a.setWailsApp(wailsApp)
 
 	windowURL := fmt.Sprintf("http://127.0.0.1:%d", a.listenPort)
 	wailsApp.Window.NewWithOptions(application.WebviewWindowOptions{
@@ -163,4 +175,53 @@ func (a *ServerApp) runLifecycle(server *http.Server, cancel context.CancelFunc)
 	defer shutdownCancel()
 	server.Shutdown(shutdownCtx)
 	log.Println("Server stopped")
+}
+
+func (a *ServerApp) setWailsApp(app *application.App) {
+	a.wailsMu.Lock()
+	defer a.wailsMu.Unlock()
+	a.wailsApp = app
+}
+
+func (a *ServerApp) injectAuthAndFocus(accessToken, authToken string) {
+	a.wailsMu.RLock()
+	app := a.wailsApp
+	a.wailsMu.RUnlock()
+
+	if app != nil {
+		if win, ok := app.Window.GetByName("main"); ok && win != nil {
+			js := fmt.Sprintf(`(function() {
+				try {
+					localStorage.setItem("accessToken", %q);
+					localStorage.setItem("accAccessToken", %q);
+					if (window.location.pathname !== "/") {
+						window.location.href = "/";
+					}
+				} catch(e) {
+					console.error("Failed to inject auth token:", e);
+				}
+			})();`, accessToken, authToken)
+			win.ExecJS(js)
+			win.UnMinimise()
+			win.Restore()
+			win.Show()
+			win.Focus()
+		}
+	}
+}
+
+func (a *ServerApp) focusMainWindow() {
+	a.wailsMu.RLock()
+	app := a.wailsApp
+	a.wailsMu.RUnlock()
+
+	if app != nil {
+		if win, ok := app.Window.GetByName("main"); ok && win != nil {
+			log.Println("Focusing main desktop window...")
+			win.UnMinimise()
+			win.Restore()
+			win.Show()
+			win.Focus()
+		}
+	}
 }

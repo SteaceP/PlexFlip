@@ -237,10 +237,17 @@ export function getTranscodeImageURL(url: string, width: number, height: number)
  * @param {string} pin - The PIN code used to request the access token.
  * @returns {Promise<Plex.TokenData>} A promise that resolves to the token data.
  */
-export async function getAccessToken(pin: string): Promise<Plex.TokenData> {
+export async function getAccessToken(pin: string, clientIDOverride?: string): Promise<Plex.TokenData> {
+    let clientID = clientIDOverride || localStorage.getItem("clientID");
+    if (!clientID) {
+      clientID = `nevu-${Math.random().toString(36).substring(2, 10)}`;
+      try {
+        localStorage.setItem("clientID", clientID);
+      } catch (e) {}
+    }
     const res = await axios.get(
       `https://plex.tv/api/v2/pins/${pin}?${queryBuilder({
-        "X-Plex-Client-Identifier": localStorage.getItem("clientID"),
+        "X-Plex-Client-Identifier": clientID,
       })}`,
       {
         headers: {
