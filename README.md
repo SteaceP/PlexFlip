@@ -127,6 +127,13 @@ PLEX_SERVER=http://your-plex-server:32400 ./bin/plexflip
 
 When run in a desktop environment (X11 / Wayland), PlexFlip launches as a dedicated desktop window.
 
+> [!NOTE]
+> **Linux Subtitles & WebKit (`gst-plugins-bad`)**:
+> On Linux desktop environments, the WebKit webview relies on GStreamer for subtitle and media decoding. If you see the warning `WebKit wasn't able to find a WebVTT encoder` or experience degraded subtitle rendering during video playback, install `gst-plugins-bad` via your distribution's package manager:
+> - **Ubuntu / Debian**: `sudo apt install gstreamer1.0-plugins-bad`
+> - **Fedora / RHEL**: `sudo dnf install gstreamer1-plugins-bad-free`
+> - **Arch Linux**: `sudo pacman -S gst-plugins-bad`
+
 ### Headless & Server Mode
 
 If you want to run PlexFlip without a GUI (for example on a headless server, in Docker, or via SSH):
