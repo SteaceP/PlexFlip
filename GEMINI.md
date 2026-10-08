@@ -12,7 +12,7 @@ This document defines the core architecture, active Model Context Protocol (MCP)
 - **Desktop Runtime**: [Wails v3](https://v3.wails.io/) native desktop wrapper for Linux (X11/Wayland), macOS, and Windows.
 - **Backend**: Go 1.26 ([`backend/`](file:///home/steace/Documents/PlexFlip/backend))
   - Embedded HTTP reverse proxy forwarding requests to the target Plex Media Server.
-  - SQLite storage ([`data/perplexed.db`](file:///home/steace/Documents/PlexFlip/data/perplexed.db)) via `modernc.org/sqlite` for user options, server configs, and cached metadata.
+  - SQLite storage ([`data/plexflip.db`](file:///home/steace/Documents/PlexFlip/data/plexflip.db)) via `modernc.org/sqlite` for user options, server configs, and cached metadata.
   - WebSocket synchronization ([`backend/sync.go`](file:///home/steace/Documents/PlexFlip/backend/sync.go)) for watch-together sessions (PlexFlip Sync).
   - SSDP discovery ([`backend/discovery.go`](file:///home/steace/Documents/PlexFlip/backend/discovery.go)) for local Plex server discovery.
   - Embedded frontend assets ([`backend/static.go`](file:///home/steace/Documents/PlexFlip/backend/static.go)) via `//go:embed all:www`.
@@ -163,7 +163,7 @@ The following MCP servers are configured and active for this project. Agents mus
 2. **SQLite Access**:
    - Connection pool: SQLite works best with 1 writer or serialized access; adhere to `db.SetMaxOpenConns(1)` in [`backend/db.go`](file:///home/steace/Documents/PlexFlip/backend/db.go#L56).
    - Use `modernc.org/sqlite` (pure Go, CGO-free).
-   - Database file defaults to [`data/perplexed.db`](file:///home/steace/Documents/PlexFlip/data/perplexed.db).
+   - Database file defaults to [`data/plexflip.db`](file:///home/steace/Documents/PlexFlip/data/plexflip.db).
 3. **Plex Reverse Proxy & Token Handling**:
    - Central proxy logic resides in [`backend/proxy.go`](file:///home/steace/Documents/PlexFlip/backend/proxy.go).
    - Rewrites cookies, paths, and injects authentication headers (`X-Plex-Token`).
@@ -197,5 +197,5 @@ The following MCP servers are configured and active for this project. Agents mus
 - **MCP First**: When addressing issues involving Plex metadata or desktop bindings, check with the `plex` or `wails3` MCP server before making assumptions.
 - **Verification**: Always run `go_diagnostics` (Go) or `get_diagnostics` (TS) after code edits to ensure no syntax or typing errors remain.
 - **Preserve Documentation**: Maintain existing comments and docstrings unless explicitly instructed otherwise.
-- **Accidental Data Loss Prevention**: Do NOT delete database tables (`data/perplexed.db`), truncate collections, or run destructive git/filesystem commands without explicit user confirmation.
+- **Accidental Data Loss Prevention**: Do NOT delete database tables (`data/plexflip.db`), truncate collections, or run destructive git/filesystem commands without explicit user confirmation.
 - **File Links**: Use GitHub-style markdown links with the `file://` scheme when referencing files and symbols (e.g., [`DesktopService`](file:///home/steace/Documents/PlexFlip/backend/wails.go#L23)).

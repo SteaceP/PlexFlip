@@ -1374,7 +1374,7 @@ function MetaPage3(data: Plex.Metadata | undefined) {
 function MetaPageReviews({ data }: { data: Plex.Metadata | undefined }) {
   const [reviews, setReviews] = useState<
     | (PlexCommunity.ReviewsData & {
-        plexFlipReviews: PerPlexed.Reviews.Review[];
+        plexFlipReviews: PlexFlip.Reviews.Review[];
       })
     | null
   >(null);
@@ -1428,19 +1428,19 @@ function MetaPageReviews({ data }: { data: Plex.Metadata | undefined }) {
           <Grid container spacing={3} sx={{ width: "100%" }}>
             {reviewNodes?.map((review, index) => {
               const username = isPlexFlip
-                ? (review as PerPlexed.Reviews.Review).user.username
+                ? (review as PlexFlip.Reviews.Review).user.username
                 : (review as PlexCommunity.ActivityReview).userV2?.username;
 
               const avatarSrc = isPlexFlip
-                ? (review as PerPlexed.Reviews.Review).user.avatar
+                ? (review as PlexFlip.Reviews.Review).user.avatar
                 : (review as PlexCommunity.ActivityReview).userV2?.avatar;
 
               const hasSpoilers = isPlexFlip
-                ? (review as PerPlexed.Reviews.Review).spoilers
+                ? (review as PlexFlip.Reviews.Review).spoilers
                 : (review as PlexCommunity.ActivityReview).hasSpoilers;
 
               const reviewDate = isPlexFlip
-                ? (review as PerPlexed.Reviews.Review).created_at
+                ? (review as PlexFlip.Reviews.Review).created_at
                 : (review as PlexCommunity.ActivityReview).date;
 
               return (

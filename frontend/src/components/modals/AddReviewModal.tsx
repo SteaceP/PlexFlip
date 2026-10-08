@@ -33,7 +33,7 @@ function AddReviewModal({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [existingReview, setExistingReview] =
-    useState<PerPlexed.Reviews.Review | null>(null);
+    useState<PlexFlip.Reviews.Review | null>(null);
   const [rating, setRating] = useState<number>((item.userRating || 0) / 2); // Convert to 0-5 scale
   const [reviewText, setReviewText] = useState<string>("");
   const [isSpoiler, setIsSpoiler] = useState<boolean>(false);

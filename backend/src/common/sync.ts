@@ -1,6 +1,6 @@
 import { Socket } from "socket.io";
 import { io } from "..";
-import { PerPlexed } from "../types";
+import { PlexFlip } from "../types";
 import { CheckPlexUser } from "./plex";
 import crypto from 'crypto';
 
@@ -30,7 +30,7 @@ io?.on('connection', async (socket) => {
         socket.emit("conn-error", {
             type: 'invalid_room',
             message: 'No room provided'
-        } satisfies PerPlexed.Sync.SocketError);
+        } satisfies PlexFlip.Sync.SocketError);
         return setTimeout(() => socket.disconnect(), 1000);
     }
 
@@ -39,7 +39,7 @@ io?.on('connection', async (socket) => {
         socket.emit("conn-error", {
             type: 'invalid_auth',
             message: 'No token provided'
-        } satisfies PerPlexed.Sync.SocketError);
+        } satisfies PlexFlip.Sync.SocketError);
         return setTimeout(() => socket.disconnect(), 1000);
     }
 
@@ -49,7 +49,7 @@ io?.on('connection', async (socket) => {
         socket.emit("conn-error", {
             type: 'invalid_auth',
             message: 'Invalid token'
-        } satisfies PerPlexed.Sync.SocketError);
+        } satisfies PlexFlip.Sync.SocketError);
         return setTimeout(() => socket.disconnect(), 1000);
     }
 
@@ -66,7 +66,7 @@ io?.on('connection', async (socket) => {
         socket.emit("conn-error", {
             type: 'invalid_room',
             message: 'Invalid room'
-        } satisfies PerPlexed.Sync.SocketError);
+        } satisfies PlexFlip.Sync.SocketError);
         return setTimeout(() => socket.disconnect(), 1000);
     }
 
@@ -77,14 +77,14 @@ io?.on('connection', async (socket) => {
     socket.emit('ready', {
         room: socket.handshake.query.room,
         host: isHost
-    } satisfies PerPlexed.Sync.Ready);
+    } satisfies PlexFlip.Sync.Ready);
 
     io?.to(room).emit('EVNT_USER_JOIN', {
         uid: user.uuid,
         socket: socket.id,
         name: user.friendlyName,
         avatar: user.thumb
-    } satisfies PerPlexed.Sync.Member);
+    } satisfies PlexFlip.Sync.Member);
 
     AddEvents(socket, isHost, room);
 
@@ -96,7 +96,7 @@ io?.on('connection', async (socket) => {
             io?.to(room).emit('conn-error', {
                 type: 'host_disconnect',
                 message: 'Host disconnected'
-            } satisfies PerPlexed.Sync.SocketError);
+            } satisfies PlexFlip.Sync.SocketError);
 
             const clients = io?.sockets.adapter.rooms.get(room);
             if(clients) {
@@ -110,13 +110,13 @@ io?.on('connection', async (socket) => {
                 socket: socket.id,
                 name: user.friendlyName,
                 avatar: user.thumb
-            } satisfies PerPlexed.Sync.Member);
+            } satisfies PlexFlip.Sync.Member);
         }
     });
 })
 
 function AddEvents(socket: Socket, isHost: boolean, room: string) {
-    const user = socket.data.user as PerPlexed.PlexTV.User;
+    const user = socket.data.user as PlexFlip.PlexTV.User;
 
     socket.onAny((event, ...args) => {
         if(!event.startsWith('SYNC_')) return;
@@ -135,7 +135,7 @@ function AddEvents(socket: Socket, isHost: boolean, room: string) {
             socket: socket.id,
             name: user.friendlyName,
             avatar: user.thumb
-        } satisfies PerPlexed.Sync.Member, ...args);
+        } satisfies PlexFlip.Sync.Member, ...args);
     });
 
     socket.onAny((event, ...args) => {
@@ -147,7 +147,7 @@ function AddEvents(socket: Socket, isHost: boolean, room: string) {
             socket: socket.id,
             name: user.friendlyName,
             avatar: user.thumb
-        } satisfies PerPlexed.Sync.Member, ...args);
+        } satisfies PlexFlip.Sync.Member, ...args);
     })
         
 }

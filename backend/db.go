@@ -19,9 +19,9 @@ func initDB() (*Database, error) {
 	if dbPath == "" {
 		// Check standard locations
 		candidates := []string{
-			"data/perplexed.db",
-			"../data/perplexed.db",
-			"/app/data/perplexed.db",
+			"data/plexflip.db",
+			"../data/plexflip.db",
+			"/app/data/plexflip.db",
 		}
 		found := false
 		for _, cand := range candidates {
@@ -32,12 +32,12 @@ func initDB() (*Database, error) {
 			}
 		}
 		if !found {
-			// If not found, default to data/perplexed.db or ../data/perplexed.db depending on directory structure
+			// If not found, default to data/plexflip.db or ../data/plexflip.db depending on directory structure
 			if _, err := os.Stat("../frontend"); err == nil {
 				// Running from backend/ directory
-				dbPath = "../data/perplexed.db"
+				dbPath = "../data/plexflip.db"
 			} else {
-				dbPath = "data/perplexed.db"
+				dbPath = "data/plexflip.db"
 			}
 		}
 	}

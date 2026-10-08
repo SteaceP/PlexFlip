@@ -1,7 +1,7 @@
 import { Box, Button, LinearProgress, Typography } from "@mui/material";
 import React, { useEffect } from "react";
 import { useSyncSessionState } from "../states/SyncSessionState";
-import { useSyncInterfaceState } from "../components/PerPlexedSync";
+import { useSyncInterfaceState } from "../components/PlexFlipSync";
 import { useNavigate } from "react-router-dom";
 
 function WaitingRoom() {
@@ -18,7 +18,7 @@ function WaitingRoom() {
   useEffect(() => {
     if(!socket) return;
 
-    socket.once("RES_SYNC_RESYNC_PLAYBACK", (user, data: PerPlexed.Sync.PlayBackState) => {
+    socket.once("RES_SYNC_RESYNC_PLAYBACK", (user, data: PlexFlip.Sync.PlayBackState) => {
       console.log("Playback resync received", data);
       navigate(`/watch/${data.key}?t=${data.time}`);
     })

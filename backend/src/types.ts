@@ -1,4 +1,4 @@
-export namespace PerPlexed {
+export namespace PlexFlip {
     export interface Status {
         ready: boolean;
         error: boolean;

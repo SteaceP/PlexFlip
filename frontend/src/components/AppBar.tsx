@@ -45,7 +45,7 @@ import {
   SettingsRounded,
   ShortcutRounded,
 } from "@mui/icons-material";
-import { useSyncInterfaceState } from "./PerPlexedSync";
+import { useSyncInterfaceState } from "./PlexFlipSync";
 import { useSyncSessionState } from "../states/SyncSessionState";
 import { config } from "..";
 import { useBigReader } from "./BigReader";

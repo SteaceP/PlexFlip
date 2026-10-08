@@ -2,7 +2,7 @@ import axios, { AxiosRequestConfig } from 'axios';
 import express from 'express';
 import https from 'https';
 import { Server as SocketIOServer } from 'socket.io';
-import { PerPlexed } from './types';
+import { PlexFlip } from './types';
 import { randomBytes } from 'crypto';
 import { PrismaClient } from '@prisma/client';
 import { CheckPlexUser } from './common/plex';
@@ -25,7 +25,7 @@ const deploymentID = randomBytes(8).toString('hex');
 
 const plexFlipHubUrl = "https://gnuqknwmixeunfmeseep.supabase.co/functions/v1/"
 
-const status: PerPlexed.Status = {
+const status: PlexFlip.Status = {
     ready: false,
     error: false,
     message: 'Server is starting up...',

@@ -12,7 +12,7 @@ import Library from "./pages/Library";
 import BigReader from "./components/BigReader";
 import { useWatchListCache } from "./states/WatchListCache";
 import Startup, { useStartupState } from "./pages/Startup";
-import PerPlexedSync from "./components/PerPlexedSync";
+import PlexFlipSync from "./components/PlexFlipSync";
 import WaitingRoom from "./pages/WaitingRoom";
 import ToastManager from "./components/ToastManager";
 import LibraryScreen from "./components/LibraryScreen";
@@ -94,7 +94,7 @@ function App() {
   return (
     <>
       <BigReader />
-      <PerPlexedSync />
+      <PlexFlipSync />
       <ToastManager />
       <LibraryScreen />
       <AppTitleManager />

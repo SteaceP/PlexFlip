@@ -56,7 +56,7 @@ import {
   SessionStateEmitter,
   useSyncSessionState,
 } from "../states/SyncSessionState";
-import { useSyncInterfaceState } from "../components/PerPlexedSync";
+import { useSyncInterfaceState } from "../components/PlexFlipSync";
 import { absoluteDifference } from "../common/NumberExtra";
 import WatchShowChildView from "../components/WatchShowChildView";
 import { useUserSettings } from "../states/UserSettingsState";
@@ -244,7 +244,7 @@ function Watch() {
         key: itemID,
         state: playing ? "playing" : "paused",
         time: player.current?.getCurrentTime() ?? 0,
-      } satisfies PerPlexed.Sync.PlayBackState);
+      } satisfies PlexFlip.Sync.PlayBackState);
 
     return () => {
       clearInterval(interval);
@@ -262,10 +262,10 @@ function Watch() {
         key: itemID,
         state: playing ? "playing" : "paused",
         time: player.current?.getCurrentTime() ?? 0,
-      } satisfies PerPlexed.Sync.PlayBackState);
+      } satisfies PlexFlip.Sync.PlayBackState);
     }, 2500);
 
-    const resyncPlayback = async (data: PerPlexed.Sync.PlayBackState) => {
+    const resyncPlayback = async (data: PlexFlip.Sync.PlayBackState) => {
       if (data.key !== itemID) {
         navigate(`/watch/${data.key}?t=${data.time}`);
         return;

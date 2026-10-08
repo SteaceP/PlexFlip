@@ -10,7 +10,7 @@ export interface SyncSessionState {
     isHost: boolean;
     room: string | null;
 
-    connect: (room?: string, navigate?: NavigateFunction) => Promise<true | PerPlexed.Sync.SocketError>;
+    connect: (room?: string, navigate?: NavigateFunction) => Promise<true | PlexFlip.Sync.SocketError>;
     disconnect: () => void;
 }
 
@@ -22,7 +22,7 @@ export const useSyncSessionState = create<SyncSessionState>((set, get) => ({
     room: null,
 
     connect: async (room, navigate) => {
-        return new Promise<true | PerPlexed.Sync.SocketError>((resolve) => {
+        return new Promise<true | PlexFlip.Sync.SocketError>((resolve) => {
             const socket = isDev ? io(getBackendURL(), {
                 auth: {
                     token: localStorage.getItem("accAccessToken")
@@ -47,7 +47,7 @@ export const useSyncSessionState = create<SyncSessionState>((set, get) => ({
                 console.log("Connected to server");
             });
 
-            (new Promise<true | PerPlexed.Sync.SocketError>((resolve) => {
+            (new Promise<true | PlexFlip.Sync.SocketError>((resolve) => {
                 let resolved = false;
 
                 socket.once("ready", (data) => {
@@ -112,41 +112,41 @@ function SocketManager(navigate: NavigateFunction | undefined) {
     }
     else 
     {
-        socket.on("RES_SYNC_SET_PLAYBACK", (user: PerPlexed.Sync.Member, data: PerPlexed.Sync.PlayBackState) => {
+        socket.on("RES_SYNC_SET_PLAYBACK", (user: PlexFlip.Sync.Member, data: PlexFlip.Sync.PlayBackState) => {
             console.log("Playback state received", data);
             navigate?.(`/watch/${data.key}?t=${data.time}`);
             useToast.getState().addToast(user, "PlaySet", "Started Playback", 5000);
         });
 
-        socket.on("RES_SYNC_RESYNC_PLAYBACK", (user: PerPlexed.Sync.Member, data: PerPlexed.Sync.PlayBackState) => {
+        socket.on("RES_SYNC_RESYNC_PLAYBACK", (user: PlexFlip.Sync.Member, data: PlexFlip.Sync.PlayBackState) => {
             console.log("Playback resync received", data);
             SessionStateEmitter.emit("PLAYBACK_RESYNC", data);
         })
 
-        socket.on("RES_SYNC_PLAYBACK_END", (user: PerPlexed.Sync.Member) => {
+        socket.on("RES_SYNC_PLAYBACK_END", (user: PlexFlip.Sync.Member) => {
             SessionStateEmitter.emit("PLAYBACK_END");
         })
     }
 
-    socket.on("EVNT_SYNC_PAUSE", (user: PerPlexed.Sync.Member) => {
+    socket.on("EVNT_SYNC_PAUSE", (user: PlexFlip.Sync.Member) => {
         useToast.getState().addToast(user, "Pause", "Paused Playback", 5000);
         SessionStateEmitter.emit("PLAYBACK_PAUSE");
     })
 
-    socket.on("EVNT_SYNC_RESUME", (user: PerPlexed.Sync.Member) => {
+    socket.on("EVNT_SYNC_RESUME", (user: PlexFlip.Sync.Member) => {
         useToast.getState().addToast(user, "Play", "Resumed Playback", 5000);
         SessionStateEmitter.emit("PLAYBACK_RESUME");
     })
 
-    socket.on("EVNT_SYNC_SEEK", (user: PerPlexed.Sync.Member, time: number) => {
+    socket.on("EVNT_SYNC_SEEK", (user: PlexFlip.Sync.Member, time: number) => {
         SessionStateEmitter.emit("PLAYBACK_SEEK", time);
     })
 
-    socket.on("EVNT_USER_JOIN", (user: PerPlexed.Sync.Member) => {
+    socket.on("EVNT_USER_JOIN", (user: PlexFlip.Sync.Member) => {
         useToast.getState().addToast(user, "UserAdd", "Joined the session", 5000);
     });
 
-    socket.on("EVNT_USER_LEAVE", (user: PerPlexed.Sync.Member) => {
+    socket.on("EVNT_USER_LEAVE", (user: PlexFlip.Sync.Member) => {
         useToast.getState().addToast(user, "UserRemove", "Left the session", 5000);
     });
 
@@ -154,9 +154,9 @@ function SocketManager(navigate: NavigateFunction | undefined) {
 }
 
 export interface SessionPlayBackCache {
-    playBackState: PerPlexed.Sync.PlayBackState | null;
+    playBackState: PlexFlip.Sync.PlayBackState | null;
 
-    update: (data: PerPlexed.Sync.PlayBackState) => void;
+    update: (data: PlexFlip.Sync.PlayBackState) => void;
 }
 
 export const useSessionPlayBackCache = create<SessionPlayBackCache>((set, get) => ({

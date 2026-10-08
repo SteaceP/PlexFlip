@@ -24,7 +24,7 @@ export const useSyncInterfaceState = create<SyncInterfaceState>((set, get) => ({
   setOpen: (open) => set({ open }),
 }));
 
-function PerPlexedSync() {
+function PlexFlipSync() {
   const { open, setOpen } = useSyncInterfaceState();
   const { room, isHost } = useSyncSessionState();
   const navigate = useNavigate();
@@ -335,4 +335,4 @@ function PerPlexedSync() {
   );
 }
 
-export default PerPlexedSync;
+export default PlexFlipSync;

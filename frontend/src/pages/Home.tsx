@@ -17,7 +17,7 @@ import { useUserSettings } from "../states/UserSettingsState";
 export default function Home() {
   const [libraries, setLibraries] = React.useState<Plex.LibarySection[]>([]);
   const [featured, setFeatured] = React.useState<
-    PerPlexed.RecommendationShelf[]
+    PlexFlip.RecommendationShelf[]
   >([]);
   const [randomItem, setRandomItem] = React.useState<Plex.Metadata | null>(
     null
@@ -284,7 +284,7 @@ export default function Home() {
 }
 
 async function getRecommendations(libraries: Plex.Directory[]) {
-  const genreSelection: PerPlexed.RecommendationShelf[] = [];
+  const genreSelection: PlexFlip.RecommendationShelf[] = [];
 
   for (const library of libraries) {
     const genres = await getLibrarySecondary(library.key, "genre");

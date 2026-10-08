@@ -1,4 +1,4 @@
-declare namespace PerPlexed {
+declare namespace PlexFlip {
     interface RecommendationShelf {
         title: string;
         libraryID: string;

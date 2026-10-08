@@ -12,11 +12,11 @@ interface StartupState {
   showDiagnostic: boolean;
   setShowDiagnostic: (showDiagnostic: boolean) => void;
 
-  lastStatus?: PerPlexed.Status;
-  setLastStatus: (status: PerPlexed.Status) => void;
+  lastStatus?: PlexFlip.Status;
+  setLastStatus: (status: PlexFlip.Status) => void;
 
-  frontEndStatus?: PerPlexed.Status;
-  setFrontEndStatus: (frontEndStatus: PerPlexed.Status | undefined) => void;
+  frontEndStatus?: PlexFlip.Status;
+  setFrontEndStatus: (frontEndStatus: PlexFlip.Status | undefined) => void;
 }
 
 export const useStartupState = create<StartupState>((set) => ({
@@ -55,7 +55,7 @@ function Startup() {
         .get(`${getBackendURL()}/status`, {
           timeout: 5000,
         })
-        .then((res) => res.data as PerPlexed.Status)
+        .then((res) => res.data as PlexFlip.Status)
         .catch(() => null);
       if (!res) {
         setFrontEndStatus({
@@ -91,7 +91,7 @@ function Startup() {
 
         const config = await axios
           .get(`${getBackendURL()}/config`)
-          .then((res) => res.data as PerPlexed.Config)
+          .then((res) => res.data as PlexFlip.Config)
           .catch(() => null);
 
         if (!config) {

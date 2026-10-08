@@ -1,7 +1,7 @@
 import axios, { AxiosError } from "axios";
 import { getBackendURL } from "../backendURL";
 
-export async function getPlexFlipReviews(itemID: string, userID?: string): Promise<PerPlexed.Reviews.Review[]> {
+export async function getPlexFlipReviews(itemID: string, userID?: string): Promise<PlexFlip.Reviews.Review[]> {
     const res = await axios.get(`${getBackendURL()}/reviews`, {
         params: {
             itemID,
@@ -25,7 +25,7 @@ export async function updatePlexFlipReview(
     message: string,
     visibility: "GLOBAL" | "LOCAL",
     spoilers: boolean
-): Promise<PerPlexed.Reviews.ReviewResponse | null> {
+): Promise<PlexFlip.Reviews.ReviewResponse | null> {
     const res = await axios.post(`${getBackendURL()}/reviews`, {
         itemID,
         rating,

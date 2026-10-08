@@ -1,6 +1,6 @@
 import { CheckPlexUser } from "./plex";
 import { remoteIo as io } from "..";
-import { PerPlexed } from "../types";
+import { PlexFlip } from "../types";
 
 io?.on('connection', async (socket) => {
     console.log(`REMOTE [${socket.id}] connected`);
@@ -10,7 +10,7 @@ io?.on('connection', async (socket) => {
         socket.emit("conn-error", {
             type: 'invalid_query',
             message: 'No deviceID provided'
-        } satisfies PerPlexed.Sync.SocketError);
+        } satisfies PlexFlip.Sync.SocketError);
         return setTimeout(() => socket.disconnect(), 1000);
     }
 
@@ -19,7 +19,7 @@ io?.on('connection', async (socket) => {
         socket.emit("conn-error", {
             type: 'invalid_auth',
             message: 'No token provided'
-        } satisfies PerPlexed.Sync.SocketError);
+        } satisfies PlexFlip.Sync.SocketError);
         return setTimeout(() => socket.disconnect(), 1000);
     }
 
@@ -29,12 +29,12 @@ io?.on('connection', async (socket) => {
         socket.emit("conn-error", {
             type: 'invalid_auth',
             message: 'Invalid token'
-        } satisfies PerPlexed.Sync.SocketError);
+        } satisfies PlexFlip.Sync.SocketError);
         return setTimeout(() => socket.disconnect(), 1000);
     }
 
     socket.data.user = user;
-    socket.data.deviceID = JSON.parse(socket.handshake.query.deviceID as string) as PerPlexed.Remote.DeviceID;
+    socket.data.deviceID = JSON.parse(socket.handshake.query.deviceID as string) as PlexFlip.Remote.DeviceID;
 
     socket.join("remote:" + user.uuid);
 
@@ -42,9 +42,9 @@ io?.on('connection', async (socket) => {
 
     socket.on("getDevices", (callback) => {
         callback(Array.from(io?.sockets.sockets.values())
-            .filter(s => s.data.user && (s.data.user as PerPlexed.PlexTV.User).uuid === user.uuid && s.data.deviceID?.id !== socket.data.deviceID.id)
+            .filter(s => s.data.user && (s.data.user as PlexFlip.PlexTV.User).uuid === user.uuid && s.data.deviceID?.id !== socket.data.deviceID.id)
             .map(s => {
-                const deviceID = s.data.deviceID as PerPlexed.Remote.DeviceID;
+                const deviceID = s.data.deviceID as PlexFlip.Remote.DeviceID;
                 return {
                     socket: s.id,
                     id: deviceID.id,
@@ -52,11 +52,11 @@ io?.on('connection', async (socket) => {
                     friendlyName: deviceID.friendlyName,
                     isControllable: deviceID.isControllable,
                     isRemote: deviceID.isRemote
-                } satisfies PerPlexed.Remote.DeviceID;
+                } satisfies PlexFlip.Remote.DeviceID;
             }));
     });
 
-    socket.on("remoteAction", (action: PerPlexed.Remote.RemoteAction, callback) => {
+    socket.on("remoteAction", (action: PlexFlip.Remote.RemoteAction, callback) => {
         if (!action.target || !action.action) {
             return callback({ success: false, message: "Invalid action" });
         }
@@ -70,7 +70,7 @@ io?.on('connection', async (socket) => {
         callback({ success: true, message: "Action sent" });
     });
 
-    socket.on("mediaState", (state: PerPlexed.Sync.PlayBackState) => {
+    socket.on("mediaState", (state: PlexFlip.Sync.PlayBackState) => {
         io.to("remote:" + user.uuid).emit(`mediaState:${socket.id}`, {
             ...state,
             deviceID: socket.data.deviceID

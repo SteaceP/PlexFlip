@@ -11,7 +11,7 @@ import (
 
 func setupTestDB(t *testing.T) (*Database, func()) {
 	t.Helper()
-	tmpFile, err := os.CreateTemp("", "test_perplexed_*.db")
+	tmpFile, err := os.CreateTemp("", "test_plexflip_*.db")
 	if err != nil {
 		t.Fatalf("Failed to create temp db file: %v", err)
 	}

@@ -18,7 +18,7 @@ if (!localStorage.getItem("clientID"))
 
 sessionStorage.setItem("sessionID", uuidv4());
 
-let config: PerPlexed.ConfigOptions = {
+let config: PlexFlip.ConfigOptions = {
   DISABLE_PROXY: false, // DEPRECATED
   DISABLE_PLEXFLIP_SYNC: false,
 };
@@ -27,7 +27,7 @@ let config: PerPlexed.ConfigOptions = {
   if (!localStorage.getItem("config")) return;
   config = JSON.parse(
     localStorage.getItem("config") as string
-  ) as PerPlexed.ConfigOptions;
+  ) as PlexFlip.ConfigOptions;
 })();
 
 if (!localStorage.getItem("quality")) localStorage.setItem("quality", "12000");
