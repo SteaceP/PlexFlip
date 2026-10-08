@@ -341,7 +341,9 @@ function HeroDisplay({ item }: { item: Plex.Metadata }) {
               </Typography>
             </Button>
 
-            <HeroWatchListButton item={item} />
+            {!["artist", "album", "track"].includes(item.type) && (
+              <HeroWatchListButton item={item} />
+            )}
           </Box>
         </Box>
       </Box>

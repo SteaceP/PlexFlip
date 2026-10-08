@@ -75,18 +75,20 @@ function MovieItemSlider({
   }, []);
 
   const fetchData = async () => {
-    if (!dir) return;
+    if (!dir) {
+      setItems([]);
+      return;
+    }
 
-    getLibraryDir(dir, props).then((res) => {
-      // cut the array down so its a multiple of itemsPerPage
-      if (!res.Metadata) return;
+    try {
+      const res = await getLibraryDir(dir, props);
+      let media: Plex.Metadata[] = res?.Metadata || [];
+      if (filter) media = media.filter(filter);
 
-      let media: Plex.Metadata[] = res.Metadata;
-      if (filter) media = res.Metadata.filter(filter);
-
-      if (!media) return;
       setItems(shuffle ? shuffleArray(media) : media);
-    });
+    } catch (err) {
+      setItems([]);
+    }
   };
 
   React.useEffect(() => {
@@ -96,7 +98,7 @@ function MovieItemSlider({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, dir, filter, props, shuffle]);
 
-  if (!items) return <></>;
+  if (!items || items.length === 0) return null;
 
   const itemCount = items.slice(0, itemsPerPage * 5).length;
 

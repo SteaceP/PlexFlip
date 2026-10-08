@@ -151,17 +151,19 @@ function BrowseRecommendations() {
 
             if (lastViewItem?.Related?.Hub?.[0]?.Metadata?.[0]) {
               let shortenedTitle = lastViewItem.title;
-              if (shortenedTitle.length > 40)
+              if (shortenedTitle && shortenedTitle.length > 40)
                 shortenedTitle = `${shortenedTitle.slice(0, 40)}...`;
 
-              categoryPool.push({
-                title: isMusic
-                  ? `Because you listened to ${shortenedTitle}`
-                  : `Because you watched ${shortenedTitle}`,
-                dir: lastViewItem.Related.Hub[0].hubKey,
-                link: lastViewItem.Related.Hub[0].key,
-                shuffle: true,
-              });
+              if (shortenedTitle && shortenedTitle.trim().length > 0) {
+                categoryPool.push({
+                  title: isMusic
+                    ? `Because you listened to ${shortenedTitle}`
+                    : `Because you watched ${shortenedTitle}`,
+                  dir: lastViewItem.Related.Hub[0].hubKey,
+                  link: lastViewItem.Related.Hub[0].key,
+                  shuffle: true,
+                });
+              }
             }
           }
 
@@ -171,16 +173,18 @@ function BrowseRecommendations() {
             const randomMeta = await getLibraryMeta(randomItem.ratingKey);
 
             let shortenedTitle = randomMeta.title;
-            if (shortenedTitle.length > 40)
+            if (shortenedTitle && shortenedTitle.length > 40)
               shortenedTitle = `${shortenedTitle.slice(0, 40)}...`;
 
             if (randomMeta?.Related?.Hub?.[0]?.Metadata?.[0]) {
-              categoryPool.push({
-                title: `More Like ${shortenedTitle}`,
-                dir: randomMeta.Related.Hub[0].hubKey,
-                link: randomMeta.Related.Hub[0].key,
-                shuffle: true,
-              });
+              if (shortenedTitle && shortenedTitle.trim().length > 0) {
+                categoryPool.push({
+                  title: `More Like ${shortenedTitle}`,
+                  dir: randomMeta.Related.Hub[0].hubKey,
+                  link: randomMeta.Related.Hub[0].key,
+                  shuffle: true,
+                });
+              }
             }
           }
         }
@@ -236,6 +240,7 @@ function BrowseRecommendations() {
                 type: "9",
                 sort: "lastViewedAt:desc",
                 limit: "30",
+                unwatched: "0",
               },
             });
           }
@@ -315,9 +320,9 @@ function BrowseRecommendations() {
         }}
       >
         {categories && categories.length > 0 ? (
-          categories.map((category, index) => (
+          categories.map((category) => (
             <MovieItemSlider
-              key={index}
+              key={`${category.title}-${category.dir}`}
               title={category.title}
               dir={category.dir}
               props={category.props}

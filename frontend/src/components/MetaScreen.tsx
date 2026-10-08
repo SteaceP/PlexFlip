@@ -798,103 +798,107 @@ function MetaScreen() {
                     </Button>
                   )}
 
-                <Tooltip placement="top" arrow title="Watchlist">
-                  <HeroWatchListButton item={data as Plex.Metadata} />
-                </Tooltip>
+                {!["artist", "album", "track"].includes(data?.type || "") && (
+                  <Tooltip placement="top" arrow title="Watchlist">
+                    <HeroWatchListButton item={data as Plex.Metadata} />
+                  </Tooltip>
+                )}
 
                 {data && <RatingButton item={data} />}
 
-                <Tooltip
-                  placement="top"
-                  arrow
-                  title={
-                    `Mark as ` +
-                    (data?.type === "movie"
-                      ? !Boolean(data?.viewCount)
-                        ? "watched"
-                        : "unwatched"
-                      : data?.viewedLeafCount === data?.leafCount
-                      ? "unwatched"
-                      : "watched")
-                  }
-                >
-                  <Button
-                    variant="contained"
-                    sx={{
-                      height: "38px",
-                      fontWeight: "bold",
-                      letterSpacing: "0.1em",
-                      textTransform: "uppercase",
-                      transition: "all 0.2s ease-in-out",
-                      display: "flex",
-                      gap: 1,
-                    }}
-                    onClick={async () => {
-                      if (!data) return;
-                      let state = "unwatched";
-
-                      if (data?.type === "movie" && (data?.viewCount ?? 0) > 0)
-                        state = "watched";
-                      if (
-                        data?.type === "show" &&
-                        data?.viewedLeafCount === data?.leafCount
-                      )
-                        state = "watched";
-
-                      useConfirmModal.getState().setModal({
-                        title: `Mark as ${
-                          state === "unwatched" ? "watched" : "unwatched"
-                        }`,
-                        message: `Are you sure you want to mark ${
-                          data?.title
-                        } as ${
-                          state === "unwatched" ? "watched" : "unwatched"
-                        }?`,
-                        onConfirm: async () => {
-                          switch (data.type) {
-                            case "movie":
-                              data.viewCount = !Boolean(data.viewCount) ? 1 : 0;
-                              setData({ ...data });
-                              await setMediaPlayedStatus(
-                                Boolean(data.viewCount),
-                                data.ratingKey
-                              );
-                              break;
-                            case "show":
-                              const newViewedLeafCount =
-                                data.viewedLeafCount === data.leafCount
-                                  ? 0
-                                  : data.leafCount;
-                              data.viewedLeafCount = newViewedLeafCount;
-                              setData({ ...data });
-                              await setMediaPlayedStatus(
-                                newViewedLeafCount === data.leafCount,
-                                data.ratingKey
-                              );
-                              break;
-                            default:
-                              break;
-                          }
-                        },
-                        onCancel: () => {},
-                      });
-                    }}
+                {!["artist", "album", "track"].includes(data?.type || "") && (
+                  <Tooltip
+                    placement="top"
+                    arrow
+                    title={
+                      `Mark as ` +
+                      (data?.type === "movie"
+                        ? !Boolean(data?.viewCount)
+                          ? "watched"
+                          : "unwatched"
+                        : data?.viewedLeafCount === data?.leafCount
+                        ? "unwatched"
+                        : "watched")
+                    }
                   >
-                    {data?.type === "movie" ? (
-                      !((data?.viewCount ?? 0) > 0) ? (
-                        <CheckCircleOutlineRounded fontSize="small" />
-                      ) : (
-                        <CheckCircleRounded fontSize="small" />
-                      )
-                    ) : data?.type === "show" ? (
-                      data?.viewedLeafCount === data?.leafCount ? (
-                        <CheckCircleRounded fontSize="small" />
-                      ) : (
-                        <CheckCircleOutlineRounded fontSize="small" />
-                      )
-                    ) : null}
-                  </Button>
-                </Tooltip>
+                    <Button
+                      variant="contained"
+                      sx={{
+                        height: "38px",
+                        fontWeight: "bold",
+                        letterSpacing: "0.1em",
+                        textTransform: "uppercase",
+                        transition: "all 0.2s ease-in-out",
+                        display: "flex",
+                        gap: 1,
+                      }}
+                      onClick={async () => {
+                        if (!data) return;
+                        let state = "unwatched";
+
+                        if (data?.type === "movie" && (data?.viewCount ?? 0) > 0)
+                          state = "watched";
+                        if (
+                          data?.type === "show" &&
+                          data?.viewedLeafCount === data?.leafCount
+                        )
+                          state = "watched";
+
+                        useConfirmModal.getState().setModal({
+                          title: `Mark as ${
+                            state === "unwatched" ? "watched" : "unwatched"
+                          }`,
+                          message: `Are you sure you want to mark ${
+                            data?.title
+                          } as ${
+                            state === "unwatched" ? "watched" : "unwatched"
+                          }?`,
+                          onConfirm: async () => {
+                            switch (data.type) {
+                              case "movie":
+                                data.viewCount = !Boolean(data.viewCount) ? 1 : 0;
+                                setData({ ...data });
+                                await setMediaPlayedStatus(
+                                  Boolean(data.viewCount),
+                                  data.ratingKey
+                                );
+                                break;
+                              case "show":
+                                const newViewedLeafCount =
+                                  data.viewedLeafCount === data.leafCount
+                                    ? 0
+                                    : data.leafCount;
+                                data.viewedLeafCount = newViewedLeafCount;
+                                setData({ ...data });
+                                await setMediaPlayedStatus(
+                                  newViewedLeafCount === data.leafCount,
+                                  data.ratingKey
+                                );
+                                break;
+                              default:
+                                break;
+                            }
+                          },
+                          onCancel: () => {},
+                        });
+                      }}
+                    >
+                      {data?.type === "movie" ? (
+                        !((data?.viewCount ?? 0) > 0) ? (
+                          <CheckCircleOutlineRounded fontSize="small" />
+                        ) : (
+                          <CheckCircleRounded fontSize="small" />
+                        )
+                      ) : data?.type === "show" ? (
+                        data?.viewedLeafCount === data?.leafCount ? (
+                          <CheckCircleRounded fontSize="small" />
+                        ) : (
+                          <CheckCircleOutlineRounded fontSize="small" />
+                        )
+                      ) : null}
+                    </Button>
+                  </Tooltip>
+                )}
               </Box>
 
               <Box
@@ -1606,6 +1610,13 @@ function MetaPage2(data: Plex.Metadata | undefined) {
   if (!data) return <></>;
   if (data.Related?.Hub?.length === 0) return <>Nothing here</>;
 
+  const validHubs =
+    data.Related?.Hub?.filter(
+      (hub) => hub.Metadata && hub.Metadata.length > 0
+    ) || [];
+
+  if (validHubs.length === 0) return <>Nothing here</>;
+
   return (
     <Box
       component={motion.div}
@@ -1624,8 +1635,9 @@ function MetaPage2(data: Plex.Metadata | undefined) {
         userSelect: "none",
       }}
     >
-      {data.Related?.Hub?.map((hub) => (
+      {validHubs.map((hub) => (
         <Box
+          key={hub.title || hub.key || hub.hubKey}
           sx={{
             width: "100%",
             display: "flex",
@@ -1647,7 +1659,7 @@ function MetaPage2(data: Plex.Metadata | undefined) {
 
           <Grid container spacing={2} sx={{ width: "100%" }}>
             {hub.Metadata?.map((item) => (
-              <Grid size={{ lg: 3, md: 4, sm: 6, xs: 12 }}>
+              <Grid key={item.ratingKey} size={{ lg: 3, md: 4, sm: 6, xs: 12 }}>
                 <MovieItem item={item} />
               </Grid>
             ))}
