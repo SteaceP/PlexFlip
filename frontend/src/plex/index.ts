@@ -281,6 +281,76 @@ export async function getPin(): Promise<Plex.TokenData> {
 }
 
 /**
+ * Signs in a user directly using Plex email/username and password.
+ *
+ * @param login - The user's email or Plex username.
+ * @param password - The user's password.
+ * @param verificationCode - Optional 2FA verification code.
+ * @returns An object containing authToken on success, or error/requiresTwoFactor on failure.
+ */
+export async function signInWithEmailPassword(
+    login: string,
+    password: string,
+    verificationCode?: string
+): Promise<{ authToken?: string; error?: string; requiresTwoFactor?: boolean }> {
+    let clientID = localStorage.getItem("clientID");
+    if (!clientID) {
+        clientID = `nevu-${Math.random().toString(36).substring(2, 10)}`;
+        try {
+            localStorage.setItem("clientID", clientID);
+        } catch (e) {}
+    }
+    try {
+        const payload: Record<string, string> = {
+            login,
+            password,
+        };
+        if (verificationCode) {
+            payload.verificationCode = verificationCode;
+        }
+        const res = await axios.post("https://plex.tv/api/v2/users/signin", payload, {
+            headers: {
+                "Content-Type": "application/json",
+                accept: "application/json",
+                "X-Plex-Client-Identifier": clientID,
+                "X-Plex-Product": "Nevu",
+                "X-Plex-Version": "0.1.0",
+                "X-Plex-Platform": "Desktop",
+                "X-Plex-Device": "Desktop",
+            },
+        });
+
+        if (res.data && res.data.authToken) {
+            return { authToken: res.data.authToken };
+        }
+        return { error: "Unexpected response from Plex server. No auth token returned." };
+    } catch (err: any) {
+        const errData = err.response?.data;
+        const errors = errData?.errors;
+        if (errors && errors.length > 0) {
+            const firstErr = errors[0];
+            if (
+                firstErr.code === 1027 ||
+                firstErr.code === 1028 ||
+                firstErr.message?.toLowerCase().includes("verification") ||
+                firstErr.message?.toLowerCase().includes("two-factor")
+            ) {
+                return {
+                    requiresTwoFactor: true,
+                    error: "Two-factor verification code required. Please enter your 6-digit code.",
+                };
+            }
+            if (firstErr.code === 1001) {
+                return { error: "Invalid email, username, or password." };
+            }
+            return { error: firstErr.message || "Failed to sign in. Please check your credentials." };
+        }
+        return { error: err.message || "Network error while connecting to Plex." };
+    }
+}
+
+
+/**
  * Fetches the logged-in user's data from the Plex API.
  *
  * @returns {Promise<Plex.UserData | null>} A promise that resolves to the user's data if the request is successful, or null if it fails.

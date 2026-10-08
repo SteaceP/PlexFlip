@@ -3,19 +3,21 @@ import {
   Box,
   Button,
   Card,
+  Chip,
   CircularProgress,
   Collapse,
   Divider,
   IconButton,
   Paper,
   Stack,
+  TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { getBrowserName, queryBuilder } from "../plex/QuickFunctions";
 import { useSearchParams } from "react-router-dom";
-import { getAccessToken, getPin } from "../plex";
+import { getAccessToken, getPin, signInWithEmailPassword } from "../plex";
 import axios from "axios";
 import { ProxiedRequest, getBackendURL } from "../backendURL";
 import { XMLParser } from "fast-xml-parser";
@@ -27,6 +29,7 @@ import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import CheckIcon from "@mui/icons-material/Check";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 function GoogleSvgIcon() {
   return (
@@ -54,12 +57,22 @@ function GoogleSvgIcon() {
 export default function Login() {
   const [query] = useSearchParams();
   const [error, setError] = useState<string | null>(null);
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [pinData, setPinData] = useState<{ id: number; code: string } | null>(null);
   const [authUrl, setAuthUrl] = useState<string>("");
   const [copied, setCopied] = useState<boolean>(false);
   const [browserOpened, setBrowserOpened] = useState<boolean>(false);
   const [isCompleting, setIsCompleting] = useState<boolean>(false);
   const [browserCallbackComplete, setBrowserCallbackComplete] = useState<boolean>(false);
+
+  // Direct Email & Password Sign-In Form state
+  const [showEmailForm, setShowEmailForm] = useState<boolean>(false);
+  const [emailInput, setEmailInput] = useState<string>("");
+  const [passwordInput, setPasswordInput] = useState<string>("");
+  const [twoFactorCode, setTwoFactorCode] = useState<string>("");
+  const [requiresTwoFactor, setRequiresTwoFactor] = useState<boolean>(false);
+  const [emailLoginLoading, setEmailLoginLoading] = useState<boolean>(false);
+  const [emailLoginError, setEmailLoginError] = useState<string | null>(null);
 
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isCompletingRef = useRef<boolean>(false);
@@ -315,7 +328,87 @@ export default function Login() {
     if (pinData?.code) {
       navigator.clipboard.writeText(pinData.code);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setTimeout(() => setCopied(false), 2500);
+    }
+  };
+
+  const handleQuickLink = async () => {
+    if (pinData?.code) {
+      try {
+        await navigator.clipboard.writeText(pinData.code);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+      } catch (e) {}
+    }
+    setBrowserOpened(true);
+    setInfoMessage("Code copied! Enter it at plex.tv/link in your browser.");
+    await openExternalURL("https://plex.tv/link");
+  };
+
+  const handleGoogleSignIn = async () => {
+    if (pinData?.code) {
+      try {
+        await navigator.clipboard.writeText(pinData.code);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+      } catch (e) {}
+    }
+    setBrowserOpened(true);
+    setInfoMessage(
+      `Code ${pinData?.code || ""} copied! On plex.tv/link, sign in with your Google account and enter your 4-letter code.`
+    );
+    await openExternalURL("https://plex.tv/link");
+  };
+
+  const handleAppleSignIn = async () => {
+    if (pinData?.code) {
+      try {
+        await navigator.clipboard.writeText(pinData.code);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+      } catch (e) {}
+    }
+    setBrowserOpened(true);
+    setInfoMessage(
+      `Code ${pinData?.code || ""} copied! On plex.tv/link, sign in with Apple and enter your 4-letter code.`
+    );
+    await openExternalURL("https://plex.tv/link");
+  };
+
+  const handleEmailSignIn = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!emailInput.trim() || !passwordInput.trim()) {
+      setEmailLoginError("Please enter your email/username and password.");
+      return;
+    }
+    setEmailLoginLoading(true);
+    setEmailLoginError(null);
+    try {
+      const res = await signInWithEmailPassword(
+        emailInput.trim(),
+        passwordInput.trim(),
+        twoFactorCode.trim() || undefined
+      );
+      if (res.requiresTwoFactor) {
+        setRequiresTwoFactor(true);
+        setEmailLoginError(res.error || "Two-factor verification code required.");
+        setEmailLoginLoading(false);
+        return;
+      }
+      if (res.error) {
+        setEmailLoginError(res.error);
+        setEmailLoginLoading(false);
+        return;
+      }
+      if (res.authToken) {
+        const ok = await completeLogin(res.authToken);
+        if (!ok) {
+          setEmailLoginLoading(false);
+        }
+      }
+    } catch (err: any) {
+      setEmailLoginError(err?.message || "Failed to sign in. Please try again.");
+      setEmailLoginLoading(false);
     }
   };
 
@@ -472,6 +565,23 @@ export default function Login() {
           </Typography>
         </Stack>
 
+        <Collapse in={Boolean(infoMessage)}>
+          <Alert
+            severity="info"
+            onClose={() => setInfoMessage(null)}
+            sx={{
+              mb: 2.5,
+              borderRadius: "12px",
+              background: "rgba(59, 130, 246, 0.15)",
+              color: "#93C5FD",
+              border: "1px solid rgba(59, 130, 246, 0.3)",
+              fontSize: "0.88rem",
+            }}
+          >
+            {infoMessage}
+          </Alert>
+        </Collapse>
+
         <Collapse in={Boolean(error)}>
           <Alert
             severity="error"
@@ -480,7 +590,7 @@ export default function Login() {
                 <RefreshIcon fontSize="small" />
               </IconButton>
             }
-            sx={{ mb: 3, borderRadius: "12px", background: "rgba(239, 68, 68, 0.12)", color: "#FCA5A5" }}
+            sx={{ mb: 2.5, borderRadius: "12px", background: "rgba(239, 68, 68, 0.12)", color: "#FCA5A5" }}
           >
             {error}
           </Alert>
@@ -496,69 +606,285 @@ export default function Login() {
               Finalizing credentials and libraries
             </Typography>
           </Box>
+        ) : showEmailForm ? (
+          /* Direct In-App Email & Password Sign-In */
+          <Box component="form" onSubmit={handleEmailSignIn}>
+            <Stack spacing={2}>
+              <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5 }}>
+                <IconButton
+                  size="small"
+                  onClick={() => {
+                    setShowEmailForm(false);
+                    setEmailLoginError(null);
+                  }}
+                  sx={{ color: "#94A3B8", "&:hover": { color: "#F8FAFC" } }}
+                >
+                  <ArrowBackIcon fontSize="small" />
+                </IconButton>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "#F8FAFC" }}>
+                  Email & Password Sign-In
+                </Typography>
+              </Stack>
+
+              <Collapse in={Boolean(emailLoginError)}>
+                <Alert
+                  severity="error"
+                  sx={{
+                    borderRadius: "12px",
+                    background: "rgba(239, 68, 68, 0.12)",
+                    color: "#FCA5A5",
+                    fontSize: "0.85rem",
+                  }}
+                >
+                  {emailLoginError}
+                </Alert>
+              </Collapse>
+
+              <TextField
+                label="Email or Username"
+                variant="outlined"
+                fullWidth
+                size="small"
+                value={emailInput}
+                onChange={(e) => setEmailInput(e.target.value)}
+                autoComplete="username"
+                disabled={emailLoginLoading}
+                autoFocus
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    color: "#F8FAFC",
+                    borderRadius: "12px",
+                    background: "rgba(255, 255, 255, 0.05)",
+                    "& fieldset": { borderColor: "rgba(255, 255, 255, 0.15)" },
+                    "&:hover fieldset": { borderColor: "#E5A00D" },
+                    "&.Mui-focused fieldset": { borderColor: "#E5A00D" },
+                  },
+                  "& .MuiInputLabel-root": { color: "#94A3B8" },
+                  "& .MuiInputLabel-root.Mui-focused": { color: "#E5A00D" },
+                }}
+              />
+
+              <TextField
+                label="Password"
+                type="password"
+                variant="outlined"
+                fullWidth
+                size="small"
+                value={passwordInput}
+                onChange={(e) => setPasswordInput(e.target.value)}
+                autoComplete="current-password"
+                disabled={emailLoginLoading}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    color: "#F8FAFC",
+                    borderRadius: "12px",
+                    background: "rgba(255, 255, 255, 0.05)",
+                    "& fieldset": { borderColor: "rgba(255, 255, 255, 0.15)" },
+                    "&:hover fieldset": { borderColor: "#E5A00D" },
+                    "&.Mui-focused fieldset": { borderColor: "#E5A00D" },
+                  },
+                  "& .MuiInputLabel-root": { color: "#94A3B8" },
+                  "& .MuiInputLabel-root.Mui-focused": { color: "#E5A00D" },
+                }}
+              />
+
+              {requiresTwoFactor && (
+                <TextField
+                  label="Verification Code (2FA)"
+                  variant="outlined"
+                  fullWidth
+                  size="small"
+                  value={twoFactorCode}
+                  onChange={(e) => setTwoFactorCode(e.target.value)}
+                  placeholder="123456"
+                  disabled={emailLoginLoading}
+                  autoFocus
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      color: "#F8FAFC",
+                      borderRadius: "12px",
+                      background: "rgba(255, 255, 255, 0.05)",
+                      "& fieldset": { borderColor: "rgba(255, 255, 255, 0.15)" },
+                      "&:hover fieldset": { borderColor: "#E5A00D" },
+                      "&.Mui-focused fieldset": { borderColor: "#E5A00D" },
+                    },
+                    "& .MuiInputLabel-root": { color: "#94A3B8" },
+                    "& .MuiInputLabel-root.Mui-focused": { color: "#E5A00D" },
+                  }}
+                />
+              )}
+
+              <Button
+                type="submit"
+                variant="contained"
+                fullWidth
+                disabled={emailLoginLoading || !emailInput || !passwordInput}
+                sx={{
+                  py: 1.3,
+                  borderRadius: "14px",
+                  textTransform: "none",
+                  fontSize: "0.98rem",
+                  fontWeight: 700,
+                  background: "linear-gradient(135deg, #E5A00D 0%, #D97706 100%)",
+                  color: "#000000",
+                  "&:hover": {
+                    background: "linear-gradient(135deg, #F59E0B 0%, #D97706 100%)",
+                  },
+                }}
+              >
+                {emailLoginLoading ? (
+                  <CircularProgress size={22} sx={{ color: "#000000" }} />
+                ) : (
+                  "Sign In with Plex"
+                )}
+              </Button>
+
+              <Button
+                variant="text"
+                fullWidth
+                onClick={() => {
+                  setShowEmailForm(false);
+                  setEmailLoginError(null);
+                }}
+                sx={{
+                  color: "#94A3B8",
+                  textTransform: "none",
+                  fontSize: "0.85rem",
+                  "&:hover": { color: "#F8FAFC" },
+                }}
+              >
+                Cancel and view other options
+              </Button>
+            </Stack>
+          </Box>
         ) : (
           <Stack spacing={2}>
-            {/* Continue with Google */}
-            <Button
-              variant="contained"
-              fullWidth
-              onClick={handleOpenBrowser}
-              disabled={!authUrl}
-              startIcon={<GoogleSvgIcon />}
+            {/* 1. Primary Recommendation: Quick Link with 4-Letter Code */}
+            <Paper
+              elevation={0}
               sx={{
-                py: 1.4,
-                px: 2,
-                borderRadius: "14px",
-                textTransform: "none",
-                fontSize: "0.98rem",
-                fontWeight: 700,
-                background: "#FFFFFF",
-                color: "#1F2937",
-                "&:hover": {
-                  background: "#F3F4F6",
-                  transform: "translateY(-1px)",
-                  boxShadow: "0 8px 20px rgba(255, 255, 255, 0.15)",
-                },
-                transition: "all 0.15s ease",
+                p: 2.5,
+                borderRadius: "16px",
+                background: "rgba(229, 160, 13, 0.06)",
+                border: "1px solid rgba(229, 160, 13, 0.3)",
+                textAlign: "center",
               }}
             >
-              Continue with Google
-            </Button>
+              <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "#FBBF24" }}>
+                  Link with 4-Letter Code
+                </Typography>
+                <Chip
+                  label="Recommended"
+                  size="small"
+                  sx={{
+                    height: 22,
+                    fontSize: "0.72rem",
+                    fontWeight: 700,
+                    background: "rgba(229, 160, 13, 0.2)",
+                    color: "#FBBF24",
+                    border: "1px solid rgba(229, 160, 13, 0.4)",
+                  }}
+                />
+              </Stack>
 
-            {/* Continue with Apple */}
-            <Button
-              variant="contained"
-              fullWidth
-              onClick={handleOpenBrowser}
-              disabled={!authUrl}
-              startIcon={<AppleIcon sx={{ color: "#FFFFFF" }} />}
-              sx={{
-                py: 1.4,
-                px: 2,
-                borderRadius: "14px",
-                textTransform: "none",
-                fontSize: "0.98rem",
-                fontWeight: 700,
-                background: "#000000",
-                color: "#FFFFFF",
-                border: "1px solid rgba(255, 255, 255, 0.15)",
-                "&:hover": {
-                  background: "#18181b",
-                  transform: "translateY(-1px)",
-                  boxShadow: "0 8px 20px rgba(0, 0, 0, 0.4)",
-                },
-                transition: "all 0.15s ease",
-              }}
-            >
-              Continue with Apple
-            </Button>
+              <Typography variant="caption" sx={{ color: "#CBD5E1", display: "block", mb: 1.5, lineHeight: 1.4 }}>
+                Works with Google, Apple, or Email. Open{" "}
+                <Box
+                  component="span"
+                  onClick={() => openExternalURL("https://plex.tv/link")}
+                  sx={{
+                    color: "#E5A00D",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    textDecoration: "underline",
+                  }}
+                >
+                  plex.tv/link
+                </Box>{" "}
+                in your browser and enter:
+              </Typography>
 
-            {/* Continue with Email */}
+              <Stack direction="row" alignItems="center" justifyContent="center" spacing={1.5} sx={{ mb: 1.8 }}>
+                <Typography
+                  sx={{
+                    fontFamily: "monospace",
+                    fontSize: "2.4rem",
+                    fontWeight: 900,
+                    letterSpacing: "0.28em",
+                    color: "#FBBF24",
+                    textShadow: "0 0 20px rgba(245, 158, 11, 0.3)",
+                  }}
+                >
+                  {pinData?.code || "••••"}
+                </Typography>
+                <Tooltip title={copied ? "Copied!" : "Copy code"}>
+                  <IconButton
+                    size="small"
+                    onClick={handleCopyCode}
+                    disabled={!pinData?.code}
+                    sx={{ color: copied ? "#10B981" : "#E5A00D" }}
+                  >
+                    {copied ? <CheckIcon fontSize="small" /> : <ContentCopyIcon fontSize="small" />}
+                  </IconButton>
+                </Tooltip>
+              </Stack>
+
+              <Button
+                variant="contained"
+                fullWidth
+                size="medium"
+                onClick={handleQuickLink}
+                disabled={!pinData?.code}
+                startIcon={<OpenInNewIcon fontSize="small" />}
+                sx={{
+                  py: 1.2,
+                  borderRadius: "12px",
+                  textTransform: "none",
+                  fontWeight: 700,
+                  fontSize: "0.95rem",
+                  background: "linear-gradient(135deg, #E5A00D 0%, #D97706 100%)",
+                  color: "#000000",
+                  boxShadow: "0 4px 15px rgba(229, 160, 13, 0.3)",
+                  "&:hover": {
+                    background: "linear-gradient(135deg, #F59E0B 0%, #D97706 100%)",
+                    boxShadow: "0 6px 20px rgba(229, 160, 13, 0.4)",
+                  },
+                }}
+              >
+                {copied ? "Code Copied! Open plex.tv/link" : "Copy Code & Open plex.tv/link"}
+              </Button>
+            </Paper>
+
+            {/* Divider */}
+            <Box sx={{ position: "relative", my: 1, textAlign: "center" }}>
+              <Divider sx={{ borderColor: "rgba(255, 255, 255, 0.08)" }} />
+              <Typography
+                variant="caption"
+                sx={{
+                  position: "absolute",
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
+                  px: 1.5,
+                  background: "#0F172A",
+                  color: "#64748B",
+                  fontWeight: 700,
+                  letterSpacing: "0.08em",
+                }}
+              >
+                OR SIGN IN DIRECTLY
+              </Typography>
+            </Box>
+
+            {/* Continue with Email & Password */}
             <Button
               variant="outlined"
               fullWidth
-              onClick={handleOpenBrowser}
-              disabled={!authUrl}
+              onClick={() => {
+                setShowEmailForm(true);
+                setEmailLoginError(null);
+              }}
               startIcon={<EmailIcon sx={{ color: "#E5A00D" }} />}
               sx={{
                 py: 1.3,
@@ -581,108 +907,60 @@ export default function Login() {
               Continue with Email & Password
             </Button>
 
-            {/* Divider */}
-            <Box sx={{ position: "relative", my: 1.5, textAlign: "center" }}>
-              <Divider sx={{ borderColor: "rgba(255, 255, 255, 0.08)" }} />
-              <Typography
-                variant="caption"
-                sx={{
-                  position: "absolute",
-                  top: "50%",
-                  left: "50%",
-                  transform: "translate(-50%, -50%)",
-                  px: 1.5,
-                  background: "#0F172A",
-                  color: "#64748B",
-                  fontWeight: 700,
-                  letterSpacing: "0.08em",
-                }}
-              >
-                OR LINK WITH CODE
-              </Typography>
-            </Box>
-
-            {/* Link Code Box */}
-            <Paper
-              elevation={0}
+            {/* Continue with Google */}
+            <Button
+              variant="contained"
+              fullWidth
+              onClick={handleGoogleSignIn}
+              disabled={!pinData?.code}
+              startIcon={<GoogleSvgIcon />}
               sx={{
-                p: 2.5,
-                borderRadius: "16px",
-                background: "rgba(229, 160, 13, 0.05)",
-                border: "1px solid rgba(229, 160, 13, 0.25)",
-                textAlign: "center",
+                py: 1.3,
+                px: 2,
+                borderRadius: "14px",
+                textTransform: "none",
+                fontSize: "0.95rem",
+                fontWeight: 700,
+                background: "#FFFFFF",
+                color: "#1F2937",
+                "&:hover": {
+                  background: "#F3F4F6",
+                  transform: "translateY(-1px)",
+                  boxShadow: "0 8px 20px rgba(255, 255, 255, 0.15)",
+                },
+                transition: "all 0.15s ease",
               }}
             >
-              <Typography variant="caption" sx={{ color: "#CBD5E1", display: "block", mb: 1, fontWeight: 500 }}>
-                Link via your Plex account at{" "}
-                <Box
-                  component="span"
-                  onClick={() => openExternalURL("https://plex.tv/link")}
-                  sx={{
-                    color: "#E5A00D",
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    textDecoration: "underline",
-                  }}
-                >
-                  plex.tv/link
-                </Box>
-                :
-              </Typography>
+              Continue with Google (via Code Link)
+            </Button>
 
-              <Stack direction="row" alignItems="center" justifyContent="center" spacing={1.5} sx={{ mb: 1.5 }}>
-                <Typography
-                  sx={{
-                    fontFamily: "monospace",
-                    fontSize: "2.2rem",
-                    fontWeight: 900,
-                    letterSpacing: "0.28em",
-                    color: "#FBBF24",
-                  }}
-                >
-                  {pinData?.code || "••••"}
-                </Typography>
-                <Tooltip title={copied ? "Copied!" : "Copy code"}>
-                  <IconButton
-                    size="small"
-                    onClick={handleCopyCode}
-                    disabled={!pinData?.code}
-                    sx={{ color: copied ? "#10B981" : "#E5A00D" }}
-                  >
-                    {copied ? <CheckIcon fontSize="small" /> : <ContentCopyIcon fontSize="small" />}
-                  </IconButton>
-                </Tooltip>
-              </Stack>
-
-              <Button
-                variant="contained"
-                fullWidth
-                size="medium"
-                onClick={async () => {
-                  if (pinData?.code) {
-                    navigator.clipboard.writeText(pinData.code);
-                    setCopied(true);
-                  }
-                  await openExternalURL("https://plex.tv/link");
-                }}
-                disabled={!pinData?.code}
-                startIcon={<OpenInNewIcon fontSize="small" />}
-                sx={{
-                  py: 1.1,
-                  borderRadius: "12px",
-                  textTransform: "none",
-                  fontWeight: 700,
-                  fontSize: "0.92rem",
-                  background: "linear-gradient(135deg, #E5A00D 0%, #D97706 100%)",
-                  color: "#000000",
-                  "&:hover": {
-                    background: "linear-gradient(135deg, #F59E0B 0%, #D97706 100%)",
-                  },
-                }}
-              >
-                {copied ? "Code Copied! Open plex.tv/link" : "Copy Code & Open plex.tv/link"}
-              </Button>
-            </Paper>
+            {/* Continue with Apple */}
+            <Button
+              variant="contained"
+              fullWidth
+              onClick={handleAppleSignIn}
+              disabled={!pinData?.code}
+              startIcon={<AppleIcon sx={{ color: "#FFFFFF" }} />}
+              sx={{
+                py: 1.3,
+                px: 2,
+                borderRadius: "14px",
+                textTransform: "none",
+                fontSize: "0.95rem",
+                fontWeight: 700,
+                background: "#000000",
+                color: "#FFFFFF",
+                border: "1px solid rgba(255, 255, 255, 0.15)",
+                "&:hover": {
+                  background: "#18181b",
+                  transform: "translateY(-1px)",
+                  boxShadow: "0 8px 20px rgba(0, 0, 0, 0.4)",
+                },
+                transition: "all 0.15s ease",
+              }}
+            >
+              Continue with Apple (via Code Link)
+            </Button>
 
             {/* Waiting Status */}
             <Stack
@@ -690,18 +968,34 @@ export default function Login() {
               alignItems="center"
               justifyContent="center"
               spacing={1.2}
-              sx={{ pt: 1 }}
+              sx={{ pt: 0.5 }}
             >
               <CircularProgress size={16} sx={{ color: "#6366F1" }} />
               <Typography variant="caption" sx={{ color: "#94A3B8", fontWeight: 500 }}>
                 {browserOpened
-                  ? "Browser opened! Waiting for sign-in approval..."
+                  ? "Waiting for sign-in approval... Nevu connects automatically."
                   : "Waiting for sign-in... Nevu connects automatically."}
               </Typography>
             </Stack>
 
-            {/* Secondary actions: Open in browser button & in-app fallback */}
+            {/* Secondary actions: In-app fallback & browser auth */}
             <Stack direction="row" spacing={1} justifyContent="center" sx={{ pt: 0.5 }}>
+              <Button
+                size="small"
+                onClick={handleContinueInApp}
+                disabled={!authUrl}
+                sx={{
+                  color: "#94A3B8",
+                  textTransform: "none",
+                  fontSize: "0.8rem",
+                  "&:hover": { color: "#F8FAFC" },
+                }}
+              >
+                Sign In In-App (Webview)
+              </Button>
+
+              <Divider orientation="vertical" flexItem sx={{ borderColor: "rgba(255,255,255,0.1)" }} />
+
               <Button
                 size="small"
                 onClick={handleOpenBrowser}
@@ -714,23 +1008,7 @@ export default function Login() {
                   "&:hover": { color: "#F8FAFC" },
                 }}
               >
-                {browserOpened ? "Reopen in Browser" : "Open in Browser"}
-              </Button>
-
-              <Divider orientation="vertical" flexItem sx={{ borderColor: "rgba(255,255,255,0.1)" }} />
-
-              <Button
-                size="small"
-                onClick={handleContinueInApp}
-                disabled={!authUrl}
-                sx={{
-                  color: "#94A3B8",
-                  textTransform: "none",
-                  fontSize: "0.8rem",
-                  "&:hover": { color: "#F8FAFC" },
-                }}
-              >
-                Sign In In-App
+                Open Plex Web Auth
               </Button>
             </Stack>
           </Stack>
