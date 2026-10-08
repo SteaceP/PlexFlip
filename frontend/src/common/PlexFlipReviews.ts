@@ -3,6 +3,10 @@ import { getBackendURL } from "../backendURL";
 import { CloudService } from "./CloudService";
 import { useUserSettings } from "../states/UserSettingsState";
 
+function getAuthToken(): string {
+    return localStorage.getItem("accAccessToken") || localStorage.getItem("accessToken") || "";
+}
+
 export async function getPlexFlipReviews(itemID: string, userID?: string): Promise<PlexFlip.Reviews.Review[]> {
     const isCloudEnabled = useUserSettings.getState().settings["ENABLE_CLOUD_REVIEWS"] === "true";
 
@@ -13,7 +17,7 @@ export async function getPlexFlipReviews(itemID: string, userID?: string): Promi
         }, 
         headers: {
             'Content-Type': 'application/json',
-            'x-plex-token': localStorage.getItem("accAccessToken") || ""
+            'x-plex-token': getAuthToken()
         }
     }).catch((error: AxiosError) => {
         console.error("Failed to fetch PlexFlip reviews:", error);
@@ -64,14 +68,14 @@ export async function updatePlexFlipReview(
     }, {
         headers: {
             'Content-Type': 'application/json',
-            'x-plex-token': localStorage.getItem("accAccessToken") || ""
+            'x-plex-token': getAuthToken()
         }
     }).catch((error: AxiosError) => {
         console.error("Failed to update PlexFlip review:", error);
         return error.response || { data: { error: "Failed to update review" } };
     });
 
-    return res.data;
+    return res?.data ?? { error: "Failed to update review" };
 }
 
 export async function deletePlexFlipReview(itemID: string, visibility: "GLOBAL" | "LOCAL"): Promise<void> {
@@ -87,12 +91,12 @@ export async function deletePlexFlipReview(itemID: string, visibility: "GLOBAL" 
         },
         headers: {
             'Content-Type': 'application/json',
-            'x-plex-token': localStorage.getItem("accAccessToken") || ""
+            'x-plex-token': getAuthToken()
         }
     }).catch((error: AxiosError) => {
         console.error("Failed to delete PlexFlip review:", error);
         return error.response || { data: { error: "Failed to delete review" } };
     });
 
-    return res.data;
+    return res?.data;
 }

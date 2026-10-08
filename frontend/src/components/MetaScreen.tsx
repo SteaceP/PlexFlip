@@ -24,7 +24,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import React, { JSX, useEffect, useState } from "react";
+import React, { JSX, useCallback, useEffect, useState } from "react";
 import {
   getLibraryMeta,
   getLibraryMetaChildren,
@@ -45,6 +45,8 @@ import {
   CheckBoxRounded,
   QueueMusicRounded,
   GraphicEqRounded,
+  RateReviewRounded,
+  EditRounded,
 } from "@mui/icons-material";
 import { durationToText } from "./MovieItemSlider";
 import ReactPlayer from "react-player";
@@ -63,6 +65,7 @@ import { queryBuilder } from "../plex/QuickFunctions";
 import AddReviewModal from "./modals/AddReviewModal";
 import { getPlexFlipReviews } from "../common/PlexFlipReviews";
 import { useAudioPlayerStore } from "../states/AudioPlayerState";
+import { useUserSessionStore } from "../states/UserSession";
 
 function MetaScreen() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -1883,32 +1886,68 @@ function MetaPageReviews({ data }: { data: Plex.Metadata | undefined }) {
     | null
   >(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [reviewModalOpen, setReviewModalOpen] = useState<boolean>(false);
+  const currentUser = useUserSessionStore((state) => state.user);
 
-  useEffect(() => {
+  const fetchReviews = useCallback(async () => {
     if (!data) return;
     setLoading(true);
-    const metaID = data.guid.split("/").pop();
-    if (!metaID) return;
+    const metaID = data.guid?.split("/").pop();
 
-    PlexCommunity.getUserReviews(metaID)
-      .then(async (res) => {
-        if (!res) return;
-        res.recentReviews.nodes =
-          res?.recentReviews.nodes.filter(
+    try {
+      const [communityRes, plexFlipReviews] = await Promise.all([
+        metaID
+          ? PlexCommunity.getUserReviews(metaID).catch((err) => {
+              console.warn("Could not load Plex Community reviews:", err);
+              return null;
+            })
+          : Promise.resolve(null),
+        data.guid
+          ? getPlexFlipReviews(data.guid).catch((err) => {
+              console.warn("Could not load PlexFlip reviews:", err);
+              return [];
+            })
+          : Promise.resolve([]),
+      ]);
+
+      const emptySection: PlexCommunity.ReviewsSection = {
+        nodes: [],
+        pageInfo: { hasNextPage: false },
+        title: "",
+      };
+      const baseRes: PlexCommunity.ReviewsData = communityRes || {
+        userReview: null,
+        topReviews: emptySection,
+        recentReviews: emptySection,
+        friendReviews: emptySection,
+        hotReviews: emptySection,
+        otherReviews: emptySection,
+      };
+
+      if (baseRes.recentReviews?.nodes) {
+        baseRes.recentReviews.nodes =
+          baseRes.recentReviews.nodes.filter(
             (review) =>
-              res?.topReviews?.nodes.find(
+              baseRes.topReviews?.nodes.find(
                 (topReview) => topReview.id === review.id
               ) === undefined
           ) ?? [];
+      }
 
-        const plexFlipReviews = await getPlexFlipReviews(data.guid);
-
-        setReviews({ ...res, plexFlipReviews });
-      })
-      .finally(() => {
-        setLoading(false);
+      setReviews({
+        ...baseRes,
+        plexFlipReviews: plexFlipReviews || [],
       });
+    } catch (e) {
+      console.error("Failed to load reviews:", e);
+    } finally {
+      setLoading(false);
+    }
   }, [data]);
+
+  useEffect(() => {
+    fetchReviews();
+  }, [fetchReviews]);
 
   const renderReviewsSection = (
     title: string,
@@ -1932,11 +1971,11 @@ function MetaPageReviews({ data }: { data: Plex.Metadata | undefined }) {
           <Grid container spacing={3} sx={{ width: "100%" }}>
             {reviewNodes?.map((review, index) => {
               const username = isPlexFlip
-                ? (review as PlexFlip.Reviews.Review).user.username
+                ? (review as PlexFlip.Reviews.Review).user?.username
                 : (review as PlexCommunity.ActivityReview).userV2?.username;
 
               const avatarSrc = isPlexFlip
-                ? (review as PlexFlip.Reviews.Review).user.avatar
+                ? (review as PlexFlip.Reviews.Review).user?.avatar
                 : (review as PlexCommunity.ActivityReview).userV2?.avatar;
 
               const hasSpoilers = isPlexFlip
@@ -1946,6 +1985,16 @@ function MetaPageReviews({ data }: { data: Plex.Metadata | undefined }) {
               const reviewDate = isPlexFlip
                 ? (review as PlexFlip.Reviews.Review).created_at
                 : (review as PlexCommunity.ActivityReview).date;
+
+              const isCurrentUser =
+                isPlexFlip &&
+                Boolean(
+                  currentUser?.uuid &&
+                    ((review as PlexFlip.Reviews.Review).userID ===
+                      currentUser.uuid ||
+                      (review as PlexFlip.Reviews.Review).user?.id ===
+                        currentUser.uuid)
+                );
 
               return (
                 <Grid size={{ xs: 12, sm: 6, md: 4 }} key={title + index}>
@@ -1958,6 +2007,10 @@ function MetaPageReviews({ data }: { data: Plex.Metadata | undefined }) {
                       borderRadius: 2,
                       height: "100%",
                       transition: "all 0.2s ease",
+                      border: isCurrentUser
+                        ? (theme) =>
+                            `1px solid ${alpha(theme.palette.primary.main, 0.4)}`
+                        : undefined,
                       "&:hover": {
                         bgcolor: (theme) =>
                           alpha(theme.palette.background.paper, 0.6),
@@ -1985,7 +2038,7 @@ function MetaPageReviews({ data }: { data: Plex.Metadata | undefined }) {
                       >
                         {username?.charAt(0) || "U"}
                       </Avatar>
-                      <Box sx={{ flex: 1 }}>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
                         <Stack
                           spacing={0.5}
                           justifyContent={"flex-start"}
@@ -1995,6 +2048,19 @@ function MetaPageReviews({ data }: { data: Plex.Metadata | undefined }) {
                           <Typography fontWeight="medium" noWrap>
                             {username || "Anonymous User"}
                           </Typography>
+                          {isCurrentUser && (
+                            <Chip
+                              label="You"
+                              size="small"
+                              color="primary"
+                              variant="outlined"
+                              sx={{
+                                height: 20,
+                                fontSize: "0.7rem",
+                                fontWeight: "bold",
+                              }}
+                            />
+                          )}
                           {review.visibility === "GLOBAL" && (
                             <Chip label="Global" size="small" color="info" />
                           )}
@@ -2021,6 +2087,23 @@ function MetaPageReviews({ data }: { data: Plex.Metadata | undefined }) {
                           </Typography>
                         </Box>
                       </Box>
+                      {isCurrentUser && (
+                        <Tooltip title="Edit your review">
+                          <IconButton
+                            size="small"
+                            onClick={() => setReviewModalOpen(true)}
+                            sx={{
+                              color: "primary.main",
+                              "&:hover": {
+                                bgcolor: (theme) =>
+                                  alpha(theme.palette.primary.main, 0.1),
+                              },
+                            }}
+                          >
+                            <EditRounded fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      )}
                     </Box>
 
                     <Divider sx={{ mb: 2 }} />
@@ -2098,9 +2181,47 @@ function MetaPageReviews({ data }: { data: Plex.Metadata | undefined }) {
         userSelect: "none",
       }}
     >
-      {totalReviews === 0 && !loading && (
-        <Typography>No one has reviewed this title yet.</Typography>
+      {reviewModalOpen && data && (
+        <AddReviewModal
+          item={data}
+          onClose={() => setReviewModalOpen(false)}
+          onSuccess={fetchReviews}
+        />
       )}
+
+      <Box
+        sx={{
+          width: "100%",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 2,
+        }}
+      >
+        <Typography variant="h5" fontWeight="bold" color="text.primary">
+          Reviews
+        </Typography>
+        <Button
+          variant="contained"
+          startIcon={<RateReviewRounded />}
+          onClick={() => setReviewModalOpen(true)}
+          sx={{
+            fontWeight: "bold",
+            borderRadius: 2,
+            px: 2.5,
+            py: 0.8,
+            textTransform: "none",
+            bgcolor: (theme) => theme.palette.primary.main,
+            color: "#000",
+            "&:hover": {
+              bgcolor: (theme) => theme.palette.primary.dark,
+            },
+          }}
+        >
+          Write a Review
+        </Button>
+      </Box>
 
       {loading ? (
         <Grid container spacing={3} sx={{ width: "100%" }}>
@@ -2131,7 +2252,7 @@ function MetaPageReviews({ data }: { data: Plex.Metadata | undefined }) {
             </Grid>
           ))}
         </Grid>
-      ) : !reviews ? (
+      ) : totalReviews === 0 ? (
         <Box
           sx={{
             display: "flex",
@@ -2142,40 +2263,61 @@ function MetaPageReviews({ data }: { data: Plex.Metadata | undefined }) {
             width: "100%",
             bgcolor: (theme) => alpha(theme.palette.background.paper, 0.2),
             borderRadius: 2,
+            textAlign: "center",
+            gap: 2,
           }}
         >
-          <StarOutlineRounded
-            sx={{ fontSize: 60, color: "text.disabled", mb: 2 }}
+          <RateReviewRounded
+            sx={{ fontSize: 56, color: "text.disabled" }}
           />
           <Typography color="text.secondary" variant="body1">
-            No reviews available for this title yet
+            No one has reviewed this title yet. Be the first to share your review!
           </Typography>
+          <Button
+            variant="contained"
+            startIcon={<RateReviewRounded />}
+            onClick={() => setReviewModalOpen(true)}
+            sx={{
+              fontWeight: "bold",
+              borderRadius: 2,
+              px: 3,
+              py: 1,
+              textTransform: "none",
+              bgcolor: (theme) => theme.palette.primary.main,
+              color: "#000",
+              "&:hover": {
+                bgcolor: (theme) => theme.palette.primary.dark,
+              },
+            }}
+          >
+            Write a Review
+          </Button>
         </Box>
       ) : (
         <Box sx={{ width: "100%" }}>
           {renderReviewsSection(
             "PlexFlip Reviews",
-            reviews.plexFlipReviews,
-            !reviews.plexFlipReviews.length,
+            reviews?.plexFlipReviews,
+            !reviews?.plexFlipReviews?.length,
             true
           )}
 
           {renderReviewsSection(
             "Recent Reviews",
-            reviews.recentReviews?.nodes,
-            !reviews.recentReviews?.nodes.length
+            reviews?.recentReviews?.nodes,
+            !reviews?.recentReviews?.nodes?.length
           )}
 
           {renderReviewsSection(
             "Top Reviews",
-            reviews.topReviews?.nodes,
-            !reviews.topReviews?.nodes.length
+            reviews?.topReviews?.nodes,
+            !reviews?.topReviews?.nodes?.length
           )}
 
           {renderReviewsSection(
             "Friend Reviews",
-            reviews.friendReviews?.nodes,
-            !reviews.friendReviews?.nodes.length
+            reviews?.friendReviews?.nodes,
+            !reviews?.friendReviews?.nodes?.length
           )}
         </Box>
       )}
@@ -2295,17 +2437,28 @@ function RatingButton({ item }: { item: Plex.Metadata }): JSX.Element {
   const [addReviewModalOpen, setAddReviewModalOpen] = useState<boolean>(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
+  useEffect(() => {
+    setRating((item.userRating && item.userRating / 2) ?? null);
+  }, [item, item.userRating]);
+
   return (
     <>
       {addReviewModalOpen && item && (
         <AddReviewModal
           item={item}
+          initialRating={rating !== null ? rating : undefined}
           onClose={() => setAddReviewModalOpen(false)}
+          onSuccess={() => {
+            if (item.userRating) {
+              setRating(item.userRating / 2);
+            }
+          }}
         />
       )}
       <Popover
         anchorEl={anchorEl}
         open={anchorEl !== null}
+        onClose={() => setAnchorEl(null)}
         onClick={() => {
           setAnchorEl(null);
         }}
@@ -2319,13 +2472,15 @@ function RatingButton({ item }: { item: Plex.Metadata }): JSX.Element {
         }}
         sx={{
           "& .MuiPopover-paper": {
-            padding: 1,
+            padding: 1.5,
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            gap: 1,
+            gap: 1.5,
             backgroundColor: (theme) => theme.palette.background.paper,
+            borderRadius: 2,
+            boxShadow: 6,
           },
         }}
       >
@@ -2339,8 +2494,11 @@ function RatingButton({ item }: { item: Plex.Metadata }): JSX.Element {
 
             if (v === null) return;
 
+            item.userRating = v * 2;
             item.rating = v * 2;
-            setMediaRating(v * 2, item.ratingKey);
+            if (item.ratingKey && /^\d+$/.test(item.ratingKey)) {
+              setMediaRating(v * 2, item.ratingKey).catch(() => {});
+            }
           }}
           onClick={(e) => {
             e.stopPropagation();
@@ -2348,55 +2506,70 @@ function RatingButton({ item }: { item: Plex.Metadata }): JSX.Element {
           onContextMenu={(e) => {
             e.preventDefault();
             setRating(null);
+            item.userRating = undefined;
             item.rating = undefined;
-            setMediaRating(-1, item.ratingKey);
+            if (item.ratingKey && /^\d+$/.test(item.ratingKey)) {
+              setMediaRating(-1, item.ratingKey).catch(() => {});
+            }
           }}
         />
 
         <Button
           variant="contained"
           size="small"
-          onClick={() => {
+          startIcon={<RateReviewRounded fontSize="small" />}
+          onClick={(e) => {
+            e.stopPropagation();
             setAddReviewModalOpen(true);
             setAnchorEl(null);
           }}
           sx={{
-            height: rating ? "38px" : "0px",
-            opacity: rating ? 1 : 0,
-            overflow: "hidden",
-            transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+            width: "100%",
+            borderRadius: 1.5,
+            textTransform: "none",
+            fontWeight: "bold",
+            bgcolor: (theme) => theme.palette.primary.main,
+            color: "#000",
+            "&:hover": {
+              bgcolor: (theme) => theme.palette.primary.dark,
+            },
           }}
         >
-          Add Review
+          {rating ? "Write / Edit Review" : "Write Review"}
         </Button>
       </Popover>
-      <Button
-        variant="contained"
-        sx={{
-          height: "38px",
-          fontWeight: "bold",
-          letterSpacing: "0.1em",
-          textTransform: "uppercase",
-          transition: "all 0.2s ease-in-out",
-          display: "flex",
-          gap: 1,
-        }}
-        onClick={(e) => {
-          setAnchorEl(e.currentTarget);
-        }}
-        onContextMenu={(e) => {
-          e.preventDefault();
-          setRating(null);
-          item.rating = undefined;
-          setMediaRating(-1, item.ratingKey);
-        }}
-      >
-        {rating ? (
-          <StarRounded fontSize="small" />
-        ) : (
-          <StarOutlineRounded fontSize="small" />
-        )}
-      </Button>
+      <Tooltip title="Rate & Review" arrow placement="top">
+        <Button
+          variant="contained"
+          sx={{
+            height: "38px",
+            fontWeight: "bold",
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            transition: "all 0.2s ease-in-out",
+            display: "flex",
+            gap: 1,
+          }}
+          onClick={(e) => {
+            setAnchorEl(e.currentTarget);
+          }}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            setRating(null);
+            item.userRating = undefined;
+            item.rating = undefined;
+            if (item.ratingKey && /^\d+$/.test(item.ratingKey)) {
+              setMediaRating(-1, item.ratingKey).catch(() => {});
+            }
+          }}
+        >
+          {rating ? (
+            <StarRounded fontSize="small" />
+          ) : (
+            <StarOutlineRounded fontSize="small" />
+          )}
+        </Button>
+      </Tooltip>
     </>
   );
 }

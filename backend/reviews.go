@@ -75,13 +75,15 @@ func (h *ReviewsHandler) HandleGetReviews(w http.ResponseWriter, r *http.Request
 			resp, err := h.httpClient.Do(outReq)
 			if err == nil {
 				defer resp.Body.Close()
-				var globalResult struct {
-					Data []Review `json:"data"`
-				}
-				if err := json.NewDecoder(resp.Body).Decode(&globalResult); err == nil {
-					for _, rev := range globalResult.Data {
-						rev.Visibility = "GLOBAL"
-						reviews = append(reviews, rev)
+				if resp.StatusCode == http.StatusOK {
+					var globalResult struct {
+						Data []Review `json:"data"`
+					}
+					if err := json.NewDecoder(resp.Body).Decode(&globalResult); err == nil {
+						for _, rev := range globalResult.Data {
+							rev.Visibility = "GLOBAL"
+							reviews = append(reviews, rev)
+						}
 					}
 				}
 			}
@@ -136,7 +138,7 @@ func (h *ReviewsHandler) HandlePostReviews(w http.ResponseWriter, r *http.Reques
 		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid itemID"})
 		return
 	}
-	if len(msgTrimmed) == 0 || len(msgTrimmed) > 256 {
+	if len(msgTrimmed) == 0 || len(msgTrimmed) > 500 {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid message"})
 		return
@@ -181,11 +183,22 @@ func (h *ReviewsHandler) HandlePostReviews(w http.ResponseWriter, r *http.Reques
 			} else {
 				defer resp.Body.Close()
 				bodyBytes, _ := io.ReadAll(resp.Body)
-				var hubResp struct {
-					Error any `json:"error"`
-				}
-				if json.Unmarshal(bodyBytes, &hubResp) == nil && hubResp.Error != nil && hubResp.Error != false {
-					errVal = fmt.Sprintf("%v", hubResp.Error)
+				if resp.StatusCode >= 400 {
+					var hubResp struct {
+						Error any `json:"error"`
+					}
+					if json.Unmarshal(bodyBytes, &hubResp) == nil && hubResp.Error != nil && hubResp.Error != false {
+						errVal = fmt.Sprintf("%v", hubResp.Error)
+					} else {
+						errVal = fmt.Sprintf("Cloud error (%d)", resp.StatusCode)
+					}
+				} else {
+					var hubResp struct {
+						Error any `json:"error"`
+					}
+					if json.Unmarshal(bodyBytes, &hubResp) == nil && hubResp.Error != nil && hubResp.Error != false {
+						errVal = fmt.Sprintf("%v", hubResp.Error)
+					}
 				}
 			}
 		}
@@ -260,11 +273,22 @@ func (h *ReviewsHandler) HandleDeleteReviews(w http.ResponseWriter, r *http.Requ
 			} else {
 				defer resp.Body.Close()
 				bodyBytes, _ := io.ReadAll(resp.Body)
-				var hubResp struct {
-					Error any `json:"error"`
-				}
-				if json.Unmarshal(bodyBytes, &hubResp) == nil && hubResp.Error != nil && hubResp.Error != false {
-					errVal = fmt.Sprintf("%v", hubResp.Error)
+				if resp.StatusCode >= 400 {
+					var hubResp struct {
+						Error any `json:"error"`
+					}
+					if json.Unmarshal(bodyBytes, &hubResp) == nil && hubResp.Error != nil && hubResp.Error != false {
+						errVal = fmt.Sprintf("%v", hubResp.Error)
+					} else {
+						errVal = fmt.Sprintf("Cloud error (%d)", resp.StatusCode)
+					}
+				} else {
+					var hubResp struct {
+						Error any `json:"error"`
+					}
+					if json.Unmarshal(bodyBytes, &hubResp) == nil && hubResp.Error != nil && hubResp.Error != false {
+						errVal = fmt.Sprintf("%v", hubResp.Error)
+					}
 				}
 			}
 		}
