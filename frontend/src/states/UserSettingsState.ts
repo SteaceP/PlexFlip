@@ -13,6 +13,8 @@ type UserSettingsOptions =
 "DISABLE_GENRE_RECOMMENDATIONS" |
 "DISABLE_RECENTLY_ADDED" |
 "DISABLE_SIMILAR_RECOMMENDATIONS" |
+"ENABLE_CLOUD_WATCHLIST" |
+"ENABLE_CLOUD_REVIEWS" |
 string;
 
 export interface UserSettingsState {
@@ -37,6 +39,8 @@ export const useUserSettings = create<UserSettingsState>((set) => ({
         DISABLE_GENRE_RECOMMENDATIONS: "false",
         DISABLE_RECENTLY_ADDED: "false",
         DISABLE_SIMILAR_RECOMMENDATIONS: "false",
+        ENABLE_CLOUD_WATCHLIST: "false",
+        ENABLE_CLOUD_REVIEWS: "false",
     },
     setSetting: async (key, value) => {
         await axios.post(`${getBackendURL()}/user/options`, {

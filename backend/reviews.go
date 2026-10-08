@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-const plexFlipHubUrl = "https://gnuqknwmixeunfmeseep.supabase.co/functions/v1/"
+const plexFlipHubUrl = "https://plexflip-cloud.coderage.workers.dev/"
 
 type ReviewsHandler struct {
 	db                   *Database

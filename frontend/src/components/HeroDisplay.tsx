@@ -296,9 +296,10 @@ function HeroDisplay({ item }: { item: Plex.Metadata }) {
               onClick={() => {
                 if (!item) return;
                 setPreviewVidPlaying(false);
-                setSearchParams({
-                  ...searchParams,
-                  mid: item.ratingKey.toString(),
+                setSearchParams((prev) => {
+                  const next = new URLSearchParams(prev);
+                  next.set("mid", item.ratingKey.toString());
+                  return next;
                 });
               }}
             >

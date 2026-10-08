@@ -62,6 +62,18 @@ function SettingsRecommendations() {
         />
 
         <CheckBoxOption
+          title="Save Watchlist to Cloud"
+          subtitle="Sync your watchlist with Cloudflare D1 database so it is backed up and accessible across your PlexFlip devices."
+          checked={settings.ENABLE_CLOUD_WATCHLIST === "true"}
+          onChange={() => {
+            setSetting(
+              "ENABLE_CLOUD_WATCHLIST",
+              settings.ENABLE_CLOUD_WATCHLIST === "true" ? "false" : "true"
+            );
+          }}
+        />
+
+        <CheckBoxOption
           title="Disable Genre Recommendations"
           subtitle="Disables dynamically selected genre shelves (e.g. Action, Comedy) on the Home and Browse screens."
           checked={settings.DISABLE_GENRE_RECOMMENDATIONS === "true"}

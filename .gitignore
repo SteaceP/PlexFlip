@@ -33,3 +33,9 @@ yarn-error.log*
 # build output
 /bin/
 /data
+
+# packaging build output
+/build/linux/appimage/build/
+/build/linux/appimage/plexflip
+/build/linux/appimage/plexflip.png
+/build/linux/appimage/*.AppImage
