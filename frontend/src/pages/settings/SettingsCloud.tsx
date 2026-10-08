@@ -3,18 +3,23 @@ import {
   Typography,
   Box,
   Button,
-  Chip,
   CircularProgress,
   Stack,
   Alert,
+  Fade,
 } from "@mui/material";
-import {
-  CloudDoneRounded,
-  CloudOffRounded,
-  SyncRounded,
-  SecurityRounded,
-} from "@mui/icons-material";
+import { motion } from "framer-motion";
+import CloudDoneRoundedIcon from "@mui/icons-material/CloudDoneRounded";
+import CloudOffRoundedIcon from "@mui/icons-material/CloudOffRounded";
+import SyncRoundedIcon from "@mui/icons-material/SyncRounded";
+import SecurityRoundedIcon from "@mui/icons-material/SecurityRounded";
+import CloudQueueRoundedIcon from "@mui/icons-material/CloudQueueRounded";
+import RateReviewRoundedIcon from "@mui/icons-material/RateReviewRounded";
+import BookmarkAddedRoundedIcon from "@mui/icons-material/BookmarkAddedRounded";
+
 import CheckBoxOption from "../../components/settings/CheckBoxOption";
+import SettingsCard from "../../components/settings/SettingsCard";
+import SettingsHeader from "../../components/settings/SettingsHeader";
 import { useUserSettings } from "../../states/UserSettingsState";
 import { CloudService } from "../../common/CloudService";
 import { useWatchListCache } from "../../states/WatchListCache";
@@ -36,171 +41,191 @@ function SettingsCloud() {
     setSyncStatus(null);
     try {
       await useWatchListCache.getState().syncWithCloud();
-      setSyncStatus("Watchlist successfully synced with the cloud!");
-    } catch (err) {
-      setSyncStatus("Failed to sync watchlist. Please try again.");
+      setSyncStatus("Watchlist successfully synchronized with Cloudflare D1.");
+    } catch {
+      setSyncStatus("Failed to synchronize watchlist. Please verify your connection.");
     } finally {
       setIsSyncing(false);
     }
   };
 
   return (
-    <>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          width: "100%",
-        }}
-      >
-        <Typography variant="h4">Cloud & Sync</Typography>
-        <Chip
-          icon={
-            isCloudHealthy === null ? (
-              <CircularProgress size={16} color="inherit" />
-            ) : isCloudHealthy ? (
-              <CloudDoneRounded fontSize="small" />
-            ) : (
-              <CloudOffRounded fontSize="small" />
-            )
-          }
-          label={
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25, ease: "easeOut" }}
+      style={{ width: "100%" }}
+    >
+      <SettingsHeader
+        category="Cloud & Network"
+        title="Cloud & Synchronization"
+        subtitle="Leverage serverless Cloudflare D1 storage for cross-client watchlist syncing and shared community reviews."
+        chip={{
+          label:
             isCloudHealthy === null
-              ? "Checking Cloud..."
+              ? "Checking D1..."
               : isCloudHealthy
-              ? "Cloudflare D1 Connected"
-              : "Cloud Unavailable"
-          }
-          color={isCloudHealthy ? "success" : "default"}
-          variant="outlined"
-          sx={{ fontWeight: "bold" }}
-        />
-      </Box>
-
-      {/* Cloud Status Card */}
-      <Box
-        sx={{
-          mt: 3,
-          width: "100%",
-          p: 2.5,
-          backgroundColor: "#1e1e1e",
-          borderRadius: "10px",
-          border: "1px solid #333",
-          display: "flex",
-          flexDirection: "column",
-          gap: 1.5,
+              ? "Cloudflare D1 Online"
+              : "D1 Offline",
+          color: isCloudHealthy ? "success" : "default",
+          icon:
+            isCloudHealthy === null ? (
+              <CircularProgress size={14} color="inherit" />
+            ) : isCloudHealthy ? (
+              <CloudDoneRoundedIcon fontSize="small" />
+            ) : (
+              <CloudOffRoundedIcon fontSize="small" />
+            ),
         }}
-      >
-        <Stack direction="row" spacing={1.5} alignItems="center">
-          <SecurityRounded sx={{ color: "#e5a00d" }} />
-          <Typography variant="subtitle1" fontWeight="bold">
-            Zero-Knowledge Cloud Isolation
-          </Typography>
-        </Stack>
-        <Typography variant="body2" sx={{ color: "#bbb" }}>
-          All cloud data is hosted on serverless Cloudflare D1 storage. Requests
-          are authenticated directly with your Plex account token—each user can only
-          update, modify, or delete their own watchlist items and reviews.
-        </Typography>
-      </Box>
+      />
 
-      <Box
-        sx={{
-          mt: 3,
-          display: "flex",
-          flexDirection: "column",
-          gap: 2.5,
-          width: "100%",
-        }}
-      >
-        <Typography variant="h6" sx={{ color: "text.secondary" }}>
-          Cloud Features
-        </Typography>
-
-        {/* Watchlist Setting */}
-        <Box
-          sx={{
-            p: 2,
-            backgroundColor: "#161616",
-            borderRadius: "8px",
-            border: "1px solid #282828",
-          }}
+      <Stack spacing={3} sx={{ width: "100%" }}>
+        {/* Security & Infrastructure Banner */}
+        <SettingsCard
+          title="Zero-Knowledge Cloud Infrastructure"
+          subtitle="Enterprise-grade serverless isolation powered by Cloudflare D1"
+          icon={<SecurityRoundedIcon fontSize="small" />}
         >
-          <CheckBoxOption
-            title="Save Watchlist to Cloud"
-            subtitle="Sync your watchlist with Cloudflare D1 so your saved movies and TV shows are backed up and accessible across your PlexFlip clients."
-            checked={settings.ENABLE_CLOUD_WATCHLIST === "true"}
-            onChange={() => {
-              setSetting(
-                "ENABLE_CLOUD_WATCHLIST",
-                settings.ENABLE_CLOUD_WATCHLIST === "true" ? "false" : "true"
-              );
+          <Box
+            sx={{
+              p: 2.5,
+              borderRadius: "12px",
+              bgcolor: "rgba(0, 0, 0, 0.25)",
+              border: "1px solid rgba(255, 255, 255, 0.06)",
+              display: "flex",
+              flexDirection: "column",
+              gap: 1,
             }}
-          />
+          >
+            <Typography variant="body2" sx={{ color: "#CBD5E1", lineHeight: 1.6 }}>
+              All cloud data is hosted on edge-replicated Cloudflare D1 databases.
+              Requests are authenticated via your Plex user token with zero personal tracking.
+              Each user maintains exclusive write and delete permissions over their own watchlist items and review threads.
+            </Typography>
+          </Box>
+        </SettingsCard>
 
-          {settings.ENABLE_CLOUD_WATCHLIST === "true" && (
-            <Box sx={{ mt: 2, ml: "10px" }}>
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={
-                  isSyncing ? (
-                    <CircularProgress size={16} color="inherit" />
-                  ) : (
-                    <SyncRounded />
-                  )
-                }
-                disabled={isSyncing}
-                onClick={handleSyncWatchlist}
+        {/* Watchlist Cloud Sync */}
+        <SettingsCard
+          title="Cross-Device Watchlist"
+          subtitle="Keep your saved titles synchronized between desktop, mobile, and web clients"
+          icon={<BookmarkAddedRoundedIcon fontSize="small" />}
+        >
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <CheckBoxOption
+              icon={<CloudQueueRoundedIcon fontSize="small" />}
+              badge="D1 Sync"
+              title="Enable Cloud Watchlist Sync"
+              subtitle="Automatically pushes watchlist updates to the cloud so all your PlexFlip installations remain in sync."
+              checked={settings.ENABLE_CLOUD_WATCHLIST === "true"}
+              onChange={() => {
+                setSetting(
+                  "ENABLE_CLOUD_WATCHLIST",
+                  settings.ENABLE_CLOUD_WATCHLIST === "true" ? "false" : "true"
+                );
+              }}
+            />
+
+            {settings.ENABLE_CLOUD_WATCHLIST === "true" && (
+              <Box
                 sx={{
-                  borderColor: "#e5a00d",
-                  color: "#e5a00d",
-                  "&:hover": {
-                    borderColor: "#f5b01d",
-                    backgroundColor: "#e5a00d15",
-                  },
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: 1.5,
+                  p: 2,
+                  borderRadius: "12px",
+                  bgcolor: "rgba(99, 102, 241, 0.08)",
+                  border: "1px solid rgba(99, 102, 241, 0.2)",
                 }}
               >
-                {isSyncing ? "Syncing..." : "Sync Watchlist Now"}
-              </Button>
-            </Box>
-          )}
-        </Box>
+                <Box>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 650, color: "#E0E7FF" }}>
+                    Manual Sync Trigger
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: "#94A3B8" }}>
+                    Force an immediate sync between your local cache and Cloudflare D1
+                  </Typography>
+                </Box>
 
-        {/* Reviews Setting */}
-        <Box
-          sx={{
-            p: 2,
-            backgroundColor: "#161616",
-            borderRadius: "8px",
-            border: "1px solid #282828",
-          }}
+                <Button
+                  variant="contained"
+                  size="small"
+                  disabled={isSyncing}
+                  onClick={handleSyncWatchlist}
+                  startIcon={
+                    isSyncing ? (
+                      <CircularProgress size={16} color="inherit" />
+                    ) : (
+                      <SyncRoundedIcon fontSize="small" />
+                    )
+                  }
+                  sx={{
+                    bgcolor: "rgba(99, 102, 241, 0.8)",
+                    color: "#fff",
+                    fontWeight: 600,
+                    textTransform: "none",
+                    borderRadius: "8px",
+                    px: 2,
+                    "&:hover": {
+                      bgcolor: "rgba(99, 102, 241, 1)",
+                    },
+                  }}
+                >
+                  {isSyncing ? "Syncing..." : "Sync Watchlist Now"}
+                </Button>
+              </Box>
+            )}
+
+            {syncStatus && (
+              <Fade in={Boolean(syncStatus)}>
+                <Alert
+                  severity={syncStatus.includes("Failed") ? "error" : "success"}
+                  sx={{
+                    borderRadius: "10px",
+                    bgcolor: syncStatus.includes("Failed")
+                      ? "rgba(239, 68, 68, 0.15)"
+                      : "rgba(16, 185, 129, 0.15)",
+                    border: "1px solid",
+                    borderColor: syncStatus.includes("Failed")
+                      ? "rgba(239, 68, 68, 0.3)"
+                      : "rgba(16, 185, 129, 0.3)",
+                    color: syncStatus.includes("Failed") ? "#FCA5A5" : "#A7F3D0",
+                  }}
+                  onClose={() => setSyncStatus(null)}
+                >
+                  {syncStatus}
+                </Alert>
+              </Fade>
+            )}
+          </Box>
+        </SettingsCard>
+
+        {/* Reviews Cloud Sync */}
+        <SettingsCard
+          title="Community Reviews & Ratings"
+          subtitle="Publish reviews and read thoughts from fellow PlexFlip community members"
+          icon={<RateReviewRoundedIcon fontSize="small" />}
         >
-          <CheckBoxOption
-            title="Save Reviews to Cloud"
-            subtitle="Store your movie and show ratings and reviews in Cloudflare D1. Only you can edit or delete your reviews, and other PlexFlip users can read them."
-            checked={settings.ENABLE_CLOUD_REVIEWS === "true"}
-            onChange={() => {
-              setSetting(
-                "ENABLE_CLOUD_REVIEWS",
-                settings.ENABLE_CLOUD_REVIEWS === "true" ? "false" : "true"
-              );
-            }}
-          />
-        </Box>
-
-        {syncStatus && (
-          <Alert
-            severity={syncStatus.includes("Failed") ? "error" : "success"}
-            sx={{ mt: 1 }}
-            onClose={() => setSyncStatus(null)}
-          >
-            {syncStatus}
-          </Alert>
-        )}
-      </Box>
-    </>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+            <CheckBoxOption
+              icon={<RateReviewRoundedIcon fontSize="small" />}
+              badge="Community"
+              title="Store Reviews in Cloudflare D1"
+              subtitle="Allows you to submit ratings and reviews to the decentralized database. Only you can modify or delete your reviews, while other PlexFlip users can view them."
+              checked={settings.ENABLE_CLOUD_REVIEWS === "true"}
+              onChange={() => {
+                setSetting(
+                  "ENABLE_CLOUD_REVIEWS",
+                  settings.ENABLE_CLOUD_REVIEWS === "true" ? "false" : "true"
+                );
+              }}
+            />
+          </Box>
+        </SettingsCard>
+      </Stack>
+    </motion.div>
   );
 }
 

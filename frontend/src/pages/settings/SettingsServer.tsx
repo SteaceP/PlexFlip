@@ -6,11 +6,12 @@ import {
   Button,
   CircularProgress,
   Alert,
-  Paper,
   InputAdornment,
   Chip,
   Fade,
+  Stack,
 } from "@mui/material";
+import { motion } from "framer-motion";
 import DnsRoundedIcon from "@mui/icons-material/DnsRounded";
 import SensorsRoundedIcon from "@mui/icons-material/SensorsRounded";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
@@ -19,8 +20,13 @@ import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import CloudQueueRoundedIcon from "@mui/icons-material/CloudQueueRounded";
 import SwapHorizRoundedIcon from "@mui/icons-material/SwapHorizRounded";
+import WifiRoundedIcon from "@mui/icons-material/WifiRounded";
+import HubRoundedIcon from "@mui/icons-material/HubRounded";
 import axios from "axios";
 import { XMLParser } from "fast-xml-parser";
+
+import SettingsCard from "../../components/settings/SettingsCard";
+import SettingsHeader from "../../components/settings/SettingsHeader";
 import { getBackendURL } from "../../backendURL";
 import { queryBuilder } from "../../plex/QuickFunctions";
 
@@ -277,475 +283,484 @@ function SettingsServer() {
 
   if (loadingConfig) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", p: 6, width: "100%" }}>
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", py: 12, width: "100%" }}>
         <CircularProgress />
       </Box>
     );
   }
 
   return (
-    <>
-      <Typography variant="h4" sx={{ fontWeight: 700, color: "#F4F8FF" }}>
-        General - Plex Server
-      </Typography>
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25, ease: "easeOut" }}
+      style={{ width: "100%" }}
+    >
+      <SettingsHeader
+        category="General"
+        title="Plex Media Server"
+        subtitle="Manage the target Plex server used to stream media, sync libraries, and handle proxy routes."
+      />
 
-      <Typography variant="body2" sx={{ color: "#94A3B8", mt: 1, mb: 3 }}>
-        Manage the Plex Media Server address used by PlexFlip to stream video, fetch metadata, and synchronize playback.
-      </Typography>
-
-      {/* Current Server Status Card */}
-      <Paper
-        elevation={2}
-        sx={{
-          p: 3,
-          mb: 4,
-          borderRadius: 2,
-          bgcolor: "rgba(18, 25, 39, 0.7)",
-          border: "1px solid rgba(255, 255, 255, 0.08)",
-          display: "flex",
-          flexDirection: "column",
-          gap: 2,
-        }}
-      >
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <DnsRoundedIcon sx={{ color: "#818CF8", fontSize: 24 }} />
-            <Typography variant="h6" sx={{ fontSize: "1.1rem", fontWeight: 600 }}>
-              Active Server Connection
-            </Typography>
-          </Box>
-
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            {onlineStatus === "checking" && (
-              <Chip
-                label="Checking status..."
-                size="small"
-                icon={<CircularProgress size={12} color="inherit" />}
-                sx={{ bgcolor: "rgba(255,255,255,0.08)", color: "#CBD5E1" }}
-              />
-            )}
-            {onlineStatus === "online" && (
-              <Chip
-                label="Online & Connected"
-                size="small"
-                icon={<CheckCircleRoundedIcon sx={{ fontSize: "16px !important" }} />}
-                sx={{
-                  bgcolor: "rgba(16, 185, 129, 0.15)",
-                  color: "#34D399",
-                  border: "1px solid rgba(16, 185, 129, 0.3)",
-                  fontWeight: 600,
-                }}
-              />
-            )}
-            {onlineStatus === "offline" && (
-              <Chip
-                label="Unreachable"
-                size="small"
-                icon={<ErrorOutlineRoundedIcon sx={{ fontSize: "16px !important" }} />}
-                sx={{
-                  bgcolor: "rgba(239, 68, 68, 0.15)",
-                  color: "#F87171",
-                  border: "1px solid rgba(239, 68, 68, 0.3)",
-                  fontWeight: 600,
-                }}
-              />
-            )}
+      <Stack spacing={3} sx={{ width: "100%" }}>
+        {/* Active Server Status Card */}
+        <SettingsCard
+          title="Active Server Connection"
+          subtitle="Currently routed Plex Media Server instance"
+          icon={<DnsRoundedIcon fontSize="small" />}
+          action={
             <Button
               size="small"
               onClick={() => currentServer && checkServerHealth(currentServer)}
               startIcon={<RefreshRoundedIcon sx={{ fontSize: 16 }} />}
-              sx={{ color: "#94A3B8", minWidth: 0, px: 1 }}
-            >
-              Check
-            </Button>
-          </Box>
-        </Box>
-
-        <Box sx={{ bgcolor: "rgba(0, 0, 0, 0.25)", p: 2, borderRadius: 1.5 }}>
-          <Typography variant="caption" sx={{ color: "#94A3B8", display: "block" }}>
-            Current Address:
-          </Typography>
-          <Typography variant="body1" sx={{ fontFamily: "monospace", color: "#F4F8FF", fontWeight: 600 }}>
-            {currentServer || "(None configured)"}
-          </Typography>
-          {deploymentId && (
-            <Typography variant="caption" sx={{ color: "#64748B", display: "block", mt: 0.5 }}>
-              Deployment ID: {deploymentId}
-            </Typography>
-          )}
-        </Box>
-      </Paper>
-
-      {/* Discovered & Shared Servers */}
-      <Paper
-        elevation={2}
-        sx={{
-          p: 3,
-          mb: 4,
-          borderRadius: 2,
-          bgcolor: "rgba(18, 25, 39, 0.7)",
-          border: "1px solid rgba(255, 255, 255, 0.08)",
-        }}
-      >
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: 1.5,
-            mb: 1.5,
-          }}
-        >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <CloudQueueRoundedIcon sx={{ color: "#38BDF8", fontSize: 24 }} />
-            <Box>
-              <Typography variant="h6" sx={{ fontSize: "1.1rem", fontWeight: 600 }}>
-                Discovered & Shared Servers
-              </Typography>
-              <Typography variant="body2" sx={{ color: "#94A3B8" }}>
-                Switch between your owned servers and servers shared by friends to access all libraries.
-              </Typography>
-            </Box>
-          </Box>
-
-          <Button
-            size="small"
-            variant="outlined"
-            onClick={fetchAvailableServers}
-            disabled={loadingServers}
-            startIcon={
-              loadingServers ? (
-                <CircularProgress size={14} color="inherit" />
-              ) : (
-                <RefreshRoundedIcon sx={{ fontSize: 16 }} />
-              )
-            }
-            sx={{
-              borderColor: "rgba(255, 255, 255, 0.15)",
-              color: "#CBD5E1",
-              textTransform: "none",
-            }}
-          >
-            {loadingServers ? "Refreshing..." : "Refresh Servers"}
-          </Button>
-        </Box>
-
-        {loadingServers && availableServers.length === 0 ? (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-            <CircularProgress size={28} />
-          </Box>
-        ) : availableServers.length === 0 ? (
-          <Box
-            sx={{
-              p: 3,
-              borderRadius: 1.5,
-              bgcolor: "rgba(0, 0, 0, 0.2)",
-              textAlign: "center",
-            }}
-          >
-            <Typography variant="body2" sx={{ color: "#94A3B8" }}>
-              No Plex servers found under your account. Ensure you are signed into Plex.tv.
-            </Typography>
-          </Box>
-        ) : (
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: {
-                xs: "1fr",
-                md: "repeat(2, 1fr)",
-              },
-              gap: 2,
-              mt: 2,
-            }}
-          >
-            {availableServers.map((srv) => {
-              const active = isServerActive(srv);
-              const isSwitching = switchingServerId === srv.clientIdentifier;
-              const primaryConn =
-                srv.connections.find((c) => c.local) || srv.connections[0];
-
-              return (
-                <Paper
-                  key={srv.clientIdentifier}
-                  variant="outlined"
-                  sx={{
-                    p: 2,
-                    borderRadius: 1.5,
-                    bgcolor: active
-                      ? "rgba(99, 102, 241, 0.08)"
-                      : "rgba(0, 0, 0, 0.25)",
-                    borderColor: active
-                      ? "rgba(99, 102, 241, 0.4)"
-                      : "rgba(255, 255, 255, 0.06)",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "space-between",
-                    gap: 1.5,
-                    transition: "all 0.2s ease",
-                    "&:hover": {
-                      borderColor: active
-                        ? "rgba(99, 102, 241, 0.6)"
-                        : "rgba(255, 255, 255, 0.15)",
-                    },
-                  }}
-                >
-                  <Box>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: 1,
-                        mb: 1,
-                      }}
-                    >
-                      <Typography
-                        variant="subtitle1"
-                        sx={{ fontWeight: 700, color: "#F4F8FF" }}
-                      >
-                        {srv.name}
-                      </Typography>
-                      {active ? (
-                        <Chip
-                          label="Connected"
-                          size="small"
-                          icon={
-                            <CheckCircleRoundedIcon
-                              sx={{ fontSize: "14px !important" }}
-                            />
-                          }
-                          sx={{
-                            bgcolor: "rgba(16, 185, 129, 0.15)",
-                            color: "#34D399",
-                            fontWeight: 600,
-                            border: "1px solid rgba(16, 185, 129, 0.3)",
-                          }}
-                        />
-                      ) : null}
-                    </Box>
-
-                    <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap", mb: 1 }}>
-                      {srv.owned ? (
-                        <Chip
-                          label="Owned Server"
-                          size="small"
-                          sx={{
-                            bgcolor: "rgba(245, 158, 11, 0.15)",
-                            color: "#FBBF24",
-                            fontWeight: 600,
-                            fontSize: "0.75rem",
-                          }}
-                        />
-                      ) : (
-                        <Chip
-                          label={`Shared by ${srv.sourceTitle || "Friend"}`}
-                          size="small"
-                          sx={{
-                            bgcolor: "rgba(168, 85, 247, 0.15)",
-                            color: "#C084FC",
-                            fontWeight: 600,
-                            fontSize: "0.75rem",
-                          }}
-                        />
-                      )}
-                      {primaryConn && (
-                        <Chip
-                          label={primaryConn.local ? "Local LAN" : "Remote / Relay"}
-                          size="small"
-                          sx={{
-                            bgcolor: "rgba(255, 255, 255, 0.05)",
-                            color: "#94A3B8",
-                            fontSize: "0.75rem",
-                          }}
-                        />
-                      )}
-                    </Box>
-
-                    {primaryConn && (
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          fontFamily: "monospace",
-                          color: "#64748B",
-                          display: "block",
-                          wordBreak: "break-all",
-                        }}
-                      >
-                        {primaryConn.uri || `${primaryConn.address}:${primaryConn.port}`}
-                      </Typography>
-                    )}
-                  </Box>
-
-                  <Box sx={{ display: "flex", justifyContent: "flex-end", pt: 1 }}>
-                    <Button
-                      size="small"
-                      variant={active ? "text" : "contained"}
-                      disabled={active || isSwitching}
-                      onClick={() => handleSwitchServer(srv)}
-                      startIcon={
-                        isSwitching ? (
-                          <CircularProgress size={14} color="inherit" />
-                        ) : (
-                          <SwapHorizRoundedIcon sx={{ fontSize: 16 }} />
-                        )
-                      }
-                      sx={
-                        active
-                          ? { color: "#64748B", textTransform: "none" }
-                          : {
-                              background:
-                                "linear-gradient(135deg, #4F46E5 0%, #3730A3 100%)",
-                              color: "#fff",
-                              fontWeight: 600,
-                              textTransform: "none",
-                              "&:hover": {
-                                background:
-                                  "linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)",
-                              },
-                            }
-                      }
-                    >
-                      {active ? "Active" : isSwitching ? "Switching..." : "Switch to Server"}
-                    </Button>
-                  </Box>
-                </Paper>
-              );
-            })}
-          </Box>
-        )}
-      </Paper>
-
-      {/* Edit Server Address Form */}
-      <Paper
-        elevation={2}
-        sx={{
-          p: 3,
-          borderRadius: 2,
-          bgcolor: "rgba(18, 25, 39, 0.7)",
-          border: "1px solid rgba(255, 255, 255, 0.08)",
-        }}
-      >
-        <Typography variant="h6" sx={{ fontSize: "1.1rem", fontWeight: 600, mb: 1 }}>
-          Update Server Address
-        </Typography>
-        <Typography variant="body2" sx={{ color: "#94A3B8", mb: 2 }}>
-          Specify the HTTP/HTTPS address and port of your Plex Media Server.
-        </Typography>
-
-        {saveSuccess && (
-          <Fade in={saveSuccess}>
-            <Alert
-              severity="success"
-              icon={<CheckCircleRoundedIcon />}
-              action={
-                <Button color="inherit" size="small" onClick={() => window.location.reload()}>
-                  Reload App
-                </Button>
-              }
               sx={{
-                mb: 2.5,
-                bgcolor: "rgba(16, 185, 129, 0.15)",
-                border: "1px solid rgba(16, 185, 129, 0.3)",
-                color: "#A7F3D0",
+                color: "#94A3B8",
+                textTransform: "none",
+                borderRadius: "8px",
+                border: "1px solid rgba(255, 255, 255, 0.08)",
+                px: 1.5,
+                "&:hover": {
+                  color: "#F4F8FF",
+                  bgcolor: "rgba(255, 255, 255, 0.05)",
+                },
               }}
             >
-              Plex server updated successfully! You can reload to apply full changes.
+              Check Health
+            </Button>
+          }
+        >
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
+              alignItems: { xs: "flex-start", sm: "center" },
+              justifyContent: "space-between",
+              p: 2.5,
+              borderRadius: "12px",
+              bgcolor: "rgba(0, 0, 0, 0.3)",
+              border: "1px solid rgba(255, 255, 255, 0.06)",
+              gap: 2,
+            }}
+          >
+            <Box>
+              <Typography variant="caption" sx={{ color: "#94A3B8", display: "block" }}>
+                Target Address:
+              </Typography>
+              <Typography
+                variant="body1"
+                sx={{
+                  fontFamily: "monospace",
+                  color: "#F4F8FF",
+                  fontWeight: 650,
+                  fontSize: "1.05rem",
+                  mt: 0.25,
+                }}
+              >
+                {currentServer || "(None configured)"}
+              </Typography>
+              {deploymentId && (
+                <Typography variant="caption" sx={{ color: "#64748B", display: "block", mt: 0.5 }}>
+                  Deployment Identifier: {deploymentId}
+                </Typography>
+              )}
+            </Box>
+
+            <Chip
+              label={
+                onlineStatus === "online"
+                  ? "Connected & Responsive"
+                  : onlineStatus === "checking"
+                  ? "Verifying Ping..."
+                  : "Unreachable / Error"
+              }
+              size="small"
+              sx={{
+                bgcolor:
+                  onlineStatus === "online"
+                    ? "rgba(16, 185, 129, 0.15)"
+                    : onlineStatus === "checking"
+                    ? "rgba(255, 255, 255, 0.08)"
+                    : "rgba(239, 68, 68, 0.15)",
+                color:
+                  onlineStatus === "online"
+                    ? "#34D399"
+                    : onlineStatus === "checking"
+                    ? "#CBD5E1"
+                    : "#F87171",
+                border: "1px solid",
+                borderColor:
+                  onlineStatus === "online"
+                    ? "rgba(16, 185, 129, 0.3)"
+                    : onlineStatus === "checking"
+                    ? "rgba(255, 255, 255, 0.12)"
+                    : "rgba(239, 68, 68, 0.3)",
+                fontWeight: 650,
+              }}
+            />
+          </Box>
+        </SettingsCard>
+
+        {/* Discovered & Shared Servers */}
+        <SettingsCard
+          title="Discovered & Shared Servers"
+          subtitle="Switch between your personal servers and servers shared by friends"
+          icon={<CloudQueueRoundedIcon fontSize="small" />}
+          action={
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={fetchAvailableServers}
+              disabled={loadingServers}
+              startIcon={
+                loadingServers ? (
+                  <CircularProgress size={14} color="inherit" />
+                ) : (
+                  <RefreshRoundedIcon sx={{ fontSize: 16 }} />
+                )
+              }
+              sx={{
+                borderColor: "rgba(255, 255, 255, 0.15)",
+                color: "#CBD5E1",
+                textTransform: "none",
+                borderRadius: "8px",
+                "&:hover": {
+                  borderColor: "rgba(255, 255, 255, 0.3)",
+                  bgcolor: "rgba(255, 255, 255, 0.05)",
+                },
+              }}
+            >
+              {loadingServers ? "Refreshing..." : "Refresh List"}
+            </Button>
+          }
+        >
+          {loadingServers && availableServers.length === 0 ? (
+            <Box sx={{ display: "flex", justifyContent: "center", py: 5 }}>
+              <CircularProgress size={28} />
+            </Box>
+          ) : availableServers.length === 0 ? (
+            <Box
+              sx={{
+                p: 3,
+                borderRadius: "12px",
+                bgcolor: "rgba(0, 0, 0, 0.25)",
+                border: "1px dashed rgba(255, 255, 255, 0.08)",
+                textAlign: "center",
+              }}
+            >
+              <Typography variant="body2" sx={{ color: "#94A3B8" }}>
+                No Plex servers found under your Plex.tv account. Make sure you are signed in.
+              </Typography>
+            </Box>
+          ) : (
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  md: "repeat(2, 1fr)",
+                },
+                gap: 2,
+              }}
+            >
+              {availableServers.map((srv) => {
+                const active = isServerActive(srv);
+                const isSwitching = switchingServerId === srv.clientIdentifier;
+                const primaryConn =
+                  srv.connections.find((c) => c.local) || srv.connections[0];
+
+                return (
+                  <Box
+                    key={srv.clientIdentifier}
+                    sx={{
+                      p: 2.25,
+                      borderRadius: "12px",
+                      bgcolor: active
+                        ? "rgba(99, 102, 241, 0.08)"
+                        : "rgba(0, 0, 0, 0.25)",
+                      border: "1px solid",
+                      borderColor: active
+                        ? "rgba(99, 102, 241, 0.45)"
+                        : "rgba(255, 255, 255, 0.06)",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "space-between",
+                      gap: 2,
+                      transition: "all 0.2s ease",
+                      "&:hover": {
+                        borderColor: active
+                          ? "rgba(99, 102, 241, 0.7)"
+                          : "rgba(255, 255, 255, 0.16)",
+                        boxShadow: "0 6px 18px rgba(0, 0, 0, 0.3)",
+                      },
+                    }}
+                  >
+                    <Box>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: 1,
+                          mb: 1.25,
+                        }}
+                      >
+                        <Typography
+                          variant="subtitle1"
+                          sx={{ fontWeight: 700, color: "#F4F8FF", fontSize: "1rem" }}
+                        >
+                          {srv.name}
+                        </Typography>
+                        {active && (
+                          <Chip
+                            label="Active"
+                            size="small"
+                            icon={<CheckCircleRoundedIcon sx={{ fontSize: "14px !important" }} />}
+                            sx={{
+                              bgcolor: "rgba(16, 185, 129, 0.15)",
+                              color: "#34D399",
+                              fontWeight: 700,
+                              border: "1px solid rgba(16, 185, 129, 0.3)",
+                            }}
+                          />
+                        )}
+                      </Box>
+
+                      <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap", mb: 1.5 }}>
+                        {srv.owned ? (
+                          <Chip
+                            label="Owned Server"
+                            size="small"
+                            sx={{
+                              bgcolor: "rgba(245, 158, 11, 0.15)",
+                              color: "#FBBF24",
+                              fontWeight: 600,
+                              fontSize: "0.75rem",
+                            }}
+                          />
+                        ) : (
+                          <Chip
+                            label={`Shared by ${srv.sourceTitle || "Friend"}`}
+                            size="small"
+                            sx={{
+                              bgcolor: "rgba(168, 85, 247, 0.15)",
+                              color: "#C084FC",
+                              fontWeight: 600,
+                              fontSize: "0.75rem",
+                            }}
+                          />
+                        )}
+                        {primaryConn && (
+                          <Chip
+                            label={primaryConn.local ? "Local LAN" : "Remote Relay"}
+                            size="small"
+                            icon={
+                              primaryConn.local ? (
+                                <WifiRoundedIcon sx={{ fontSize: "14px !important" }} />
+                              ) : (
+                                <HubRoundedIcon sx={{ fontSize: "14px !important" }} />
+                              )
+                            }
+                            sx={{
+                              bgcolor: "rgba(255, 255, 255, 0.05)",
+                              color: "#94A3B8",
+                              fontSize: "0.75rem",
+                            }}
+                          />
+                        )}
+                      </Box>
+
+                      {primaryConn && (
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            fontFamily: "monospace",
+                            color: "#64748B",
+                            display: "block",
+                            wordBreak: "break-all",
+                          }}
+                        >
+                          {primaryConn.uri || `${primaryConn.address}:${primaryConn.port}`}
+                        </Typography>
+                      )}
+                    </Box>
+
+                    <Box sx={{ display: "flex", justifyContent: "flex-end", pt: 1 }}>
+                      <Button
+                        size="small"
+                        variant={active ? "text" : "contained"}
+                        disabled={active || isSwitching}
+                        onClick={() => handleSwitchServer(srv)}
+                        startIcon={
+                          isSwitching ? (
+                            <CircularProgress size={14} color="inherit" />
+                          ) : (
+                            <SwapHorizRoundedIcon sx={{ fontSize: 16 }} />
+                          )
+                        }
+                        sx={
+                          active
+                            ? { color: "#64748B", textTransform: "none", fontWeight: 600 }
+                            : {
+                                background:
+                                  "linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)",
+                                color: "#fff",
+                                fontWeight: 650,
+                                textTransform: "none",
+                                borderRadius: "8px",
+                                px: 2,
+                                "&:hover": {
+                                  background:
+                                    "linear-gradient(135deg, #818CF8 0%, #6366F1 100%)",
+                                },
+                              }
+                        }
+                      >
+                        {active ? "Connected" : isSwitching ? "Switching..." : "Switch to Server"}
+                      </Button>
+                    </Box>
+                  </Box>
+                );
+              })}
+            </Box>
+          )}
+        </SettingsCard>
+
+        {/* Update Server Address Form */}
+        <SettingsCard
+          title="Manual Server Address"
+          subtitle="Directly specify an IP address or domain name for your target Plex Media Server"
+          icon={<SensorsRoundedIcon fontSize="small" />}
+        >
+          {saveSuccess && (
+            <Fade in={saveSuccess}>
+              <Alert
+                severity="success"
+                icon={<CheckCircleRoundedIcon />}
+                action={
+                  <Button color="inherit" size="small" onClick={() => window.location.reload()}>
+                    Reload App
+                  </Button>
+                }
+                sx={{
+                  mb: 2.5,
+                  borderRadius: "10px",
+                  bgcolor: "rgba(16, 185, 129, 0.15)",
+                  border: "1px solid rgba(16, 185, 129, 0.3)",
+                  color: "#A7F3D0",
+                }}
+              >
+                Plex server address updated successfully. Reload to apply full changes.
+              </Alert>
+            </Fade>
+          )}
+
+          {saveError && (
+            <Alert
+              severity="error"
+              icon={<ErrorOutlineRoundedIcon />}
+              sx={{
+                mb: 2.5,
+                borderRadius: "10px",
+                bgcolor: "rgba(239, 68, 68, 0.15)",
+                border: "1px solid rgba(239, 68, 68, 0.3)",
+                color: "#FCA5A5",
+              }}
+            >
+              {saveError}
             </Alert>
-          </Fade>
-        )}
+          )}
 
-        {saveError && (
-          <Alert
-            severity="error"
-            icon={<ErrorOutlineRoundedIcon />}
-            sx={{
-              mb: 2.5,
-              bgcolor: "rgba(239, 68, 68, 0.15)",
-              border: "1px solid rgba(239, 68, 68, 0.3)",
-            }}
-          >
-            {saveError}
-          </Alert>
-        )}
+          {testResult && (
+            <Alert
+              severity={testResult.ok ? "success" : "error"}
+              icon={testResult.ok ? <CheckCircleRoundedIcon /> : <ErrorOutlineRoundedIcon />}
+              sx={{
+                mb: 2.5,
+                borderRadius: "10px",
+                bgcolor: testResult.ok ? "rgba(16, 185, 129, 0.15)" : "rgba(239, 68, 68, 0.15)",
+                border: "1px solid",
+                borderColor: testResult.ok ? "rgba(16, 185, 129, 0.3)" : "rgba(239, 68, 68, 0.3)",
+                color: testResult.ok ? "#A7F3D0" : "#FCA5A5",
+              }}
+            >
+              {testResult.message}
+            </Alert>
+          )}
 
-        {testResult && (
-          <Alert
-            severity={testResult.ok ? "success" : "error"}
-            icon={testResult.ok ? <CheckCircleRoundedIcon /> : <ErrorOutlineRoundedIcon />}
-            sx={{
-              mb: 2.5,
-              bgcolor: testResult.ok ? "rgba(16, 185, 129, 0.15)" : "rgba(239, 68, 68, 0.15)",
-              border: testResult.ok ? "1px solid rgba(16, 185, 129, 0.3)" : "1px solid rgba(239, 68, 68, 0.3)",
-            }}
-          >
-            {testResult.message}
-          </Alert>
-        )}
-
-        <TextField
-          id="settings-plex-server-input"
-          fullWidth
-          label="Plex Server URL"
-          variant="outlined"
-          placeholder="http://192.168.1.100:32400"
-          value={serverUrl}
-          onChange={(e) => {
-            setServerUrl(e.target.value);
-            setSaveSuccess(false);
-            setSaveError(null);
-            setTestResult(null);
-          }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SensorsRoundedIcon sx={{ color: "#818CF8", fontSize: 20 }} />
-              </InputAdornment>
-            ),
-          }}
-          sx={{
-            "& .MuiOutlinedInput-root": {
-              bgcolor: "rgba(9, 14, 26, 0.7)",
-              borderRadius: 2,
-              color: "#F4F8FF",
-            },
-          }}
-        />
-
-        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 3 }}>
-          <Button
-            id="settings-test-server-btn"
+          <TextField
+            id="settings-plex-server-input"
+            fullWidth
+            label="Plex Server URL"
             variant="outlined"
-            onClick={handleTestConnection}
-            disabled={testing || saving || !serverUrl.trim()}
-            startIcon={testing ? <CircularProgress size={16} color="inherit" /> : <SensorsRoundedIcon />}
-            sx={{
-              borderColor: "rgba(99, 102, 241, 0.4)",
-              color: "#C7D2FE",
-              fontWeight: 600,
+            placeholder="http://192.168.1.100:32400"
+            value={serverUrl}
+            onChange={(e) => {
+              setServerUrl(e.target.value);
+              setSaveSuccess(false);
+              setSaveError(null);
+              setTestResult(null);
             }}
-          >
-            {testing ? "Testing..." : "Test Connection"}
-          </Button>
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SensorsRoundedIcon sx={{ color: "#818CF8", fontSize: 20 }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                bgcolor: "rgba(9, 14, 26, 0.7)",
+                borderRadius: "12px",
+                color: "#F4F8FF",
+              },
+            }}
+          />
 
-          <Button
-            id="settings-save-server-btn"
-            variant="contained"
-            onClick={handleSave}
-            disabled={saving || !serverUrl.trim() || serverUrl === currentServer}
-            startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveRoundedIcon />}
-            sx={{
-              background: "linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)",
-              color: "#fff",
-              fontWeight: 700,
-            }}
-          >
-            {saving ? "Saving..." : "Save Changes"}
-          </Button>
-        </Box>
-      </Paper>
-    </>
+          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1.5, mt: 3, flexWrap: "wrap" }}>
+            <Button
+              id="settings-test-server-btn"
+              variant="outlined"
+              onClick={handleTestConnection}
+              disabled={testing || saving || !serverUrl.trim()}
+              startIcon={testing ? <CircularProgress size={16} color="inherit" /> : <SensorsRoundedIcon />}
+              sx={{
+                borderColor: "rgba(99, 102, 241, 0.4)",
+                color: "#C7D2FE",
+                fontWeight: 600,
+                borderRadius: "10px",
+                px: 2.5,
+                "&:hover": {
+                  borderColor: "rgba(99, 102, 241, 0.7)",
+                  bgcolor: "rgba(99, 102, 241, 0.1)",
+                },
+              }}
+            >
+              {testing ? "Testing..." : "Test Connection"}
+            </Button>
+
+            <Button
+              id="settings-save-server-btn"
+              variant="contained"
+              onClick={handleSave}
+              disabled={saving || !serverUrl.trim() || serverUrl === currentServer}
+              startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveRoundedIcon />}
+              sx={{
+                background: "linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)",
+                color: "#fff",
+                fontWeight: 700,
+                borderRadius: "10px",
+                px: 3,
+                "&:hover": {
+                  background: "linear-gradient(135deg, #818CF8 0%, #6366F1 100%)",
+                },
+              }}
+            >
+              {saving ? "Saving..." : "Save Server"}
+            </Button>
+          </Box>
+        </SettingsCard>
+      </Stack>
+    </motion.div>
   );
 }
 
