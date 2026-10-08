@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  react-dev-utils@12.0.1: 44e264d809c9d194e1a8762f7bb55a96060bc9c8f2d8209b5eb0126188ce8406
+
 importers:
 
   .:
@@ -11526,7 +11529,7 @@ snapshots:
       regenerator-runtime: 0.13.11
       whatwg-fetch: 3.6.20
 
-  react-dev-utils@12.0.1(eslint@8.57.1(supports-color@8.1.1))(supports-color@8.1.1)(typescript@7.0.2)(webpack@5.111.1(clean-css@5.3.3)(cssnano@5.1.15(postcss@8.5.29))(csso@4.2.0)(html-minifier-terser@6.1.0)(postcss@8.5.29)(svgo@2.8.4)):
+  react-dev-utils@12.0.1(patch_hash=44e264d809c9d194e1a8762f7bb55a96060bc9c8f2d8209b5eb0126188ce8406)(eslint@8.57.1(supports-color@8.1.1))(supports-color@8.1.1)(typescript@7.0.2)(webpack@5.111.1(clean-css@5.3.3)(cssnano@5.1.15(postcss@8.5.29))(csso@4.2.0)(html-minifier-terser@6.1.0)(postcss@8.5.29)(svgo@2.8.4)):
     dependencies:
       '@babel/code-frame': 7.29.7
       address: 1.2.2
@@ -11644,7 +11647,7 @@ snapshots:
       prompts: 2.4.2
       react: 19.3.0
       react-app-polyfill: 3.0.0
-      react-dev-utils: 12.0.1(eslint@8.57.1(supports-color@8.1.1))(supports-color@8.1.1)(typescript@7.0.2)(webpack@5.111.1(clean-css@5.3.3)(cssnano@5.1.15(postcss@8.5.29))(csso@4.2.0)(html-minifier-terser@6.1.0)(postcss@8.5.29)(svgo@2.8.4))
+      react-dev-utils: 12.0.1(patch_hash=44e264d809c9d194e1a8762f7bb55a96060bc9c8f2d8209b5eb0126188ce8406)(eslint@8.57.1(supports-color@8.1.1))(supports-color@8.1.1)(typescript@7.0.2)(webpack@5.111.1(clean-css@5.3.3)(cssnano@5.1.15(postcss@8.5.29))(csso@4.2.0)(html-minifier-terser@6.1.0)(postcss@8.5.29)(svgo@2.8.4))
       react-refresh: 0.11.0
       resolve: 1.22.12
       resolve-url-loader: 4.0.0
