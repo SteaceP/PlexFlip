@@ -21,6 +21,7 @@ import Settings from "./pages/Settings";
 import { useUserSettings } from "./states/UserSettingsState";
 import MetaScreen from "./components/MetaScreen";
 import ConfirmModal from "./components/ConfirmModal";
+import AudioPlayerBar from "./components/AudioPlayerBar";
 
 function AppManager() {
   const { loading } = useStartupState();
@@ -100,6 +101,7 @@ function App() {
       <AppTitleManager />
       <MetaScreen />
       <ConfirmModal />
+      <AudioPlayerBar />
       <Routes>
         <Route path="*" element={<AppBar />} />
         <Route path="/watch/:itemID" element={<></>} />

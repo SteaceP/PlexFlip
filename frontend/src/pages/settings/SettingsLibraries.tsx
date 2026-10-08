@@ -16,7 +16,7 @@ function SettingsLibraries() {
         const librariesData = await getAllLibraries();
 
         const filteredLibraries = librariesData.filter((lib) =>
-          ["movie", "show"].includes(lib.type)
+          ["movie", "show", "artist"].includes(lib.type)
         );
 
         setLibraries(filteredLibraries);

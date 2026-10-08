@@ -181,7 +181,9 @@ function LibraryScreen() {
                 fontWeight: "bold",
               }}
             >
-              {library?.title1} {library?.title2 && ` - ${library?.title2}`}
+              {library?.title1
+                ? `${library.title1}${library.title2 ? ` - ${library.title2}` : ""}`
+                : library?.title2 || "Similar Media"}
             </Typography>
 
             <Box
@@ -227,13 +229,20 @@ function LibraryScreen() {
 
 function Element({ item, plexTv }: { item: Plex.Metadata; plexTv?: boolean }) {
   const { inView, ref } = useInView();
+  const isMusic = ["artist", "album", "track"].includes(item.type);
 
   return (
     <div ref={ref}>
       {inView && <MovieItem item={item} PlexTvSource={plexTv} />}
       {!inView && (
         <Box style={{ width: "100%" }}>
-          <Box sx={{ width: "100%", height: "auto", aspectRatio: "16/9" }} />
+          <Box
+            sx={{
+              width: "100%",
+              height: "auto",
+              aspectRatio: isMusic ? "1/1" : "16/9",
+            }}
+          />
           <Box sx={{ width: "100%", height: "104px" }} />
         </Box>
       )}

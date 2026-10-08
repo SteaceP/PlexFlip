@@ -8,6 +8,7 @@ import {
   VolumeOffRounded,
   VolumeUpRounded,
   StarRounded,
+  QueueMusicRounded,
 } from "@mui/icons-material";
 import {
   Box,
@@ -43,6 +44,7 @@ import ReactPlayer from "react-player";
 import { useConfirmModal } from "./ConfirmModal";
 import { getBackendURL } from "../backendURL";
 import { queryBuilder } from "../plex/QuickFunctions";
+import { useAudioPlayerStore } from "../states/AudioPlayerState";
 
 interface MovieItemPreviewPlaybackState {
   url: string;
@@ -204,6 +206,30 @@ function MovieItem({
           }
         }
         break;
+      case "track": {
+        useAudioPlayerStore.getState().playTrack(localItem);
+        setPlayButtonLoading(false);
+        break;
+      }
+      case "album": {
+        const tracks = await getLibraryMetaChildren(localItem.ratingKey);
+        if (tracks && tracks.length > 0) {
+          useAudioPlayerStore.getState().playAlbum(localItem, tracks);
+        }
+        setPlayButtonLoading(false);
+        break;
+      }
+      case "artist": {
+        const albums = await getLibraryMetaChildren(localItem.ratingKey);
+        if (albums && albums.length > 0) {
+          const tracks = await getLibraryMetaChildren(albums[0].ratingKey);
+          if (tracks && tracks.length > 0) {
+            useAudioPlayerStore.getState().playAlbum(albums[0], tracks);
+          }
+        }
+        setPlayButtonLoading(false);
+        break;
+      }
     }
   };
 
@@ -276,6 +302,26 @@ function MovieItem({
           </ListItemIcon>
           View Similar
         </MenuItem>
+
+        {["track", "album"].includes(item.type) && (
+          <MenuItem
+            onClick={async (e) => {
+              e.stopPropagation();
+              handleClose();
+              if (item.type === "track") {
+                useAudioPlayerStore.getState().addToQueue(item);
+              } else if (item.type === "album") {
+                const tracks = await getLibraryMetaChildren(item.ratingKey);
+                if (tracks) useAudioPlayerStore.getState().addToQueue(tracks);
+              }
+            }}
+          >
+            <ListItemIcon>
+              <QueueMusicRounded fontSize="small" />
+            </ListItemIcon>
+            Add to Queue
+          </MenuItem>
+        )}
 
         <Divider
           sx={{
@@ -426,6 +472,11 @@ function MovieItem({
 
             setSearchParams({ mid: data.ratingKey.toString() });
           } else {
+            if (item.type === "track") {
+              useAudioPlayerStore.getState().playTrack(item);
+              return;
+            }
+
             if (item.grandparentRatingKey && ["episode"].includes(item.type))
               return setSearchParams({ mid: item.grandparentRatingKey });
 
@@ -443,7 +494,9 @@ function MovieItem({
         <Box
           sx={{
             width: "100%",
-            aspectRatio: "16/9",
+            aspectRatio: ["artist", "album", "track"].includes(item.type)
+              ? "1/1"
+              : "16/9",
             position: "relative",
             overflow: "hidden",
             flexShrink: 0,
@@ -454,9 +507,15 @@ function MovieItem({
             sx={{
               position: "absolute",
               inset: 0,
-              backgroundImage: ["episode"].includes(item.type)
-                ? `url(${getTranscodeImageURL(item.thumb, 1200, 680)})`
-                : `url(${getTranscodeImageURL(item.art, 1200, 680)})`,
+              backgroundImage: ["episode", "artist", "album", "track"].includes(
+                item.type
+              )
+                ? `url(${getTranscodeImageURL(
+                    item.thumb || item.parentThumb || item.art,
+                    600,
+                    600
+                  )})`
+                : `url(${getTranscodeImageURL(item.art || item.thumb, 1200, 680)})`,
               backgroundSize: "cover",
               backgroundPosition: "center",
             }}
@@ -770,7 +829,7 @@ function MovieItem({
             {item.title}
           </Typography>
 
-          {/* Show title for episodes */}
+          {/* Show title for episodes or artist/album for music */}
           {["episode"].includes(item.type) && item.grandparentTitle && (
             <Typography
               onClick={(e) => {
@@ -800,6 +859,37 @@ function MovieItem({
               {item.grandparentTitle}
             </Typography>
           )}
+
+          {["album", "track"].includes(item.type) &&
+            (item.parentTitle || item.grandparentTitle) && (
+              <Typography
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const targetKey =
+                    item.grandparentRatingKey || item.parentRatingKey;
+                  if (!targetKey) return;
+                  setSearchParams({ mid: targetKey.toString() });
+                }}
+                sx={{
+                  fontSize: "0.8rem",
+                  fontWeight: "500",
+                  color: (theme) => theme.palette.text.secondary,
+                  opacity: 0.7,
+                  transition: "all 0.3s ease",
+                  cursor: "pointer",
+                  "&:hover": {
+                    opacity: 1,
+                    color: (theme) => theme.palette.primary.light,
+                  },
+                  textOverflow: "ellipsis",
+                  overflow: "hidden",
+                  whiteSpace: "nowrap",
+                  width: "100%",
+                }}
+              >
+                {item.grandparentTitle || item.parentTitle}
+              </Typography>
+            )}
 
           {/* Metadata row */}
           <Box

@@ -43,6 +43,8 @@ import {
   StarOutlineRounded,
   CheckBoxOutlineBlankRounded,
   CheckBoxRounded,
+  QueueMusicRounded,
+  GraphicEqRounded,
 } from "@mui/icons-material";
 import { durationToText } from "./MovieItemSlider";
 import ReactPlayer from "react-player";
@@ -60,6 +62,7 @@ import { getBackendURL } from "../backendURL";
 import { queryBuilder } from "../plex/QuickFunctions";
 import AddReviewModal from "./modals/AddReviewModal";
 import { getPlexFlipReviews } from "../common/PlexFlipReviews";
+import { useAudioPlayerStore } from "../states/AudioPlayerState";
 
 function MetaScreen() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -77,6 +80,10 @@ function MetaScreen() {
 
   const [languages, setLanguages] = useState<string[] | null>(null);
   const [subTitles, setSubTitles] = useState<string[] | null>(null);
+
+  const [musicChildren, setMusicChildren] = useState<Plex.Metadata[] | null>(
+    null
+  );
 
   const [previewVidURL, setPreviewVidURL] = useState<string | null>(null);
   const [previewVidPlaying, setPreviewVidPlaying] = useState<boolean>(false);
@@ -98,6 +105,7 @@ function MetaScreen() {
     setData(undefined);
     setLoading(true);
     setEpisodes(null);
+    setMusicChildren(null);
     setSelectedSeason(0);
     setLanguages(null);
     setSubTitles(null);
@@ -123,6 +131,17 @@ function MetaScreen() {
       setLoading(false);
     });
   }, [mid]);
+
+  useEffect(() => {
+    setMusicChildren(null);
+    if (!data) return;
+
+    if (data.type === "artist" || data.type === "album") {
+      getLibraryMetaChildren(data.ratingKey).then((res) => {
+        setMusicChildren(res || []);
+      });
+    }
+  }, [data]);
 
   useEffect(() => {
     if (!data) return;
@@ -464,7 +483,11 @@ function MetaScreen() {
               alt={data?.title || ""}
               style={{
                 width: "100%",
-                aspectRatio: "2/3",
+                aspectRatio: ["artist", "album", "track"].includes(
+                  data?.type || ""
+                )
+                  ? "1/1"
+                  : "2/3",
                 backgroundColor: "#00000088",
                 objectFit: "cover",
                 display: "block",
@@ -528,6 +551,37 @@ function MetaScreen() {
               >
                 {data?.title}
               </Typography>
+
+              {["album", "track"].includes(data?.type || "") &&
+                (data?.parentTitle || data?.grandparentTitle) && (
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      color: "#e5a00d",
+                      fontWeight: 600,
+                      cursor:
+                        data?.grandparentRatingKey || data?.parentRatingKey
+                          ? "pointer"
+                          : "default",
+                      "&:hover":
+                        data?.grandparentRatingKey || data?.parentRatingKey
+                          ? { textDecoration: "underline" }
+                          : {},
+                      mt: { xs: 0.5, sm: 0 },
+                      mb: { xs: 1, sm: 0.5 },
+                      textAlign: { xs: "center", sm: "left" },
+                    }}
+                    onClick={() => {
+                      const targetKey =
+                        data?.grandparentRatingKey || data?.parentRatingKey;
+                      if (targetKey) {
+                        setSearchParams({ mid: targetKey.toString() });
+                      }
+                    }}
+                  >
+                    {data?.grandparentTitle || data?.parentTitle}
+                  </Typography>
+                )}
 
               <Box
                 sx={{
@@ -597,7 +651,9 @@ function MetaScreen() {
                   </Typography>
                 )}
                 {data?.duration &&
-                  ["episode", "movie"].includes(data?.type) && (
+                  ["episode", "movie", "album", "track"].includes(
+                    data?.type
+                  ) && (
                     <Typography
                       sx={{
                         fontSize: "medium",
@@ -675,6 +731,32 @@ function MetaScreen() {
                           navigate(`/watch/${firstSeason[0].ratingKey}`);
                       }
                     }
+
+                    if (data?.type === "track") {
+                      useAudioPlayerStore.getState().playTrack(data);
+                    }
+
+                    if (data?.type === "album") {
+                      if (musicChildren && musicChildren.length > 0) {
+                        useAudioPlayerStore
+                          .getState()
+                          .playAlbum(data, musicChildren);
+                      }
+                    }
+
+                    if (data?.type === "artist") {
+                      if (musicChildren && musicChildren.length > 0) {
+                        const firstAlbum = musicChildren[0];
+                        const tracks = await getLibraryMetaChildren(
+                          firstAlbum.ratingKey
+                        );
+                        if (tracks && tracks.length > 0) {
+                          useAudioPlayerStore
+                            .getState()
+                            .playAlbum(firstAlbum, tracks);
+                        }
+                      }
+                    }
                   }}
                 >
                   <PlayArrowRounded fontSize="medium" /> Play{" "}
@@ -687,6 +769,34 @@ function MetaScreen() {
                         : ""
                     }E${data?.OnDeck.Metadata.index}`}
                 </Button>
+
+                {data?.type === "album" &&
+                  musicChildren &&
+                  musicChildren.length > 0 && (
+                    <Button
+                      variant="outlined"
+                      startIcon={<QueueMusicRounded />}
+                      sx={{
+                        height: "38px",
+                        fontWeight: "bold",
+                        letterSpacing: "0.1em",
+                        textTransform: "uppercase",
+                        borderColor: "rgba(229,160,13,0.5)",
+                        color: "#e5a00d",
+                        "&:hover": {
+                          borderColor: "#e5a00d",
+                          bgcolor: "rgba(229,160,13,0.1)",
+                        },
+                      }}
+                      onClick={() => {
+                        useAudioPlayerStore
+                          .getState()
+                          .addToQueue(musicChildren);
+                      }}
+                    >
+                      Queue Album
+                    </Button>
+                  )}
 
                 <Tooltip placement="top" arrow title="Watchlist">
                   <HeroWatchListButton item={data as Plex.Metadata} />
@@ -956,10 +1066,18 @@ function MetaScreen() {
                 setPage(0);
               }}
               selected={page === 0}
-              text={data?.type === "movie" ? "Similar Movies" : "Episodes"}
+              text={
+                data?.type === "movie"
+                  ? "Similar Movies"
+                  : data?.type === "album"
+                  ? "Tracks"
+                  : data?.type === "artist"
+                  ? "Albums"
+                  : "Episodes"
+              }
             />
 
-            {data?.type !== "movie" && (
+            {!["movie", "album"].includes(data?.type || "") && (
               <TabButton
                 onClick={() => {
                   setPage(1);
@@ -1021,6 +1139,7 @@ function MetaScreen() {
                 episodes={episodes}
                 refetchEpisodes={refetchEpisodes}
                 navigate={navigate}
+                musicChildren={musicChildren}
               />
             )}
             {page === 1 && MetaPage2(data)}
@@ -1041,12 +1160,14 @@ function MetaPage1({
   episodes,
   refetchEpisodes,
   navigate,
+  musicChildren,
 }: {
   data: Plex.Metadata | undefined;
   loading: boolean;
   episodes: Plex.Metadata[] | null | undefined;
   refetchEpisodes: () => void;
   navigate: (path: string) => void;
+  musicChildren: Plex.Metadata[] | null | undefined;
 }) {
   const [selectedEpisodes, setSelectedEpisodes] = useState<Plex.Metadata[]>([]);
   const [selectMode, setSelectMode] = useState<boolean>(false);
@@ -1262,7 +1383,222 @@ function MetaPage1({
           ))}
         </Box>
       )}
+
+      {data?.type === "album" && (
+        <AlbumTrackList album={data} tracks={musicChildren || null} />
+      )}
+
+      {data?.type === "artist" && (
+        <ArtistAlbumsList artist={data} albums={musicChildren || null} />
+      )}
     </>
+  );
+}
+
+function AlbumTrackList({
+  album,
+  tracks,
+}: {
+  album: Plex.Metadata;
+  tracks: Plex.Metadata[] | null;
+}) {
+  const { currentTrack, isPlaying, playAlbum, addToQueue } =
+    useAudioPlayerStore();
+
+  if (!tracks) {
+    return (
+      <Box
+        sx={{
+          width: "100%",
+          display: "flex",
+          justifyContent: "center",
+          py: 6,
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (tracks.length === 0) {
+    return (
+      <Box sx={{ width: "100%", py: 4, textAlign: "center", color: "#64748b" }}>
+        <Typography>No tracks found in this album.</Typography>
+      </Box>
+    );
+  }
+
+  return (
+    <Box
+      sx={{
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+        gap: 1,
+        mt: 1,
+      }}
+    >
+      {tracks.map((track, idx) => {
+        const isCurrent = currentTrack?.ratingKey === track.ratingKey;
+        const durationSec = track.duration ? track.duration / 1000 : 0;
+        const m = Math.floor(durationSec / 60);
+        const s = Math.floor(durationSec % 60);
+        const formattedDuration = `${m}:${s < 10 ? "0" : ""}${s}`;
+
+        return (
+          <Paper
+            key={track.ratingKey || idx}
+            elevation={0}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              p: 1.5,
+              borderRadius: 2,
+              bgcolor: isCurrent
+                ? "rgba(229, 160, 13, 0.12)"
+                : "rgba(255, 255, 255, 0.03)",
+              border: isCurrent
+                ? "1px solid rgba(229, 160, 13, 0.4)"
+                : "1px solid rgba(255, 255, 255, 0.05)",
+              transition: "all 0.2s ease",
+              cursor: "pointer",
+              "&:hover": {
+                bgcolor: isCurrent
+                  ? "rgba(229, 160, 13, 0.18)"
+                  : "rgba(255, 255, 255, 0.07)",
+                transform: "translateX(4px)",
+              },
+            }}
+            onClick={() => playAlbum(album, tracks, idx)}
+          >
+            {/* Track number / Playing indicator */}
+            <Box
+              sx={{
+                width: 36,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: isCurrent ? "#e5a00d" : "#64748b",
+              }}
+            >
+              {isCurrent && isPlaying ? (
+                <GraphicEqRounded sx={{ fontSize: 20 }} />
+              ) : (
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  {track.index || idx + 1}
+                </Typography>
+              )}
+            </Box>
+
+            {/* Title & Subtitle */}
+            <Box sx={{ flex: 1, minWidth: 0, px: 2 }}>
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: isCurrent ? 700 : 600,
+                  color: isCurrent ? "#e5a00d" : "#fff",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {track.title}
+              </Typography>
+              {(track.originalTitle || track.grandparentTitle) && (
+                <Typography
+                  variant="caption"
+                  sx={{ color: "#64748b", display: "block" }}
+                >
+                  {track.originalTitle || track.grandparentTitle}
+                </Typography>
+              )}
+            </Box>
+
+            {/* Duration */}
+            <Typography
+              variant="caption"
+              sx={{
+                color: "#64748b",
+                mr: 2,
+                minWidth: 40,
+                textAlign: "right",
+              }}
+            >
+              {formattedDuration}
+            </Typography>
+
+            {/* Actions */}
+            <Tooltip title="Add to Queue">
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  addToQueue(track);
+                }}
+                sx={{ color: "#94a3b8", "&:hover": { color: "#e5a00d" } }}
+              >
+                <QueueMusicRounded fontSize="small" />
+              </IconButton>
+            </Tooltip>
+
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                playAlbum(album, tracks, idx);
+              }}
+              sx={{
+                color: isCurrent ? "#e5a00d" : "#cbd5e1",
+                "&:hover": { color: "#e5a00d" },
+              }}
+            >
+              <PlayArrowRounded fontSize="small" />
+            </IconButton>
+          </Paper>
+        );
+      })}
+    </Box>
+  );
+}
+
+function ArtistAlbumsList({
+  artist,
+  albums,
+}: {
+  artist: Plex.Metadata;
+  albums: Plex.Metadata[] | null;
+}) {
+  if (!albums) {
+    return (
+      <Box
+        sx={{
+          width: "100%",
+          display: "flex",
+          justifyContent: "center",
+          py: 6,
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (albums.length === 0) {
+    return (
+      <Box sx={{ width: "100%", py: 4, textAlign: "center", color: "#64748b" }}>
+        <Typography>No albums found for this artist.</Typography>
+      </Box>
+    );
+  }
+
+  return (
+    <Grid container spacing={2} sx={{ width: "100%", mt: 1 }}>
+      {albums.map((album) => (
+        <Grid key={album.ratingKey} size={{ lg: 3, md: 4, sm: 6, xs: 12 }}>
+          <MovieItem item={album} />
+        </Grid>
+      ))}
+    </Grid>
   );
 }
 
@@ -1323,6 +1659,162 @@ function MetaPage2(data: Plex.Metadata | undefined) {
 }
 
 function MetaPage3(data: Plex.Metadata | undefined) {
+  if (["artist", "album", "track"].includes(data?.type || "")) {
+    return (
+      <Box
+        component={motion.div}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.5 }}
+        sx={{
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
+          gap: 3,
+          p: 1,
+          userSelect: "none",
+        }}
+      >
+        <Typography variant="h5" sx={{ fontWeight: 700, color: "#FFFFFF" }}>
+          Track & Album Details
+        </Typography>
+
+        <Grid container spacing={2}>
+          {data?.studio && (
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <Paper
+                sx={{
+                  p: 2,
+                  bgcolor: "rgba(255,255,255,0.04)",
+                  borderRadius: 2,
+                  border: "1px solid rgba(255,255,255,0.08)",
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  sx={{ color: "#94a3b8", textTransform: "uppercase" }}
+                >
+                  Record Label / Studio
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{ fontWeight: 600, color: "#fff" }}
+                >
+                  {data.studio}
+                </Typography>
+              </Paper>
+            </Grid>
+          )}
+
+          {data?.year && (
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <Paper
+                sx={{
+                  p: 2,
+                  bgcolor: "rgba(255,255,255,0.04)",
+                  borderRadius: 2,
+                  border: "1px solid rgba(255,255,255,0.08)",
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  sx={{ color: "#94a3b8", textTransform: "uppercase" }}
+                >
+                  Release Year
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{ fontWeight: 600, color: "#fff" }}
+                >
+                  {data.year}
+                </Typography>
+              </Paper>
+            </Grid>
+          )}
+
+          {data?.leafCount && (
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <Paper
+                sx={{
+                  p: 2,
+                  bgcolor: "rgba(255,255,255,0.04)",
+                  borderRadius: 2,
+                  border: "1px solid rgba(255,255,255,0.08)",
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  sx={{ color: "#94a3b8", textTransform: "uppercase" }}
+                >
+                  Track Count
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{ fontWeight: 600, color: "#fff" }}
+                >
+                  {data.leafCount} tracks
+                </Typography>
+              </Paper>
+            </Grid>
+          )}
+
+          {data?.duration && (
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <Paper
+                sx={{
+                  p: 2,
+                  bgcolor: "rgba(255,255,255,0.04)",
+                  borderRadius: 2,
+                  border: "1px solid rgba(255,255,255,0.08)",
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  sx={{ color: "#94a3b8", textTransform: "uppercase" }}
+                >
+                  Total Duration
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{ fontWeight: 600, color: "#fff" }}
+                >
+                  {durationToText(data.duration)}
+                </Typography>
+              </Paper>
+            </Grid>
+          )}
+
+          {data?.Media?.[0]?.audioCodec && (
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <Paper
+                sx={{
+                  p: 2,
+                  bgcolor: "rgba(255,255,255,0.04)",
+                  borderRadius: 2,
+                  border: "1px solid rgba(255,255,255,0.08)",
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  sx={{ color: "#94a3b8", textTransform: "uppercase" }}
+                >
+                  Audio Format
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{ fontWeight: 600, color: "#e5a00d", textTransform: "uppercase" }}
+                >
+                  {data.Media[0].audioCodec} {data.Media[0].bitrate ? `(${data.Media[0].bitrate} kbps)` : ""}
+                </Typography>
+              </Paper>
+            </Grid>
+          )}
+        </Grid>
+      </Box>
+    );
+  }
+
   return (
     <Box
       component={motion.div}

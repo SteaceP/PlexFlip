@@ -198,7 +198,12 @@ declare namespace Plex {
         year: number;
         tagline: string;
         thumb: string;
+        parentThumb?: string;
+        grandparentThumb?: string;
         art: string;
+        parentArt?: string;
+        grandparentArt?: string;
+        parentYear?: number;
         theme?: string;
         duration: number;
         originallyAvailableAt: string;

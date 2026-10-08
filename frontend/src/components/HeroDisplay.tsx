@@ -14,7 +14,8 @@ import { useBigReader } from "./BigReader";
 import { HeroWatchListButton } from "./MovieItem";
 import { getBackendURL } from "../backendURL";
 import { queryBuilder } from "../plex/QuickFunctions";
-import { getTranscodeImageURL } from "../plex";
+import { getLibraryMetaChildren, getTranscodeImageURL } from "../plex";
+import { useAudioPlayerStore } from "../states/AudioPlayerState";
 
 function HeroDisplay({ item }: { item: Plex.Metadata }) {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -47,6 +48,7 @@ function HeroDisplay({ item }: { item: Plex.Metadata }) {
     }, 3000);
 
     const onScroll = () => {
+      if (!previewVidURL) return;
       if (window.scrollY > 100) setPreviewVidPlaying(false);
       else setPreviewVidPlaying(true);
     };
@@ -57,8 +59,7 @@ function HeroDisplay({ item }: { item: Plex.Metadata }) {
       clearTimeout(timeout);
       window.removeEventListener("scroll", onScroll);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [previewVidURL, searchParams]);
 
   return (
     <Box
@@ -71,46 +72,48 @@ function HeroDisplay({ item }: { item: Plex.Metadata }) {
         justifyContent: "flex-start",
       }}
     >
-      <Box
-        sx={{
-          position: "absolute",
-          right: "2vw",
-          bottom: { xs: "20vh", sm: "15vh", md: "20vh" },
-          opacity: previewVidURL ? 1 : 0,
-          transition: "all 1s ease",
-          zIndex: 2,
-          cursor: "pointer",
-          pointerEvents: "all",
-
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 1,
-        }}
-      >
-        <IconButton
+      {previewVidURL && (
+        <Box
           sx={{
-            backgroundColor: "#00000088",
-          }}
-          onClick={() => {
-            setPreviewVidPlaying(!previewVidPlaying);
+            position: "absolute",
+            right: "2vw",
+            bottom: { xs: "20vh", sm: "15vh", md: "20vh" },
+            opacity: 1,
+            transition: "all 1s ease",
+            zIndex: 2,
+            cursor: "pointer",
+            pointerEvents: "all",
+
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 1,
           }}
         >
-          {previewVidPlaying ? <PauseRounded /> : <PlayArrowRounded />}
-        </IconButton>
+          <IconButton
+            sx={{
+              backgroundColor: "#00000088",
+            }}
+            onClick={() => {
+              setPreviewVidPlaying(!previewVidPlaying);
+            }}
+          >
+            {previewVidPlaying ? <PauseRounded /> : <PlayArrowRounded />}
+          </IconButton>
 
-        <IconButton
-          sx={{
-            backgroundColor: "#00000088",
-          }}
-          onClick={() => {
-            setMetaScreenPlayerMuted(!MetaScreenPlayerMuted);
-          }}
-        >
-          {MetaScreenPlayerMuted ? <VolumeOffRounded /> : <VolumeUpRounded />}
-        </IconButton>
-      </Box>
+          <IconButton
+            sx={{
+              backgroundColor: "#00000088",
+            }}
+            onClick={() => {
+              setMetaScreenPlayerMuted(!MetaScreenPlayerMuted);
+            }}
+          >
+            {MetaScreenPlayerMuted ? <VolumeOffRounded /> : <VolumeUpRounded />}
+          </IconButton>
+        </Box>
+      )}
 
       <Box
         sx={{
@@ -121,7 +124,7 @@ function HeroDisplay({ item }: { item: Plex.Metadata }) {
           alignItems: "flex-start",
           justifyContent: "flex-end",
           background: `linear-gradient(90deg, #000000AA, #000000AA), url(${getTranscodeImageURL(
-            item?.art,
+            item?.art || item?.thumb,
             1920,
             1080
           )})`,
@@ -132,53 +135,53 @@ function HeroDisplay({ item }: { item: Plex.Metadata }) {
           position: "relative",
         }}
       >
-        <Box
-          sx={{
-            position: "absolute",
-            // make it take up the full width of the parent
-            width: "100%",
-            height: "100vh",
-            left: 0,
-            top: 0,
-            filter: "brightness(0.5)",
-            opacity: previewVidPlaying ? 1 : 0,
-            transition: "all 2s ease",
-            backgroundColor: previewVidPlaying ? "#000000" : "transparent",
-            pointerEvents: "none",
-
-            overflow: "hidden",
-            zIndex: 0,
-          }}
-        >
-          <ReactPlayer
-            url={previewVidURL ?? undefined}
-            controls={false}
-            width="100%"
-            height="100%"
-            playing={previewVidPlaying}
-            volume={MetaScreenPlayerMuted ? 0 : 0.5}
-            muted={MetaScreenPlayerMuted}
-            onEnded={() => {
-              setPreviewVidPlaying(false);
+        {previewVidURL && (
+          <Box
+            sx={{
+              position: "absolute",
+              width: "100%",
+              height: "100vh",
+              left: 0,
+              top: 0,
+              filter: "brightness(0.5)",
+              opacity: previewVidPlaying ? 1 : 0,
+              transition: "all 2s ease",
+              backgroundColor: previewVidPlaying ? "#000000" : "transparent",
+              pointerEvents: "none",
+              overflow: "hidden",
+              zIndex: 0,
             }}
-            pip={false}
-            config={{
-              file: {
-                attributes: {
-                  controlsList: "nodownload",
-                  disablePictureInPicture: true,
-                  disableRemotePlayback: true,
-                  style: {
-                    objectFit: "cover",
-                    width: "100%",
-                    height: "100%",
-                    zIndex: -1,
-                  }
+          >
+            <ReactPlayer
+              url={previewVidURL}
+              controls={false}
+              width="100%"
+              height="100%"
+              playing={previewVidPlaying}
+              volume={MetaScreenPlayerMuted ? 0 : 0.5}
+              muted={MetaScreenPlayerMuted}
+              onEnded={() => {
+                setPreviewVidPlaying(false);
+              }}
+              pip={false}
+              config={{
+                file: {
+                  attributes: {
+                    controlsList: "nodownload",
+                    disablePictureInPicture: true,
+                    disableRemotePlayback: true,
+                    style: {
+                      objectFit: "cover",
+                      width: "100%",
+                      height: "100%",
+                      zIndex: -1,
+                    },
+                  },
                 },
-              },
-            }}
-          />
-        </Box>
+              }}
+            />
+          </Box>
+        )}
 
         <Box
           sx={{
@@ -271,9 +274,26 @@ function HeroDisplay({ item }: { item: Plex.Metadata }) {
                 gap: "10px",
                 transition: "all 0.2s ease-in-out",
               }}
-              onClick={() => {
+              onClick={async () => {
                 if (!item) return;
-                navigate(`/watch/${item.ratingKey}`);
+                if (item.type === "track") {
+                  useAudioPlayerStore.getState().playTrack(item);
+                } else if (item.type === "album") {
+                  const tracks = await getLibraryMetaChildren(item.ratingKey);
+                  if (tracks && tracks.length > 0) {
+                    useAudioPlayerStore.getState().playAlbum(item, tracks);
+                  }
+                } else if (item.type === "artist") {
+                  const albums = await getLibraryMetaChildren(item.ratingKey);
+                  if (albums && albums.length > 0) {
+                    const tracks = await getLibraryMetaChildren(albums[0].ratingKey);
+                    if (tracks && tracks.length > 0) {
+                      useAudioPlayerStore.getState().playAlbum(albums[0], tracks);
+                    }
+                  }
+                } else {
+                  navigate(`/watch/${item.ratingKey}`);
+                }
               }}
             >
               <PlayArrowRounded fontSize="medium" /> Play

@@ -99,7 +99,9 @@ function Appbar() {
         return rawValue === undefined || rawValue === "true";
       });
 
-      setLibraries(filtered.filter((lib) => ["movie", "show"].includes(lib.type)));
+      setLibraries(
+        filtered.filter((lib) => ["movie", "show", "artist"].includes(lib.type))
+      );
     });
   }, [settings]);
 
@@ -508,7 +510,9 @@ function SearchBar({ onResultSelected, inDrawer }: { onResultSelected?: () => vo
             .filter(
               (item) =>
                 (item.Metadata &&
-                  ["movie", "show"].includes(item.Metadata.type)) ||
+                  ["movie", "show", "artist", "album", "track"].includes(
+                    item.Metadata.type
+                  )) ||
                 item.Directory
             )
             .sort((a, b) => {
@@ -738,7 +742,10 @@ function SearchBar({ onResultSelected, inDrawer }: { onResultSelected?: () => vo
                         color: "#777",
                       }}
                     >
-                      {item.Metadata.librarySectionTitle}
+                      {item.Metadata.grandparentTitle ||
+                        item.Metadata.originalTitle ||
+                        item.Metadata.parentTitle ||
+                        item.Metadata.librarySectionTitle}
                     </Typography>
                   </Box>
                 </Box>

@@ -42,9 +42,19 @@ export async function authedPut(url: string, body: any) {
 }
 
 export function queryBuilder(query: any) {
+    if (!query) return '';
     return Object.keys(query)
+        .filter(k => query[k] !== undefined && query[k] !== null)
         .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(query[k]))
         .join('&');
+}
+
+export function appendQuery(url: string, params?: Record<string, any>): string {
+    if (!params) return url;
+    const qs = queryBuilder(params);
+    if (!qs) return url;
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}${qs}`;
 }
 
 export function getXPlexProps() {

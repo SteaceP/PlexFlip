@@ -24,7 +24,10 @@ export default function Search() {
           res
             .filter(
               (item) =>
-                item.Metadata && ["movie", "show"].includes(item.Metadata.type)
+                item.Metadata &&
+                ["movie", "show", "artist", "album", "track"].includes(
+                  item.Metadata.type
+                )
             )
             .map((item) => item.Metadata)
             .filter(

@@ -21,6 +21,12 @@ export const libTypeToNum = (type: string) => {
       return 2;
     case "episode":
       return 4;
+    case "artist":
+      return 8;
+    case "album":
+      return 9;
+    case "track":
+      return 10;
     default:
       return 0;
   }
@@ -177,7 +183,14 @@ function BrowseLibrary() {
             </MenuItem>
             <Divider />
             {library?.Type?.filter((e) =>
-              ["movie", "show", "episode"].includes(e.type)
+              [
+                "movie",
+                "show",
+                "episode",
+                "artist",
+                "album",
+                "track",
+              ].includes(e.type)
             ).map((type) => (
               <MenuItem key={type.key} value={type.type}>
                 {type.title}
@@ -253,7 +266,8 @@ function BrowseLibrary() {
                       sx={{
                         width: "100%",
                         height: "auto",
-                        aspectRatio: "16/9",
+                        aspectRatio:
+                          library?.Type?.[0]?.type === "artist" ? "1/1" : "16/9",
                         borderRadius: "10px",
                       }}
                     />
@@ -296,7 +310,15 @@ function DisplayMovieItem({ item }: { item: Plex.Metadata }) {
         <MovieItem item={item} />
       ) : (
         <Box style={{ width: "100%" }}>
-          <Box sx={{ width: "100%", height: "auto", aspectRatio: "16/9" }} />
+          <Box
+            sx={{
+              width: "100%",
+              height: "auto",
+              aspectRatio: ["artist", "album", "track"].includes(item.type)
+                ? "1/1"
+                : "16/9",
+            }}
+          />
           <Box sx={{ width: "100%", height: "104px" }} />
         </Box>
       )}

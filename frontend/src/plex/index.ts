@@ -1,5 +1,5 @@
 import axios from "axios";
-import { authedGet, authedPost, authedPut, getIncludeProps, getXPlexProps, queryBuilder } from "./QuickFunctions";
+import { appendQuery, authedGet, authedPost, authedPut, getIncludeProps, getXPlexProps, queryBuilder } from "./QuickFunctions";
 import './plex.d.ts'
 import { getBackendURL } from "../backendURL";
 import { platformCache } from "../common/DesktopApp";
@@ -8,14 +8,14 @@ axios.defaults.headers.common['accept'] = 'application/json';
 
 export async function getAllLibraries(): Promise<Plex.LibarySection[]> {
     const res = await authedGet(`/library/sections`);
-    return res.MediaContainer.Directory;
+    return res?.MediaContainer?.Directory || [];
 }
 
 export async function getLibrary(key: string): Promise<Plex.MediaContainer> {
     const res = await authedGet(`/library/sections/${key}?${queryBuilder({
         ...getIncludeProps(),
     })}`);
-    return res.MediaContainer;
+    return res?.MediaContainer || ({ Metadata: [], size: 0 } as any);
 }
 
 /**
@@ -23,7 +23,7 @@ export async function getLibrary(key: string): Promise<Plex.MediaContainer> {
  */
 export async function getLibraryMedia(path: string): Promise<Plex.Metadata[]> {
     const res = await authedGet(`/library${path}`);
-    return res.MediaContainer.Metadata;
+    return res?.MediaContainer?.Metadata || [];
 }
 
 /**
@@ -34,16 +34,17 @@ export async function getLibraryMedia(path: string): Promise<Plex.Metadata[]> {
  * @returns {Promise<Plex.Metadata[]>} - A promise that resolves to an array of metadata items.
  */
 export async function getLibraryDir(key: string, props?: { [key: string]: any }): Promise<Plex.MediaContainer> {
-    const res = await authedGet(`${key}?${queryBuilder({
+    const url = appendQuery(key, {
         ...props,
         ...getIncludeProps(),
-    })}`);
-    return res.MediaContainer;
+    });
+    const res = await authedGet(url);
+    return res?.MediaContainer || ({ Metadata: [], size: 0 } as unknown as Plex.MediaContainer);
 }
 
 export async function getLibrarySecondary(key: string, directory: string): Promise<Plex.Directory[]> {
     const res = await authedGet(`/library/sections/${key}/${directory}`);
-    return res.MediaContainer.Directory;
+    return res?.MediaContainer?.Directory || [];
 }
 
 export async function getLibraryMeta(id: string): Promise<Plex.Metadata> {
@@ -52,7 +53,7 @@ export async function getLibraryMeta(id: string): Promise<Plex.Metadata> {
         ...getIncludeProps(),
         ...getXPlexProps()
     })}`);
-    return res.MediaContainer.Metadata[0];
+    return res?.MediaContainer?.Metadata?.[0] || ({} as Plex.Metadata);
 }
 
 export async function getLibraryMetaChildren(id: string): Promise<Plex.Metadata[]> {
@@ -60,8 +61,7 @@ export async function getLibraryMetaChildren(id: string): Promise<Plex.Metadata[
         ...getIncludeProps(),
         ...getXPlexProps()
     })}`);
-    return res.MediaContainer.Metadata;
-
+    return res?.MediaContainer?.Metadata || [];
 }
 
 export async function getSimilar(id: string): Promise<Plex.Metadata[]> {
@@ -75,7 +75,7 @@ export async function getSimilar(id: string): Promise<Plex.Metadata[]> {
         async: 1,
         ...getXPlexProps()
     })}`);
-    return res.MediaContainer.Metadata;
+    return res?.MediaContainer?.Metadata || [];
 }
 
 export async function getUniversalDecision(id: string, limitation: {
@@ -222,7 +222,8 @@ export async function getPlayQueue(uri: string): Promise<Plex.Metadata[]> {
  * @param height - The desired height of the transcoded image.
  * @returns The URL for the transcoded image.
  */
-export function getTranscodeImageURL(url: string, width: number, height: number) {
+export function getTranscodeImageURL(url: string | undefined, width: number, height: number) {
+    if (!url) return "";
     return `${getBackendURL()}/dynproxy/photo/:/transcode?${queryBuilder({
         width,
         height,
@@ -390,11 +391,11 @@ export async function getSearch(query: string): Promise<Plex.SearchResult[]> {
         query,
         "includeCollections": 1,
         "includeExtras": 1,
-        "searchTypes": "movies,otherVideos,tv",
+        "searchTypes": "movies,otherVideos,tv,music",
         "limit": 100,
         "X-Plex-Token": localStorage.getItem("accessToken") as string
     })}`);
-    return res.MediaContainer.SearchResult;
+    return res?.MediaContainer?.SearchResult || [];
 }
 
 /**

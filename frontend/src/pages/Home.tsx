@@ -43,8 +43,8 @@ export default function Home() {
         setLibraries(enabledLibraries);
 
         const filteredLibraries = enabledLibraries
-          .filter((lib) => ["movie", "show"].includes(lib.type))
-          .slice(0, 4); // limit to first 4 libraries
+          .filter((lib) => ["movie", "show", "artist"].includes(lib.type))
+          .slice(0, 6);
 
         if (settings["DISABLE_GENRE_RECOMMENDATIONS"] !== "true") {
           const featuredData = await getRecommendations(filteredLibraries);
@@ -131,7 +131,7 @@ export default function Home() {
       >
         <Grid container spacing={2} sx={{ px: "2.5vw", mt: 2, width: "100%" }}>
           {libraries
-            ?.filter((e) => ["movie", "show"].includes(e.type || ""))
+            ?.filter((e) => ["movie", "show", "artist"].includes(e.type || ""))
             .map((library) => (
               <Grid
                 size={{ xs: 6, sm: 4, md: 3, lg: 2, xl: 2 }}

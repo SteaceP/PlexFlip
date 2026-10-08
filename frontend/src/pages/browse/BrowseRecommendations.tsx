@@ -28,7 +28,6 @@ function BrowseRecommendations() {
     null
   );
   const [categories, setCategories] = React.useState<Category[] | null>([]);
-  const [loading, setLoading] = React.useState(true);
   const { settings } = useUserSettings();
 
   const showHero = settings["DISABLE_HERO_DISPLAY"] !== "true";
@@ -45,21 +44,39 @@ function BrowseRecommendations() {
     setCategories([]);
 
     if (!library) return;
-    setLoading(true);
+
+    const libraryType = library.Type?.[0]?.type;
+    const isMusic = libraryType === "artist";
 
     const fetchHero = async () => {
       if (!showHero) return;
       try {
-        const media = await getLibraryDir(
-          `/library/sections/${library.librarySectionID.toString()}/unwatched`
+        const heroUrl = isMusic
+          ? `/library/sections/${library.librarySectionID}/all`
+          : `/library/sections/${library.librarySectionID}/unwatched`;
+
+        let media = await getLibraryDir(
+          heroUrl,
+          isMusic ? { limit: 20 } : undefined
         );
-        const data = media.Metadata;
-        if (!data || data.length === 0) return;
+        let data = media?.Metadata;
+        if (!data || data.length === 0) {
+          media = await getLibraryDir(
+            `/library/sections/${library.librarySectionID}/all`,
+            { limit: 20 }
+          );
+          data = media?.Metadata;
+        }
+        if (!data || data.length === 0) {
+          setFeaturedItem({} as Plex.Metadata);
+          return;
+        }
         const item = data[Math.floor(Math.random() * data.length)];
         const meta = await getLibraryMeta(item.ratingKey);
         setFeaturedItem(meta);
       } catch (err) {
         console.error("Error fetching featured hero item", err);
+        setFeaturedItem({} as Plex.Metadata);
       }
     };
 
@@ -104,7 +121,7 @@ function BrowseRecommendations() {
         getLibraryDir(
           `/library/sections/${library.librarySectionID.toString()}/all`,
           {
-            type: library.Type?.[0].type === "movie" ? "1" : "2",
+            type: libraryType === "movie" ? "1" : isMusic ? "9" : "2",
             sort: "lastViewedAt:desc",
             limit: "20",
             unwatched: "0",
@@ -113,7 +130,11 @@ function BrowseRecommendations() {
           .then(async (media) => {
             let data = media.Metadata;
             if (!data) return resolve([]);
-            resolve(data.filter((item) => ["movie", "show"].includes(item.type)));
+            resolve(
+              data.filter((item) =>
+                ["movie", "show", "artist", "album", "track"].includes(item.type)
+              )
+            );
           })
           .catch(() => resolve([]));
       });
@@ -134,7 +155,9 @@ function BrowseRecommendations() {
                 shortenedTitle = `${shortenedTitle.slice(0, 40)}...`;
 
               categoryPool.push({
-                title: `Because you watched ${shortenedTitle}`,
+                title: isMusic
+                  ? `Because you listened to ${shortenedTitle}`
+                  : `Because you watched ${shortenedTitle}`,
                 dir: lastViewItem.Related.Hub[0].hubKey,
                 link: lastViewItem.Related.Hub[0].key,
                 shuffle: true,
@@ -163,7 +186,7 @@ function BrowseRecommendations() {
         }
 
         if (settings["DISABLE_RECENTLY_ADDED"] !== "true") {
-          if (library.Type?.[0].type === "show") {
+          if (libraryType === "show") {
             categoryPool.push({
               title: "Recently Added",
               dir: `/hubs/home/recentlyAdded`,
@@ -177,13 +200,23 @@ function BrowseRecommendations() {
               },
               filter: (item) => item.type === "show",
             });
+          } else if (isMusic) {
+            categoryPool.push({
+              title: "Recently Added Albums",
+              dir: `/library/sections/${library.librarySectionID}/recentlyAdded`,
+              link: `/library/sections/${library.librarySectionID}/recentlyAdded`,
+              props: {
+                type: "9",
+                limit: "30",
+              },
+            });
           }
         }
 
         categoryPool = shuffleArray([...genres, ...categoryPool]);
 
         if (settings["DISABLE_RECENTLY_ADDED"] !== "true") {
-          if (library.Type?.[0].type === "movie") {
+          if (libraryType === "movie") {
             categoryPool.unshift({
               title: "Recently Added",
               dir: `/library/sections/${library.librarySectionID}/recentlyAdded`,
@@ -194,10 +227,21 @@ function BrowseRecommendations() {
               dir: `/library/sections/${library.librarySectionID}/newest`,
               link: `/library/sections/${library.librarySectionID}/newest`,
             });
+          } else if (isMusic) {
+            categoryPool.unshift({
+              title: "Recently Played",
+              dir: `/library/sections/${library.librarySectionID}/all`,
+              link: `/library/sections/${library.librarySectionID}/all`,
+              props: {
+                type: "9",
+                sort: "lastViewedAt:desc",
+                limit: "30",
+              },
+            });
           }
         }
 
-        if (settings["DISABLE_CONTINUE_WATCHING"] !== "true") {
+        if (settings["DISABLE_CONTINUE_WATCHING"] !== "true" && !isMusic) {
           categoryPool.unshift({
             title: "Continue Watching",
             dir: `/library/sections/${library.librarySectionID}/onDeck`,
@@ -209,15 +253,17 @@ function BrowseRecommendations() {
         setCategories(categoryPool);
       } catch (err) {
         console.error("Error setting categories", err);
-      } finally {
-        setLoading(false);
       }
     };
 
-    Promise.all([fetchHero(), fetchCategories()]);
+    fetchHero();
+    fetchCategories();
   }, [library, settings, showHero]);
 
-  if (loading || !library)
+  const hasHero = showHero && Boolean(featuredItem?.ratingKey);
+  const heroLoading = showHero && featuredItem === null;
+
+  if (heroLoading || categories === null || !library)
     return (
       <Box
         component={motion.div}
@@ -255,11 +301,11 @@ function BrowseRecommendations() {
         pb: 8,
       }}
     >
-      {showHero && featuredItem && <HeroDisplay item={featuredItem} />}
+      {hasHero && featuredItem && <HeroDisplay item={featuredItem} />}
       <Box
         sx={{
           zIndex: 1,
-          mt: showHero && featuredItem ? "-20vh" : "80px",
+          mt: hasHero ? "-20vh" : "80px",
           display: "flex",
           flexDirection: "column",
           alignItems: "flex-start",
