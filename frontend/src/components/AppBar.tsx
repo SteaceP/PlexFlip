@@ -60,7 +60,10 @@ const BarSide: SxProps<Theme> = {
 };
 
 function Appbar() {
-  const [scrollAtTop, setScrollAtTop] = useState(true);
+  const [scrollAtTop, setScrollAtTop] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return (window.scrollY || document.documentElement.scrollTop || 0) === 0;
+  });
   const location = useLocation();
   const { room } = useSyncSessionState();
   const [, setSearchParams] = useSearchParams();
@@ -73,10 +76,12 @@ function Appbar() {
 
   useEffect(() => {
     const onScroll = () => {
-      setScrollAtTop(window.scrollY === 0);
+      const isTop = (window.scrollY || document.documentElement.scrollTop || 0) === 0;
+      setScrollAtTop(isTop);
     };
 
-    window.addEventListener("scroll", onScroll);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
 
     return () => {
       window.removeEventListener("scroll", onScroll);
@@ -118,9 +123,15 @@ function Appbar() {
         height: 64,
         transition: "all 0.5s ease-in-out",
 
-        bgcolor: (theme) => (scrollAtTop ? "#00000000" : theme.palette.background.default + "88"),
+        bgcolor: (theme) =>
+          scrollAtTop ? "#00000000" : theme.palette.background.default + "88",
         backdropFilter: scrollAtTop ? "blur(0px)" : "blur(20px)",
+        WebkitBackdropFilter: scrollAtTop ? "blur(0px)" : "blur(20px)",
         boxShadow: scrollAtTop ? "none" : "0px 0px 10px 0px #000000AA",
+
+        transform: "translateZ(0)",
+        WebkitTransform: "translateZ(0)",
+        willChange: "backdrop-filter",
 
         borderRadius: "0px",
         border: "none",
