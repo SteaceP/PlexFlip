@@ -265,7 +265,7 @@ S - Skip onscreen markers (intro, credits, etc)
         }}
       >
         <img
-          src="/logo.png"
+          src="/logo.svg"
           alt="PlexFlip Logo"
           width={isMobile ? 90 : 120}
           style={{
@@ -376,7 +376,7 @@ S - Skip onscreen markers (intro, credits, etc)
         }}
       >
         <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
-          <img src="/logo.png" alt="PlexFlip Logo" width="120" style={{ objectFit: "contain" }} />
+          <img src="/logo.svg" alt="PlexFlip Logo" width="120" style={{ objectFit: "contain" }} />
 
           <SearchBar inDrawer onResultSelected={() => setDrawerOpen(false)} />
 

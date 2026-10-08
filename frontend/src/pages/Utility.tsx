@@ -154,7 +154,7 @@ function Utility() {
       {/* Logo Branding */}
       <Box sx={{ mb: 3, textAlign: "center" }}>
         <img
-          src="/logoBig.png"
+          src="/logo.svg"
           alt="PlexFlip Logo"
           style={{ width: "220px", height: "auto", filter: "drop-shadow(0 6px 16px rgba(99,102,241,0.25))" }}
         />

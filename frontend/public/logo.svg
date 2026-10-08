@@ -1,0 +1,55 @@
+<svg width="860" height="240" viewBox="-20 -20 840 240" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Main Gradient: Electric Blue to Deep Indigo -->
+    <linearGradient id="mainGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#8E9EFF;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#5B5CFF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3A2DCC;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Reversed Gradient for the Flipped 'P' to emphasize the 'Flip' -->
+    <linearGradient id="flippedGrad" x1="100%" y1="0%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#8E9EFF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3A2DCC;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Soft Drop Shadow for Premium Depth -->
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="12" stdDeviation="10" flood-color="#3A2DCC" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- Entire Logo Group with Shadow -->
+  <g filter="url(#shadow)">
+    
+    <!-- P -->
+    <path d="M50 40 H100 A40 40 0 0 1 100 120 H80 V160 H50 V40 Z M80 70 V90 H100 A10 10 0 0 0 100 70 H80 Z" fill="url(#mainGrad)" />
+    
+    <!-- L -->
+    <path d="M130 40 H160 V130 H200 V160 H130 V40 Z" fill="url(#mainGrad)" />
+    
+    <!-- E -->
+    <path d="M220 40 H300 V70 H250 V85 H290 V115 H250 V130 H300 V160 H220 V40 Z" fill="url(#mainGrad)" />
+    
+    <!-- X -->
+    <path d="M320 40 H350 L370 80 L390 40 H420 L385 100 L420 160 H390 L370 120 L350 160 H320 L355 100 L320 40 Z" fill="url(#mainGrad)" />
+    
+    <!-- F -->
+    <path d="M440 40 H510 V70 H470 V90 H500 V120 H470 V160 H440 V40 Z" fill="url(#mainGrad)" />
+    
+    <!-- L -->
+    <path d="M530 40 H560 V130 H600 V160 H530 V40 Z" fill="url(#mainGrad)" />
+    
+    <!-- i (Stem) -->
+    <path d="M620 70 H650 V160 H620 V70 Z" fill="url(#mainGrad)" />
+    
+    <!-- i (Standard Round Dot with Glossy Highlight) -->
+    <circle cx="635" cy="40" r="15" fill="url(#mainGrad)" />
+    <!-- Glossy highlight on the dot -->
+    <ellipse cx="632" cy="35" rx="5" ry="3" fill="white" opacity="0.6" />
+    
+    <!-- Flipped P (Using the Reversed Gradient to symbolize the Flip) -->
+    <path d="M750 40 H700 A40 40 0 0 0 700 120 H720 V160 H750 V40 Z M720 70 V90 H700 A10 10 0 0 1 700 70 H720 Z" fill="url(#flippedGrad)" />
+
+  </g>
+</svg>

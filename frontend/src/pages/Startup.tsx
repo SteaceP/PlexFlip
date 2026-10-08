@@ -148,7 +148,7 @@ function Startup() {
       }}
     >
       <img
-        src="/logoBig.png"
+        src="/logo.svg"
         alt="PlexFlip Logo"
         style={{ width: "35vw", height: "auto" }}
       />

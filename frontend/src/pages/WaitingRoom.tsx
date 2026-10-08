@@ -37,7 +37,7 @@ function WaitingRoom() {
       }}
     >
       <img
-        src="/logoBig.png"
+        src="/logo.svg"
         alt="PlexFlip"
         style={{
           width: "30vw",
