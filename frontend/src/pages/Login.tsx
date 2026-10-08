@@ -15,7 +15,7 @@ import {
   Typography,
 } from "@mui/material";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { getBrowserName, queryBuilder } from "../plex/QuickFunctions";
+import { queryBuilder } from "../plex/QuickFunctions";
 import { useSearchParams } from "react-router-dom";
 import { getAccessToken, getPin, signInWithEmailPassword } from "../plex";
 import axios from "axios";
@@ -59,7 +59,6 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [pinData, setPinData] = useState<{ id: number; code: string } | null>(null);
-  const [authUrl, setAuthUrl] = useState<string>("");
   const [copied, setCopied] = useState<boolean>(false);
   const [browserOpened, setBrowserOpened] = useState<boolean>(false);
   const [isCompleting, setIsCompleting] = useState<boolean>(false);
@@ -220,14 +219,6 @@ export default function Login() {
         console.warn("Could not register PIN with backend:", pinRegErr);
       }
 
-      const generatedUrl = `https://app.plex.tv/auth#?clientID=${encodeURIComponent(
-        clientID
-      )}&code=${encodeURIComponent(
-        pin.code
-      )}&context[device][product]=Nevu&context[device][version]=0.1.0&context[device][platform]=Nevu%20Desktop&context[device][device]=Desktop`;
-
-      setAuthUrl(generatedUrl);
-
       // Start polling Plex API for token resolution
       pollIntervalRef.current = setInterval(async () => {
         if (isCompletingRef.current) return;
@@ -312,17 +303,6 @@ export default function Login() {
       stopPolling();
     };
   }, [query, completeLogin, createPinAndStartPolling, stopPolling]);
-
-  const handleOpenBrowser = async () => {
-    if (!authUrl) return;
-    setBrowserOpened(true);
-    await openExternalURL(authUrl);
-  };
-
-  const handleContinueInApp = () => {
-    if (!authUrl) return;
-    window.location.href = authUrl;
-  };
 
   const handleCopyCode = () => {
     if (pinData?.code) {
@@ -978,39 +958,6 @@ export default function Login() {
               </Typography>
             </Stack>
 
-            {/* Secondary actions: In-app fallback & browser auth */}
-            <Stack direction="row" spacing={1} justifyContent="center" sx={{ pt: 0.5 }}>
-              <Button
-                size="small"
-                onClick={handleContinueInApp}
-                disabled={!authUrl}
-                sx={{
-                  color: "#94A3B8",
-                  textTransform: "none",
-                  fontSize: "0.8rem",
-                  "&:hover": { color: "#F8FAFC" },
-                }}
-              >
-                Sign In In-App (Webview)
-              </Button>
-
-              <Divider orientation="vertical" flexItem sx={{ borderColor: "rgba(255,255,255,0.1)" }} />
-
-              <Button
-                size="small"
-                onClick={handleOpenBrowser}
-                disabled={!authUrl}
-                startIcon={<OpenInNewIcon fontSize="small" />}
-                sx={{
-                  color: "#94A3B8",
-                  textTransform: "none",
-                  fontSize: "0.8rem",
-                  "&:hover": { color: "#F8FAFC" },
-                }}
-              >
-                Open Plex Web Auth
-              </Button>
-            </Stack>
           </Stack>
         )}
       </Card>
