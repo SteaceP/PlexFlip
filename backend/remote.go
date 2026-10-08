@@ -24,7 +24,7 @@ type remoteClientInfo struct {
 
 func InitRemoteServer(corsOrigin string) *RemoteServer {
 	opts := socket.DefaultServerOptions()
-	opts.SetPath("/nevu-remote")
+	opts.SetPath("/plexflip-remote")
 	opts.SetCors(&types.Cors{
 		Origin: corsOrigin,
 	})

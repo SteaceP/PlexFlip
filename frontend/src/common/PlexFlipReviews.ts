@@ -1,7 +1,7 @@
 import axios, { AxiosError } from "axios";
 import { getBackendURL } from "../backendURL";
 
-export async function getNevuReviews(itemID: string, userID?: string): Promise<PerPlexed.Reviews.Review[]> {
+export async function getPlexFlipReviews(itemID: string, userID?: string): Promise<PerPlexed.Reviews.Review[]> {
     const res = await axios.get(`${getBackendURL()}/reviews`, {
         params: {
             itemID,
@@ -12,14 +12,14 @@ export async function getNevuReviews(itemID: string, userID?: string): Promise<P
             'x-plex-token': localStorage.getItem("accAccessToken") || ""
         }
     }).catch((error: AxiosError) => {
-        console.error("Failed to fetch Nevu reviews:", error);
+        console.error("Failed to fetch PlexFlip reviews:", error);
         return error.response || { data: { error: "Failed to fetch reviews" } };
     });
 
     return res.data;
 }
 
-export async function updateNevuReview(
+export async function updatePlexFlipReview(
     itemID: string,
     rating: number,
     message: string,
@@ -38,14 +38,14 @@ export async function updateNevuReview(
             'x-plex-token': localStorage.getItem("accAccessToken") || ""
         }
     }).catch((error: AxiosError) => {
-        console.error("Failed to update Nevu review:", error);
+        console.error("Failed to update PlexFlip review:", error);
         return error.response || { data: { error: "Failed to update review" } };
     });
 
     return res.data;
 }
 
-export async function deleteNevuReview(itemID: string, visibility: "GLOBAL" | "LOCAL"): Promise<void> {
+export async function deletePlexFlipReview(itemID: string, visibility: "GLOBAL" | "LOCAL"): Promise<void> {
     const res = await axios.delete(`${getBackendURL()}/reviews`, {
         params: {
             itemID,
@@ -56,7 +56,7 @@ export async function deleteNevuReview(itemID: string, visibility: "GLOBAL" | "L
             'x-plex-token': localStorage.getItem("accAccessToken") || ""
         }
     }).catch((error: AxiosError) => {
-        console.error("Failed to delete Nevu review:", error);
+        console.error("Failed to delete PlexFlip review:", error);
         return error.response || { data: { error: "Failed to delete review" } };
     });
 

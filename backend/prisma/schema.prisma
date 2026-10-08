@@ -20,7 +20,7 @@ model UserOption {
   @@unique([userUid, key])
 }
 
-model NevuReviewsLocal {
+model PlexFlipReviewsLocal {
   itemID String
   userID String
   created_at DateTime @default(now())
@@ -29,13 +29,13 @@ model NevuReviewsLocal {
   message String @default("No review text provided")
   spoilers Boolean @default(false)
 
-  user NevuReviewsLocalUsers @relation(fields: [userID], references: [id])
+  user PlexFlipReviewsLocalUsers @relation(fields: [userID], references: [id])
 
   @@id([itemID, userID])
   @@unique([itemID, userID])
 }
 
-model NevuReviewsLocalUsers {
+model PlexFlipReviewsLocalUsers {
   id String @default(cuid())
   created_at DateTime @default(now())
 
@@ -45,5 +45,5 @@ model NevuReviewsLocalUsers {
   @@id([id])
   @@unique([id])
 
-  reviews NevuReviewsLocal[]
+  reviews PlexFlipReviewsLocal[]
 }

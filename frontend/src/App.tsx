@@ -57,11 +57,11 @@ function AppTitleManager() {
     const capitalizedFriendlyName =
       PlexServer.friendlyName.charAt(0).toUpperCase() +
       PlexServer.friendlyName.slice(1);
-    document.title = `${capitalizedFriendlyName} - Nevu`;
+    document.title = `${capitalizedFriendlyName} - PlexFlip`;
   }, [PlexServer]);
 
   useEffect(() => {
-    document.title = "Nevu";
+    document.title = "PlexFlip";
   }, []);
 
   return <></>;

@@ -1,13 +1,13 @@
 [Desktop Entry]
 Version=1.0
-Name=Nevu
-Comment=Nevu Plex Client
+Name=PlexFlip
+Comment=PlexFlip Plex Client
 # The Exec line includes %u to pass the URL to the application
-Exec=/usr/local/bin/nevu %u
+Exec=/usr/local/bin/plexflip %u
 Terminal=false
 Type=Application
-Icon=nevu
+Icon=plexflip
 Categories=Utility;
-StartupWMClass=nevu
+StartupWMClass=plexflip
 
  

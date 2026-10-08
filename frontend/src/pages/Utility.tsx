@@ -155,7 +155,7 @@ function Utility() {
       <Box sx={{ mb: 3, textAlign: "center" }}>
         <img
           src="/logoBig.png"
-          alt="NEVU Logo"
+          alt="PlexFlip Logo"
           style={{ width: "220px", height: "auto", filter: "drop-shadow(0 6px 16px rgba(99,102,241,0.25))" }}
         />
       </Box>
@@ -213,7 +213,7 @@ function Utility() {
             <Typography variant="body2" sx={{ color: "#94A3B8" }}>
               {isUnconfigured
                 ? "Enter your Plex server address to start streaming."
-                : "Nevu connects directly to your local or remote Plex server."}
+                : "PlexFlip connects directly to your local or remote Plex server."}
             </Typography>
           </Box>
         </Box>
@@ -252,7 +252,7 @@ function Utility() {
                 color: "#A7F3D0",
               }}
             >
-              Plex server address configured! Connecting to Nevu...
+              Plex server address configured! Connecting to PlexFlip...
             </Alert>
           </Fade>
         )}

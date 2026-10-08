@@ -20,7 +20,7 @@ sessionStorage.setItem("sessionID", uuidv4());
 
 let config: PerPlexed.ConfigOptions = {
   DISABLE_PROXY: false, // DEPRECATED
-  DISABLE_NEVU_SYNC: false,
+  DISABLE_PLEXFLIP_SYNC: false,
 };
 
 (() => {

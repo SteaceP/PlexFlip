@@ -2,14 +2,14 @@
 
 SHELL := /bin/bash
 BIN_DIR ?= bin
-BINARY ?= $(BIN_DIR)/nevu
-SERVER_BINARY ?= $(BIN_DIR)/nevu-server
+BINARY ?= $(BIN_DIR)/plexflip
+SERVER_BINARY ?= $(BIN_DIR)/plexflip-server
 BACKEND_WWW := backend/www
 
 all: build
 
 help:
-	@echo "Nevu Build Framework"
+	@echo "PlexFlip Build Framework"
 	@echo ""
 	@echo "Targets:"
 	@echo "  make build           - Build frontend and compile native desktop binary ($(BINARY))"
@@ -77,8 +77,8 @@ clean:
 	@mkdir -p $(BACKEND_WWW)
 	@rm -rf $(BACKEND_WWW)/*
 	@touch $(BACKEND_WWW)/.gitkeep
-	@rm -f backend/nevu backend/nevu-backend backend/backend backend/nevu-server
+	@rm -f backend/plexflip backend/plexflip-backend backend/backend backend/plexflip-server
 
 docker-build:
 	@echo "==> Building Docker image..."
-	@docker build -t ipmake/nevu:latest .
+	@docker build -t coderage/plexflip:latest .

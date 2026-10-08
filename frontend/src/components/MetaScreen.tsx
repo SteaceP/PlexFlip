@@ -59,7 +59,7 @@ import moment from "moment";
 import { getBackendURL } from "../backendURL";
 import { queryBuilder } from "../plex/QuickFunctions";
 import AddReviewModal from "./modals/AddReviewModal";
-import { getNevuReviews } from "../common/NevuReviews";
+import { getPlexFlipReviews } from "../common/PlexFlipReviews";
 
 function MetaScreen() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -1374,7 +1374,7 @@ function MetaPage3(data: Plex.Metadata | undefined) {
 function MetaPageReviews({ data }: { data: Plex.Metadata | undefined }) {
   const [reviews, setReviews] = useState<
     | (PlexCommunity.ReviewsData & {
-        nevuReviews: PerPlexed.Reviews.Review[];
+        plexFlipReviews: PerPlexed.Reviews.Review[];
       })
     | null
   >(null);
@@ -1397,9 +1397,9 @@ function MetaPageReviews({ data }: { data: Plex.Metadata | undefined }) {
               ) === undefined
           ) ?? [];
 
-        const nevuReviews = await getNevuReviews(data.guid);
+        const plexFlipReviews = await getPlexFlipReviews(data.guid);
 
-        setReviews({ ...res, nevuReviews });
+        setReviews({ ...res, plexFlipReviews });
       })
       .finally(() => {
         setLoading(false);
@@ -1410,7 +1410,7 @@ function MetaPageReviews({ data }: { data: Plex.Metadata | undefined }) {
     title: string,
     reviewNodes: any[] | undefined,
     isEmpty: boolean,
-    isNevu: boolean = false
+    isPlexFlip: boolean = false
   ) => {
     if (isEmpty) return null;
     return (
@@ -1427,19 +1427,19 @@ function MetaPageReviews({ data }: { data: Plex.Metadata | undefined }) {
         {reviewNodes && reviewNodes.length > 0 ? (
           <Grid container spacing={3} sx={{ width: "100%" }}>
             {reviewNodes?.map((review, index) => {
-              const username = isNevu
+              const username = isPlexFlip
                 ? (review as PerPlexed.Reviews.Review).user.username
                 : (review as PlexCommunity.ActivityReview).userV2?.username;
 
-              const avatarSrc = isNevu
+              const avatarSrc = isPlexFlip
                 ? (review as PerPlexed.Reviews.Review).user.avatar
                 : (review as PlexCommunity.ActivityReview).userV2?.avatar;
 
-              const hasSpoilers = isNevu
+              const hasSpoilers = isPlexFlip
                 ? (review as PerPlexed.Reviews.Review).spoilers
                 : (review as PlexCommunity.ActivityReview).hasSpoilers;
 
-              const reviewDate = isNevu
+              const reviewDate = isPlexFlip
                 ? (review as PerPlexed.Reviews.Review).created_at
                 : (review as PlexCommunity.ActivityReview).date;
 
@@ -1575,7 +1575,7 @@ function MetaPageReviews({ data }: { data: Plex.Metadata | undefined }) {
     (reviews?.topReviews?.nodes.length ?? 0) +
     (reviews?.friendReviews?.nodes.length ?? 0) +
     (reviews?.recentReviews?.nodes.length ?? 0) +
-    (reviews?.nevuReviews?.length ?? 0);
+    (reviews?.plexFlipReviews?.length ?? 0);
 
   return (
     <Box
@@ -1650,9 +1650,9 @@ function MetaPageReviews({ data }: { data: Plex.Metadata | undefined }) {
       ) : (
         <Box sx={{ width: "100%" }}>
           {renderReviewsSection(
-            "NEVU Reviews",
-            reviews.nevuReviews,
-            !reviews.nevuReviews.length,
+            "PlexFlip Reviews",
+            reviews.plexFlipReviews,
+            !reviews.plexFlipReviews.length,
             true
           )}
 

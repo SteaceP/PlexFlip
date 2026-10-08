@@ -38,13 +38,13 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
       
       - name: Create builder instance
-        run: docker buildx create --name nevuBuilder --use
+        run: docker buildx create --name plexflipBuilder --use
 
       - name: Build and push the amd64 image
-        run: docker buildx build --platform linux/amd64 -t ipmake/nevu:preview-amd64 . --push
+        run: docker buildx build --platform linux/amd64 -t coderage/plexflip:preview-amd64 . --push
 
       - name: Build and push the arm64 image
-        run: docker buildx build --platform linux/arm64 -t ipmake/nevu:preview-arm64 . --push
+        run: docker buildx build --platform linux/arm64 -t coderage/plexflip:preview-arm64 . --push
 
       - name: Build and push multi-platform Docker image
-        run: docker buildx imagetools create --tag ipmake/nevu:preview ipmake/nevu:preview-amd64 ipmake/nevu:preview-arm64
+        run: docker buildx imagetools create --tag coderage/plexflip:preview coderage/plexflip:preview-amd64 coderage/plexflip:preview-arm64

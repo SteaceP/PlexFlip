@@ -22,8 +22,8 @@ type ConfigResponse struct {
 }
 
 type ConfigOpts struct {
-	DisableProxy    bool `json:"DISABLE_PROXY"`
-	DisableNevuSync bool `json:"DISABLE_NEVU_SYNC"`
+	DisableProxy        bool `json:"DISABLE_PROXY"`
+	DisablePlexFlipSync bool `json:"DISABLE_PLEXFLIP_SYNC"`
 }
 
 // PlexUser represents a user returned by Plex.tv API v2.

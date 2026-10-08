@@ -50,7 +50,7 @@ export function queryBuilder(query: any) {
 export function getXPlexProps() {
     return {
         "X-Incomplete-Segments": "1",
-        "X-Plex-Product": platformCache.platform?.platform ? "Nevu Desktop" : "Nevu Web",
+        "X-Plex-Product": platformCache.platform?.platform ? "PlexFlip Desktop" : "PlexFlip Web",
         "X-Plex-Version": "10.26.0.2578",
         "X-Plex-Client-Identifier": localStorage.getItem("clientID"),
         "X-Plex-Platform": platformCache.platform?.platform ?? getBrowserName(),
@@ -58,7 +58,7 @@ export function getXPlexProps() {
         "X-Plex-Features": "external-media,indirect-media,hub-style-list",
         "X-Plex-Model": "bundled",
         "X-Plex-Device": platformCache.platform?.platform ? "Chrome" : getBrowserName(),
-        "X-Plex-Device-Name": platformCache.deviceName ?? "Nevu Web",
+        "X-Plex-Device-Name": platformCache.deviceName ?? "PlexFlip Web",
         "X-Plex-Device-Screen-Resolution": getResString(),
         "X-Plex-Token": localStorage.getItem("accessToken"),
         "X-Plex-Language": "en",

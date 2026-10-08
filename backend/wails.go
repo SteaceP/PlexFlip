@@ -91,7 +91,7 @@ func isHeadlessMode() bool {
 			return true
 		}
 	}
-	if os.Getenv("HEADLESS") == "true" || os.Getenv("NEVU_HEADLESS") == "true" || os.Getenv("SERVER_MODE") == "true" {
+	if os.Getenv("HEADLESS") == "true" || os.Getenv("PLEXFLIP_HEADLESS") == "true" || os.Getenv("SERVER_MODE") == "true" {
 		return true
 	}
 	// On Linux, check if GUI display server is available
@@ -105,11 +105,11 @@ func isHeadlessMode() bool {
 
 func (a *ServerApp) runLifecycle(server *http.Server, cancel context.CancelFunc) {
 	if isHeadlessMode() {
-		log.Println("Nevu running in headless/server mode (GUI disabled)")
+		log.Println("PlexFlip running in headless/server mode (GUI disabled)")
 		quit := make(chan os.Signal, 1)
 		signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 		<-quit
-		log.Println("Shutting down Nevu server...")
+		log.Println("Shutting down PlexFlip server...")
 		cancel()
 		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer shutdownCancel()
@@ -118,12 +118,12 @@ func (a *ServerApp) runLifecycle(server *http.Server, cancel context.CancelFunc)
 		return
 	}
 
-	log.Println("Starting Nevu desktop application (Wails v3)...")
+	log.Println("Starting PlexFlip desktop application (Wails v3)...")
 
 	desktopSvc := &DesktopService{}
 	wailsApp := application.New(application.Options{
-		Name:        "Nevu",
-		Description: "Nevu - Plex Web UI Desktop Client",
+		Name:        "PlexFlip",
+		Description: "PlexFlip - Plex Web UI Desktop Client",
 		Icon:        appIconBytes,
 		Services: []application.Service{
 			application.NewService(desktopSvc),
@@ -138,7 +138,7 @@ func (a *ServerApp) runLifecycle(server *http.Server, cancel context.CancelFunc)
 	windowURL := fmt.Sprintf("http://127.0.0.1:%d", a.listenPort)
 	wailsApp.Window.NewWithOptions(application.WebviewWindowOptions{
 		Name:             "main",
-		Title:            "Nevu",
+		Title:            "PlexFlip",
 		Width:            1280,
 		Height:           800,
 		MinWidth:         900,
@@ -169,7 +169,7 @@ func (a *ServerApp) runLifecycle(server *http.Server, cancel context.CancelFunc)
 		log.Printf("Wails application exited with error: %v", err)
 	}
 
-	log.Println("Shutting down Nevu server...")
+	log.Println("Shutting down PlexFlip server...")
 	cancel()
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer shutdownCancel()

@@ -38,7 +38,7 @@ function WaitingRoom() {
     >
       <img
         src="/logoBig.png"
-        alt="NEVU"
+        alt="PlexFlip"
         style={{
           width: "30vw",
           height: "auto",

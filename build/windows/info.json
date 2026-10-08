@@ -5,10 +5,10 @@
 	"info": {
 		"0000": {
 			"ProductVersion": "0.1.0",
-			"CompanyName": "Ipmake",
-			"FileDescription": "Nevu Plex Client",
+			"CompanyName": "Code Rage",
+			"FileDescription": "PlexFlip Plex Client",
 			"LegalCopyright": "© 2026, Code Rage",
-			"ProductName": "Nevu",
+			"ProductName": "PlexFlip",
 			"Comments": "This is a comment"
 		}
 	}

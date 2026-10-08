@@ -4,11 +4,11 @@
         <key>CFBundlePackageType</key>
             <string>APPL</string>
         <key>CFBundleName</key>
-            <string>Nevu</string>
+            <string>PlexFlip</string>
         <key>CFBundleExecutable</key>
-            <string>nevu</string>
+            <string>plexflip</string>
         <key>CFBundleIdentifier</key>
-            <string>com.ipmake.nevu</string>
+            <string>com.coderage.plexflip</string>
         <key>CFBundleVersion</key>
             <string>0.1.0</string>
         <key>CFBundleGetInfoString</key>

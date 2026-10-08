@@ -64,14 +64,14 @@ func initDB() (*Database, error) {
 		PRIMARY KEY (userUid, key)
 	);
 
-	CREATE TABLE IF NOT EXISTS NevuReviewsLocalUsers (
+	CREATE TABLE IF NOT EXISTS PlexFlipReviewsLocalUsers (
 		id TEXT NOT NULL PRIMARY KEY,
 		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		username TEXT NOT NULL,
 		avatar TEXT NOT NULL
 	);
 
-	CREATE TABLE IF NOT EXISTS NevuReviewsLocal (
+	CREATE TABLE IF NOT EXISTS PlexFlipReviewsLocal (
 		itemID TEXT NOT NULL,
 		userID TEXT NOT NULL,
 		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -79,7 +79,7 @@ func initDB() (*Database, error) {
 		message TEXT NOT NULL DEFAULT 'No review text provided',
 		spoilers BOOLEAN NOT NULL DEFAULT 0,
 		PRIMARY KEY (itemID, userID),
-		FOREIGN KEY (userID) REFERENCES NevuReviewsLocalUsers(id) ON DELETE CASCADE
+		FOREIGN KEY (userID) REFERENCES PlexFlipReviewsLocalUsers(id) ON DELETE CASCADE
 	);
 
 	CREATE TABLE IF NOT EXISTS ServerConfig (
@@ -91,7 +91,6 @@ func initDB() (*Database, error) {
 	if _, err := db.Exec(schema); err != nil {
 		return nil, fmt.Errorf("failed to initialize db schema: %w", err)
 	}
-
 	return &Database{db: db}, nil
 }
 
@@ -171,8 +170,8 @@ func (d *Database) GetLocalReviews(itemID, userID string) ([]Review, error) {
 		query = `
 		SELECT r.itemID, r.userID, r.created_at, r.rating, r.message, r.spoilers,
 		       u.id, u.username, u.avatar
-		FROM NevuReviewsLocal r
-		LEFT JOIN NevuReviewsLocalUsers u ON r.userID = u.id
+		FROM PlexFlipReviewsLocal r
+		LEFT JOIN PlexFlipReviewsLocalUsers u ON r.userID = u.id
 		WHERE r.itemID = ? AND r.userID = ?
 		ORDER BY r.created_at DESC
 		`
@@ -181,8 +180,8 @@ func (d *Database) GetLocalReviews(itemID, userID string) ([]Review, error) {
 		query = `
 		SELECT r.itemID, r.userID, r.created_at, r.rating, r.message, r.spoilers,
 		       u.id, u.username, u.avatar
-		FROM NevuReviewsLocal r
-		LEFT JOIN NevuReviewsLocalUsers u ON r.userID = u.id
+		FROM PlexFlipReviewsLocal r
+		LEFT JOIN PlexFlipReviewsLocalUsers u ON r.userID = u.id
 		WHERE r.itemID = ?
 		ORDER BY r.created_at DESC
 		`
@@ -248,7 +247,7 @@ func (d *Database) UpsertLocalReview(itemID string, user *PlexUser, message stri
 	avatar := user.Thumb
 
 	userUpsert := `
-	INSERT INTO NevuReviewsLocalUsers (id, created_at, username, avatar)
+	INSERT INTO PlexFlipReviewsLocalUsers (id, created_at, username, avatar)
 	VALUES (?, CURRENT_TIMESTAMP, ?, ?)
 	ON CONFLICT(id) DO UPDATE SET username = excluded.username, avatar = excluded.avatar
 	`
@@ -268,7 +267,7 @@ func (d *Database) UpsertLocalReview(itemID string, user *PlexUser, message stri
 
 	now := time.Now().UTC().Format(time.RFC3339)
 	reviewUpsert := `
-	INSERT INTO NevuReviewsLocal (itemID, userID, created_at, rating, message, spoilers)
+	INSERT INTO PlexFlipReviewsLocal (itemID, userID, created_at, rating, message, spoilers)
 	VALUES (?, ?, ?, ?, ?, ?)
 	ON CONFLICT(itemID, userID) DO UPDATE SET
 		message = excluded.message,
@@ -283,6 +282,6 @@ func (d *Database) UpsertLocalReview(itemID string, user *PlexUser, message stri
 }
 
 func (d *Database) DeleteLocalReview(itemID, userID string) error {
-	_, err := d.db.Exec("DELETE FROM NevuReviewsLocal WHERE itemID = ? AND userID = ?", itemID, userID)
+	_, err := d.db.Exec("DELETE FROM PlexFlipReviewsLocal WHERE itemID = ? AND userID = ?", itemID, userID)
 	return err
 }

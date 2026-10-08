@@ -63,12 +63,12 @@ func StartDiscovery(ctx context.Context, port int, deploymentID string, getPlexS
 			if currentServer != lastServer || data == nil {
 				lastServer = currentServer
 				packet := DiscoveryPacket{
-					Name:      "Nevu",
+					Name:      "PlexFlip",
 					Interval:  500,
 					Available: true,
 					Data: DiscoveryData{
 						Port:     port,
-						Type:     "nevu",
+						Type:     "plexflip",
 						Protocol: "tcp",
 						Txt: DiscoveryTxt{
 							DeploymentID: deploymentID,

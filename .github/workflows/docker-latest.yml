@@ -52,28 +52,28 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
       
       - name: Create builder instance
-        run: docker buildx create --name nevuBuilder --use
+        run: docker buildx create --name plexflipBuilder --use
 
       - name: Build and push the amd64 image
         run: |
           if [ "${{ steps.extract_version.outputs.is_release }}" = "true" ]; then
             docker buildx build --platform linux/amd64 \
-              -t ipmake/nevu:latest-amd64 \
-              -t ipmake/nevu:${{ steps.extract_version.outputs.version }}-amd64 \
+              -t coderage/plexflip:latest-amd64 \
+              -t coderage/plexflip:${{ steps.extract_version.outputs.version }}-amd64 \
               . --push
           else
-            docker buildx build --platform linux/amd64 -t ipmake/nevu:latest-amd64 . --push
+            docker buildx build --platform linux/amd64 -t coderage/plexflip:latest-amd64 . --push
           fi
 
       - name: Build and push the arm64 image
         run: |
           if [ "${{ steps.extract_version.outputs.is_release }}" = "true" ]; then
             docker buildx build --platform linux/arm64 \
-              -t ipmake/nevu:latest-arm64 \
-              -t ipmake/nevu:${{ steps.extract_version.outputs.version }}-arm64 \
+              -t coderage/plexflip:latest-arm64 \
+              -t coderage/plexflip:${{ steps.extract_version.outputs.version }}-arm64 \
               . --push
           else
-            docker buildx build --platform linux/arm64 -t ipmake/nevu:latest-arm64 . --push
+            docker buildx build --platform linux/arm64 -t coderage/plexflip:latest-arm64 . --push
           fi
 
       - name: Build and push multi-platform Docker image
@@ -81,14 +81,14 @@ jobs:
           if [ "${{ steps.extract_version.outputs.is_release }}" = "true" ]; then
             # Create versioned multi-platform image
             docker buildx imagetools create \
-              --tag ipmake/nevu:${{ steps.extract_version.outputs.version }} \
-              ipmake/nevu:${{ steps.extract_version.outputs.version }}-amd64 \
-              ipmake/nevu:${{ steps.extract_version.outputs.version }}-arm64
+              --tag coderage/plexflip:${{ steps.extract_version.outputs.version }} \
+              coderage/plexflip:${{ steps.extract_version.outputs.version }}-amd64 \
+              coderage/plexflip:${{ steps.extract_version.outputs.version }}-arm64
             # Create latest multi-platform image
             docker buildx imagetools create \
-              --tag ipmake/nevu:latest \
-              ipmake/nevu:latest-amd64 \
-              ipmake/nevu:latest-arm64
+              --tag coderage/plexflip:latest \
+              coderage/plexflip:latest-amd64 \
+              coderage/plexflip:latest-arm64
           else
-            docker buildx imagetools create --tag ipmake/nevu:latest ipmake/nevu:latest-amd64 ipmake/nevu:latest-arm64
+            docker buildx imagetools create --tag coderage/plexflip:latest coderage/plexflip:latest-amd64 coderage/plexflip:latest-arm64
           fi

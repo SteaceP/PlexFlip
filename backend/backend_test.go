@@ -142,7 +142,7 @@ func TestServerApp_StatusAndConfigEndpoints(t *testing.T) {
 	app := &ServerApp{
 		deploymentID:     "abc12345",
 		plexServer:       "http://localhost:32400",
-		disableNevuSync:  false,
+		disablePlexFlipSync: false,
 		db:               db,
 		reviewsHandler:   NewReviewsHandler(db, true),
 	}
@@ -218,12 +218,12 @@ func TestProxyService_Validation(t *testing.T) {
 
 func TestDiscovery_PacketJSON(t *testing.T) {
 	packet := DiscoveryPacket{
-		Name:      "Nevu",
+		Name:      "PlexFlip",
 		Interval:  500,
 		Available: true,
 		Data: DiscoveryData{
 			Port:     3000,
-			Type:     "nevu",
+			Type:     "plexflip",
 			Protocol: "tcp",
 			Txt: DiscoveryTxt{
 				DeploymentID: "12345678",
@@ -241,7 +241,7 @@ func TestDiscovery_PacketJSON(t *testing.T) {
 	if err := json.Unmarshal(b, &parsed); err != nil {
 		t.Fatalf("Failed to unmarshal discovery packet: %v", err)
 	}
-	if parsed["name"] != "Nevu" || parsed["interval"].(float64) != 500 {
+	if parsed["name"] != "PlexFlip" || parsed["interval"].(float64) != 500 {
 		t.Fatalf("Unexpected discovery json: %s", string(b))
 	}
 }
@@ -256,13 +256,13 @@ func TestParseTime(t *testing.T) {
 func TestStaticServing_Disk(t *testing.T) {
 	t.Setenv("DEV_STATIC", "true")
 
-	tmpDir, err := os.MkdirTemp("", "nevu_static_test_*")
+	tmpDir, err := os.MkdirTemp("", "plexflip_static_test_*")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
 	defer os.RemoveAll(tmpDir)
 
-	if err := os.WriteFile(tmpDir+"/index.html", []byte("<!doctype html><html><body>Nevu SPA</body></html>"), 0644); err != nil {
+	if err := os.WriteFile(tmpDir+"/index.html", []byte("<!doctype html><html><body>PlexFlip SPA</body></html>"), 0644); err != nil {
 		t.Fatalf("Failed to write index.html: %v", err)
 	}
 	if err := os.MkdirAll(tmpDir+"/static", 0755); err != nil {
@@ -281,7 +281,7 @@ func TestStaticServing_Disk(t *testing.T) {
 	req := httptest.NewRequest("GET", "/", nil)
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
-	if rec.Code != http.StatusOK || !bytes.Contains(rec.Body.Bytes(), []byte("Nevu SPA")) {
+	if rec.Code != http.StatusOK || !bytes.Contains(rec.Body.Bytes(), []byte("PlexFlip SPA")) {
 		t.Fatalf("Root route failed: %d, body: %s", rec.Code, rec.Body.String())
 	}
 
@@ -297,7 +297,7 @@ func TestStaticServing_Disk(t *testing.T) {
 	req = httptest.NewRequest("GET", "/browse/recommendations", nil)
 	rec = httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
-	if rec.Code != http.StatusOK || !bytes.Contains(rec.Body.Bytes(), []byte("Nevu SPA")) {
+	if rec.Code != http.StatusOK || !bytes.Contains(rec.Body.Bytes(), []byte("PlexFlip SPA")) {
 		t.Fatalf("SPA route fallback failed: %d, body: %s", rec.Code, rec.Body.String())
 	}
 
@@ -313,7 +313,7 @@ func TestStaticServing_Disk(t *testing.T) {
 func TestStaticServing_FS(t *testing.T) {
 	app := &ServerApp{}
 
-	tmpDir, err := os.MkdirTemp("", "nevu_fs_test_*")
+	tmpDir, err := os.MkdirTemp("", "plexflip_fs_test_*")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
@@ -550,7 +550,7 @@ func TestServerApp_AuthEndpoints(t *testing.T) {
 	// 1. Test POST /api/auth-pin to register PIN
 	pinBody, _ := json.Marshal(map[string]string{
 		"pinID":    "123456",
-		"clientID": "nevu-client-test",
+		"clientID": "plexflip-client-test",
 	})
 	req := httptest.NewRequest("POST", "/api/auth-pin", bytes.NewReader(pinBody))
 	rec := httptest.NewRecorder()
@@ -568,8 +568,8 @@ func TestServerApp_AuthEndpoints(t *testing.T) {
 	}
 	var res map[string]string
 	json.Unmarshal(rec.Body.Bytes(), &res)
-	if res["clientID"] != "nevu-client-test" {
-		t.Fatalf("Expected clientID nevu-client-test, got %q", res["clientID"])
+	if res["clientID"] != "plexflip-client-test" {
+		t.Fatalf("Expected clientID plexflip-client-test, got %q", res["clientID"])
 	}
 
 	// 3. Test GET /api/auth-pin with fallback (no pinID parameter)
@@ -581,8 +581,8 @@ func TestServerApp_AuthEndpoints(t *testing.T) {
 	}
 	res = nil
 	json.Unmarshal(rec.Body.Bytes(), &res)
-	if res["clientID"] != "nevu-client-test" {
-		t.Fatalf("Expected fallback clientID nevu-client-test, got %q", res["clientID"])
+	if res["clientID"] != "plexflip-client-test" {
+		t.Fatalf("Expected fallback clientID plexflip-client-test, got %q", res["clientID"])
 	}
 
 	// 4. Test POST /api/auth-complete

@@ -19,7 +19,7 @@ function SettingsInfo() {
       >
         <img
           src="/logoBig.png"
-          alt="PerPlexed Logo"
+          alt="PlexFlip Logo"
           style={{
             width: "50%",
             height: "auto",
@@ -38,14 +38,14 @@ function SettingsInfo() {
         }}
       >
         <Typography variant="h4" component="h2" sx={{ mb: 2, fontWeight: 600 }}>
-          Welcome to the Nevu Family!
+          Welcome to the PlexFlip Family!
         </Typography>
 
         <Typography variant="body1" paragraph>
           Hey there! Thanks for joining us on this journey to elevate your Plex
-          experience. Nevu is crafted with passion by{" "}
+          experience. PlexFlip is crafted with passion by{" "}
           <a
-            href="https://ipmake.dev"
+            href="https://github.com/SteaceP/PlexFlip"
             target="_blank"
             rel="noopener noreferrer"
             style={{
@@ -54,7 +54,7 @@ function SettingsInfo() {
               fontWeight: "bold",
             }}
           >
-            Ipmake
+            Code Rage
           </a>{" "}
           and a community of amazing open-source contributors just like you!
         </Typography>
@@ -70,7 +70,7 @@ function SettingsInfo() {
             variant="contained"
             color="primary"
             startIcon={<GitHubIcon />}
-            href="https://github.com/Ipmake/Nevu"
+            href="https://github.com/SteaceP/PlexFlip"
             target="_blank"
             rel="noopener noreferrer"
             sx={{ fontWeight: "bold" }}
@@ -82,7 +82,7 @@ function SettingsInfo() {
             variant="outlined"
             color="primary"
             startIcon={<BugReportIcon />}
-            href="https://github.com/Ipmake/Nevu/issues"
+            href="https://github.com/SteaceP/PlexFlip/issues"
             target="_blank"
             rel="noopener noreferrer"
             sx={{ fontWeight: "bold" }}
@@ -107,7 +107,7 @@ function SettingsInfo() {
           />
 
           <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
-            Fuel the Future of Nevu
+            Fuel the Future of PlexFlip
           </Typography>
 
           <Typography variant="body1" paragraph>
@@ -121,7 +121,7 @@ function SettingsInfo() {
             color="secondary"
             size="large"
             startIcon={<FavoriteIcon />}
-            href="https://g.ipmake.dev/perplexed"
+            href="https://github.com/SteaceP/PlexFlip"
             target="_blank"
             rel="noopener noreferrer"
             sx={{ fontWeight: "bold", py: 1, px: 3 }}

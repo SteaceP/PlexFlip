@@ -159,7 +159,7 @@ function SettingsServer() {
       </Typography>
 
       <Typography variant="body2" sx={{ color: "#94A3B8", mt: 1, mb: 3 }}>
-        Manage the Plex Media Server address used by Nevu to stream video, fetch metadata, and synchronize playback.
+        Manage the Plex Media Server address used by PlexFlip to stream video, fetch metadata, and synchronize playback.
       </Typography>
 
       {/* Current Server Status Card */}

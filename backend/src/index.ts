@@ -17,13 +17,13 @@ import httpProxy from 'http-proxy';
     * LISTEN_PORT: The port the server will listen on, defaults to 3000
     * PLEX_SERVER: The URL of the Plex server that the frontend will connect to
     * DISABLE_TLS_VERIFY?: If set to true, the proxy will not check any https ssl certificates
-    * DISABLE_NEVU_SYNC?: If set to true, NEVU sync (watch together) will be disabled
+    * DISABLE_PLEXFLIP_SYNC?: If set to true, PlexFlip sync (watch together) will be disabled
     * DISABLE_REQUEST_LOGGING?: If set to true, the server will not log any requests
-    * DISABLE_GLOBAL_REVIEWS?: If set to true, nevu community reviews will be disabled
+    * DISABLE_GLOBAL_REVIEWS?: If set to true, PlexFlip community reviews will be disabled
 **/
 const deploymentID = randomBytes(8).toString('hex');
 
-const nevuHubUrl = "https://gnuqknwmixeunfmeseep.supabase.co/functions/v1/"
+const plexFlipHubUrl = "https://gnuqknwmixeunfmeseep.supabase.co/functions/v1/"
 
 const status: PerPlexed.Status = {
     ready: false,
@@ -37,9 +37,9 @@ const discovery = new Discovery();
 
 console.log(`Deployment ID: ${deploymentID}`);
 
-discovery.announce("Nevu", {
+discovery.announce("PlexFlip", {
     port: parseInt(process.env.PORT || '3000'),
-    type: 'nevu',
+    type: 'plexflip',
     protocol: 'tcp',
     txt: {
         deploymentID,
@@ -68,15 +68,6 @@ const noVerifyHttpsAgent = new https.Agent({
 });
 
 (async () => {
-    const packageJson = fs.readFileSync('package.json', 'utf-8');
-    const packageJsonParsed = JSON.parse(packageJson);
-
-    if (packageJsonParsed.version !== "1.0.0") {
-        status.error = true;
-        status.message = 'PerPlexed is now NEVU! \nPlease change the docker image from "ipmake/perplexed" to "ipmake/nevu"';
-        console.error('PerPlexed is now NEVU! \nPlease change the docker image from "ipmake/perplexed" to "ipmake/nevu"');
-        return
-    }
 
     if (process.env.PROXY_PLEX_SERVER) {
         status.error = true;
@@ -196,7 +187,7 @@ app.get('/config', (req, res) => {
         DEPLOYMENTID: deploymentID,
         CONFIG: {
             DISABLE_PROXY: process.env.DISABLE_PROXY === 'true',
-            DISABLE_NEVU_SYNC: process.env.DISABLE_NEVU_SYNC === 'true',
+            DISABLE_PLEXFLIP_SYNC: process.env.DISABLE_PLEXFLIP_SYNC === 'true',
         }
     });
 });
@@ -296,7 +287,7 @@ app.get('/reviews', async (req, res) => {
     });
 
     try {
-        const reviews = (await prisma.nevuReviewsLocal.findMany({
+        const reviews = (await prisma.plexFlipReviewsLocal.findMany({
             where: {
                 itemID: itemID as string,
                 ...(userID && { userID: userID as string }),
@@ -315,11 +306,11 @@ app.get('/reviews', async (req, res) => {
             }
         })).map((review) => ({
             ...review,
-            visibility: "LOCAL", // Set visibility to NEVU for local reviews
+            visibility: "LOCAL", // Set visibility to LOCAL for local reviews
         }))
 
         if (process.env.DISABLE_GLOBAL_REVIEWS !== 'true') {
-            const globalReviews = await axios.post(`${nevuHubUrl}review-get`, {
+            const globalReviews = await axios.post(`${plexFlipHubUrl}review-get`, {
                 itemID: itemID as string,
                 ...(userID && { userID: userID as string }),
             }, {
@@ -330,7 +321,7 @@ app.get('/reviews', async (req, res) => {
 
             reviews.push(...globalReviews.data.data.map((review: any) => ({
                 ...review,
-                visibility: "GLOBAL", // Set visibility to GLOBAL for NevuHUB reviews
+                visibility: "GLOBAL", // Set visibility to GLOBAL for PlexFlipHub reviews
             })));
         }
 
@@ -379,7 +370,7 @@ app.post('/reviews', async (req, res) => {
     try {
         switch (visibility) {
             case "GLOBAL":
-                const res = await axios.post(`${nevuHubUrl}review-update`, {
+                const res = await axios.post(`${plexFlipHubUrl}review-update`, {
                     itemID: itemID as string,
                     userID: user.uuid,
                     message: message.trim(),
@@ -390,14 +381,14 @@ app.post('/reviews', async (req, res) => {
                         'x-plex-token': plexToken as string,
                     }
                 }).catch((error: any) => {
-                    console.error("Failed to update Nevu review:", error);
+                    console.error("Failed to update PlexFlip review:", error);
                     return error.response || { data: { error: "Failed to update review" } };
                 });
 
                 if (res.data.error) error = res.data.error;
                 break;
             case "LOCAL":
-                await prisma.nevuReviewsLocalUsers.upsert({
+                await prisma.plexFlipReviewsLocalUsers.upsert({
                     where: {
                         id: user.uuid,
                     },
@@ -412,7 +403,7 @@ app.post('/reviews', async (req, res) => {
                     },
                 })
 
-                await prisma.nevuReviewsLocal.upsert({
+                await prisma.plexFlipReviewsLocal.upsert({
                     where: {
                         itemID_userID: {
                             itemID: itemID as string,
@@ -473,7 +464,7 @@ app.delete('/reviews', async (req, res) => {
     try {
         switch (visibility) {
             case "GLOBAL":
-                const res = await axios.post(`${nevuHubUrl}review-delete`, {
+                const res = await axios.post(`${plexFlipHubUrl}review-delete`, {
                     itemID: itemID as string
                 }, {
                     headers: {
@@ -484,7 +475,7 @@ app.delete('/reviews', async (req, res) => {
                 if (res.data.error) return error = res.data.error;
                 break;
             case "LOCAL":
-                await prisma.nevuReviewsLocal.delete({
+                await prisma.plexFlipReviewsLocal.delete({
                     where: {
                         itemID_userID: {
                             itemID: itemID as string,
@@ -616,7 +607,7 @@ const server = app.listen(process.env.LISTEN_PORT || 3000, () => {
     console.log(`Server started on http://localhost:${process.env.LISTEN_PORT || 3000}`);
 });
 
-let io = (process.env.DISABLE_NEVU_SYNC === 'true') ? null : new SocketIOServer(server, {
+let io = (process.env.DISABLE_PLEXFLIP_SYNC === 'true') ? null : new SocketIOServer(server, {
     cors: {
         origin: '*',
     },
@@ -629,7 +620,7 @@ let remoteIo = new SocketIOServer(server, {
     cors: {
         origin: '*',
     },
-    path: '/nevu-remote',
+    path: '/plexflip-remote',
     connectionStateRecovery: {
         maxDisconnectionDuration: 10000, // 10 seconds
         skipMiddlewares: false, // Skip middlewares for remote connections

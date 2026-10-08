@@ -1,8 +1,8 @@
 [Desktop Entry]
 Type=Application
-Name=nevu
-Exec=nevu
-Icon=nevu
+Name=plexflip
+Exec=plexflip
+Icon=plexflip
 Categories=Development;
 Terminal=false
 Keywords=wails

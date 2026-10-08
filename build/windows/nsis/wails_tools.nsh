@@ -5,13 +5,13 @@
 !include "FileFunc.nsh"
 
 !ifndef INFO_PROJECTNAME
-    !define INFO_PROJECTNAME "nevu"
+    !define INFO_PROJECTNAME "plexflip"
 !endif
 !ifndef INFO_COMPANYNAME
-    !define INFO_COMPANYNAME "Ipmake"
+    !define INFO_COMPANYNAME "Code Rage"
 !endif
 !ifndef INFO_PRODUCTNAME
-    !define INFO_PRODUCTNAME "Nevu"
+    !define INFO_PRODUCTNAME "PlexFlip"
 !endif
 !ifndef INFO_PRODUCTVERSION
     !define INFO_PRODUCTVERSION "0.1.0"

@@ -1,21 +1,21 @@
-# NEVU for Plex
+# PlexFlip for Plex
 
 Fixing Plex's old and simple UI.
 
-[**Now also available for Android & AndroidTV**](https://github.com/Ipmake/Nevu/discussions/43)
+[**Now also available for Android & AndroidTV**](https://github.com/SteaceP/PlexFlip/discussions/43)
 
-[**Docker Hub**](https://hub.docker.com/r/ipmake/nevu)
+[**Docker Hub**](https://hub.docker.com/r/coderage/plexflip)
 
 _Click image for video_
-[![Nevu1](assets/screenshot1.png)](https://www.youtube.com/watch?v=PuTOw3Wg9oY)
-![Nevu2](assets/screenshot2.png)
-[More Screenshots](https://github.com/Ipmake/Nevu/tree/main/assets)
+[![PlexFlip1](assets/screenshot1.png)](https://www.youtube.com/watch?v=PuTOw3Wg9oY)
+![PlexFlip2](assets/screenshot2.png)
+[More Screenshots](https://github.com/SteaceP/PlexFlip/tree/main/assets)
 
 ## Description
 
-Nevu is a complete redesign of Plex's UI using the Plex media server's API. It comes with its own web server. It is currently only developed for desktops and laptops. It is not optimized for mobile or TV use.
+PlexFlip is a complete redesign of Plex's UI using the Plex media server's API. It comes with its own web server. It is currently only developed for desktops and laptops. It is not optimized for mobile or TV use.
 
-Nevu currently supports Movie and TV Show libraries. You can also play media via the interface.
+PlexFlip currently supports Movie and TV Show libraries. You can also play media via the interface.
 
 Mind that this project is still in development and may be unstable.
 
@@ -26,7 +26,7 @@ Mind that this project is still in development and may be unstable.
 - Automatic track matching (Keep the same audio and subtitle language across episodes)
 - Browse libraries
 - Search for media
-- Watch Together (Nevu Sync)
+- Watch Together (PlexFlip Sync)
 - Get Recommendations
 - Fully integrated Watchlist
 - Simple and easy to use
@@ -36,32 +36,32 @@ Mind that this project is still in development and may be unstable.
 
 ### Docker
 
-The easiest way to run Nevu is to use Docker. You can use the following command to run Nevu in a Docker container:
+The easiest way to run PlexFlip is to use Docker. You can use the following command to run PlexFlip in a Docker container:
 
 ```bash
-docker volume create nevu_data
-docker run --name nevu -p 3000:3000 -p 44201:44201/udp -v nevu_data:/data -e PLEX_SERVER=http://your-plex-server:32400 ipmake/nevu
+docker volume create plexflip_data
+docker run --name plexflip -p 3000:3000 -p 44201:44201/udp -v plexflip_data:/data -e PLEX_SERVER=http://your-plex-server:32400 coderage/plexflip
 ```
 
 ### Docker Compose
 
-Alternatively, you can use Docker Compose to run Nevu. Create a `docker-compose.yml` file with the following content:
+Alternatively, you can use Docker Compose to run PlexFlip. Create a `docker-compose.yml` file with the following content:
 
 ```yaml
 services:
-  nevu:
-    image: ipmake/nevu
-    container_name: nevu
+  plexflip:
+    image: coderage/plexflip
+    container_name: plexflip
     ports:
       - "3000:3000"
       - "44201:44201/udp"
     volumes:
-      - nevu_data:/data
+      - plexflip_data:/data
     environment:
       - PLEX_SERVER=http://your-plex-server:32400
 
 volumes:
-  nevu_data:
+  plexflip_data:
 ```
 
 Then run:
@@ -76,11 +76,11 @@ docker-compose up -d
 | ------------------------- | ---------- | -------- | -------------------------------------------------------------------------------- |
 | `PLEX_SERVER`             | string     | Yes      | The URL of the Plex server that the backend will proxy to (CAN BE LOCAL)         |
 | `PORT`                    | number     | No       | The port you published the docker container to, defaults to 3000 (For discovery) |
-| `LISTEN_PORT`             | number     | No       | The port the nevu server will listen on                                          |
+| `LISTEN_PORT`             | number     | No       | The port the PlexFlip server will listen on                                          |
 | `DISABLE_TLS_VERIFY`      | true/false | No       | If set to true, the proxy will not check any https ssl certificates              |
-| `DISABLE_NEVU_SYNC`       | true/false | No       | If set to true, Nevu sync (watch together) will be disabled                      |
+| `DISABLE_PLEXFLIP_SYNC`   | true/false | No       | If set to true, PlexFlip sync (watch together) will be disabled                      |
 | `DISABLE_REQUEST_LOGGING` | true/false | No       | If set to true, the server will not log any requests                             |
-| `DISABLE_GLOBAL_REVIEWS`  | true/false | No       | If set to true, nevu global reviews will be disabled                             |
+| `DISABLE_GLOBAL_REVIEWS`  | true/false | No       | If set to true, PlexFlip global reviews will be disabled                             |
 
 ## Contributing
 
@@ -88,10 +88,10 @@ Pull requests are welcome for any feature or a bug fix. For major changes, pleas
 
 ## Wails v3 Desktop Application
 
-Nevu is packaged as a native desktop application using **Wails v3**.
+PlexFlip is packaged as a native desktop application using **Wails v3**.
 
 ### Desktop Development
-Run Nevu in Wails v3 dev mode with live reload:
+Run PlexFlip in Wails v3 dev mode with live reload:
 
 ```bash
 # Using Wails CLI
@@ -117,26 +117,26 @@ make build
 pnpm run build
 ```
 
-The resulting native desktop executable is created at `bin/nevu`.
+The resulting native desktop executable is created at `bin/plexflip`.
 
 Run it directly on your desktop:
 
 ```bash
-PLEX_SERVER=http://your-plex-server:32400 ./bin/nevu
+PLEX_SERVER=http://your-plex-server:32400 ./bin/plexflip
 ```
 
-When run in a desktop environment (X11 / Wayland), Nevu launches as a dedicated desktop window.
+When run in a desktop environment (X11 / Wayland), PlexFlip launches as a dedicated desktop window.
 
 ### Headless & Server Mode
 
-If you want to run Nevu without a GUI (for example on a headless server, in Docker, or via SSH):
+If you want to run PlexFlip without a GUI (for example on a headless server, in Docker, or via SSH):
 
-- **Automatic headless detection**: If no display server is available (`DISPLAY` and `WAYLAND_DISPLAY` unset), Nevu automatically runs in server mode.
+- **Automatic headless detection**: If no display server is available (`DISPLAY` and `WAYLAND_DISPLAY` unset), PlexFlip automatically runs in server mode.
 - **Explicit flag/env variable**: Pass `--server` (or `HEADLESS=true`):
   ```bash
-  ./bin/nevu --server
+  ./bin/plexflip --server
   # or
-  HEADLESS=true ./bin/nevu
+  HEADLESS=true ./bin/plexflip
   ```
 - **Dedicated server build (no GUI libraries required)**:
   ```bash
@@ -144,7 +144,7 @@ If you want to run Nevu without a GUI (for example on a headless server, in Dock
   # or
   wails3 task build:server
   ```
-  Produces `bin/nevu-server`.
+  Produces `bin/plexflip-server`.
 
 ### Desktop Packaging
 

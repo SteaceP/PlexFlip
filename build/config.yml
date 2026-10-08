@@ -5,12 +5,12 @@ version: '3'
 
 # This information is used to generate the build assets.
 info:
-  companyName: "Ipmake" # The name of the company
-  productName: "Nevu" # The name of the application
-  productIdentifier: "com.ipmake.nevu" # The unique product identifier
-  description: "Nevu - Plex Web UI Desktop Client" # The application description
-  copyright: "© 2026, Ipmake" # Copyright text
-  comments: "Nevu Desktop App powered by Wails v3" # Comments
+  companyName: "Code Rage" # The name of the company
+  productName: "PlexFlip" # The name of the application
+  productIdentifier: "com.coderage.plexflip" # The unique product identifier
+  description: "PlexFlip - Plex Web UI Desktop Client" # The application description
+  copyright: "© 2026, Code Rage" # Copyright text
+  comments: "PlexFlip Desktop App powered by Wails v3" # Comments
   version: "0.1.0" # The application version
   # cfBundleIconName: "appicon" # The macOS icon name in Assets.car icon bundles (optional)
   #                               # Should match the name of your .icon file without the extension

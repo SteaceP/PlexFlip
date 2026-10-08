@@ -23,7 +23,7 @@
     "start": "./run.sh",
     "dev": "npx tsc && node ."
   },
-  "author": "Ipmake",
+  "author": "Code Rage",
   "license": "ISC",
   "description": ""
 }

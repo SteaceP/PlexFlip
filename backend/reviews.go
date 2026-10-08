@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-const nevuHubUrl = "https://gnuqknwmixeunfmeseep.supabase.co/functions/v1/"
+const plexFlipHubUrl = "https://gnuqknwmixeunfmeseep.supabase.co/functions/v1/"
 
 type ReviewsHandler struct {
 	db                   *Database
@@ -67,7 +67,7 @@ func (h *ReviewsHandler) HandleGetReviews(w http.ResponseWriter, r *http.Request
 			"userID": userID,
 		})
 
-		outReq, err := http.NewRequestWithContext(r.Context(), "POST", nevuHubUrl+"review-get", bytes.NewReader(reqBody))
+		outReq, err := http.NewRequestWithContext(r.Context(), "POST", plexFlipHubUrl+"review-get", bytes.NewReader(reqBody))
 		if err == nil {
 			outReq.Header.Set("x-plex-token", token)
 			outReq.Header.Set("Content-Type", "application/json")
@@ -169,7 +169,7 @@ func (h *ReviewsHandler) HandlePostReviews(w http.ResponseWriter, r *http.Reques
 			"spoilers": reqBody.Spoilers,
 		})
 
-		outReq, err := http.NewRequestWithContext(r.Context(), "POST", nevuHubUrl+"review-update", bytes.NewReader(hubPayload))
+		outReq, err := http.NewRequestWithContext(r.Context(), "POST", plexFlipHubUrl+"review-update", bytes.NewReader(hubPayload))
 		if err != nil {
 			errVal = "Failed to update review"
 		} else {
@@ -248,7 +248,7 @@ func (h *ReviewsHandler) HandleDeleteReviews(w http.ResponseWriter, r *http.Requ
 			"itemID": itemID,
 		})
 
-		outReq, err := http.NewRequestWithContext(r.Context(), "POST", nevuHubUrl+"review-delete", bytes.NewReader(hubPayload))
+		outReq, err := http.NewRequestWithContext(r.Context(), "POST", plexFlipHubUrl+"review-delete", bytes.NewReader(hubPayload))
 		if err != nil {
 			errVal = "Failed to delete review"
 		} else {

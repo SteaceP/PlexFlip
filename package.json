@@ -1,8 +1,8 @@
 {
-  "name": "nevu",
+  "name": "plexflip",
   "version": "0.1.0",
   "private": true,
-  "description": "Nevu - Plex Web UI with Go backend and embedded React frontend",
+  "description": "PlexFlip - Plex Web UI with Go backend and embedded React frontend",
   "scripts": {
     "build": "make build",
     "build:frontend": "make build-frontend",

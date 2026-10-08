@@ -8,27 +8,27 @@
         AllowPromptForPassword="false">
     </Settings>
     <Installer
-        Path="nevu"
+        Path="plexflip"
         Arguments=""
-        InstallLocation="C:\Program Files\Ipmake\Nevu">
+        InstallLocation="C:\Program Files\Code Rage\PlexFlip">
     </Installer>
     <PackageInformation
-        PackageName="Nevu"
-        PackageDisplayName="Nevu"
-        PublisherName="CN=Ipmake"
-        PublisherDisplayName="Ipmake"
+        PackageName="PlexFlip"
+        PackageDisplayName="PlexFlip"
+        PublisherName="CN=Code Rage"
+        PublisherDisplayName="Code Rage"
         Version="0.1.0.0"
-        PackageDescription="Nevu Plex Client">
+        PackageDescription="PlexFlip Plex Client">
         <Capabilities>
             <Capability Name="runFullTrust" />
             
         </Capabilities>
         <Applications>
             <Application
-                Id="com.ipmake.nevu"
-                Description="Nevu Plex Client"
-                DisplayName="Nevu"
-                ExecutableName="nevu"
+                Id="com.coderage.plexflip"
+                Description="PlexFlip Plex Client"
+                DisplayName="PlexFlip"
+                ExecutableName="plexflip"
                 EntryPoint="Windows.FullTrustApplication">
                 
             </Application>
@@ -41,13 +41,13 @@
         </Dependencies>
         <Properties>
             <Framework>false</Framework>
-            <DisplayName>Nevu</DisplayName>
-            <PublisherDisplayName>Ipmake</PublisherDisplayName>
-            <Description>Nevu Plex Client</Description>
+            <DisplayName>PlexFlip</DisplayName>
+            <PublisherDisplayName>Code Rage</PublisherDisplayName>
+            <Description>PlexFlip Plex Client</Description>
             <Logo>Assets\AppIcon.png</Logo>
         </Properties>
     </PackageInformation>
-    <SaveLocation PackagePath="nevu.msix" />
+    <SaveLocation PackagePath="plexflip.msix" />
     <PackageIntegrity>
         <CertificatePath></CertificatePath>
     </PackageIntegrity>

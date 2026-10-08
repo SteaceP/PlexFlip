@@ -149,7 +149,7 @@ function Startup() {
     >
       <img
         src="/logoBig.png"
-        alt="NEVU Logo"
+        alt="PlexFlip Logo"
         style={{ width: "35vw", height: "auto" }}
       />
     </Box>

@@ -25,7 +25,7 @@ export namespace PlexCommunity {
         hasNextPage: boolean;
     }
 
-    export type ActivityPrivacy = "GLOBAL" | "NEVU";
+    export type ActivityPrivacy = "GLOBAL" | "PLEXFLIP";
 
     export interface ActivityReview {
         __typename: "ActivityReview";

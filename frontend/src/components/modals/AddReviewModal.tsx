@@ -17,10 +17,10 @@ import {
 import { Star, StarBorder } from "@mui/icons-material";
 import { setMediaRating } from "../../plex";
 import {
-  deleteNevuReview,
-  getNevuReviews,
-  updateNevuReview,
-} from "../../common/NevuReviews";
+  deletePlexFlipReview,
+  getPlexFlipReviews,
+  updatePlexFlipReview,
+} from "../../common/PlexFlipReviews";
 import { useUserSessionStore } from "../../states/UserSession";
 
 function AddReviewModal({
@@ -51,7 +51,7 @@ function AddReviewModal({
 
     await setMediaRating(rating * 2, item.ratingKey);
 
-    const res = await updateNevuReview(
+    const res = await updatePlexFlipReview(
       item.guid,
       rating * 2,
       reviewText || "No text provided",
@@ -76,7 +76,7 @@ function AddReviewModal({
       if (!item.ratingKey) return;
       setIsLoading(true);
       try {
-        const reviews = await getNevuReviews(
+        const reviews = await getPlexFlipReviews(
           item.guid,
           useUserSessionStore.getState().user?.uuid
         );
@@ -229,8 +229,8 @@ function AddReviewModal({
                 displayEmpty
                 inputProps={{ "aria-label": "Visibility" }}
               >
-                <MenuItem value="GLOBAL">Nevu Community</MenuItem>
-                <MenuItem value="LOCAL">This Nevu Server</MenuItem>
+                <MenuItem value="GLOBAL">PlexFlip Community</MenuItem>
+                <MenuItem value="LOCAL">This PlexFlip Server</MenuItem>
               </Select>
             </>
           )}
@@ -244,7 +244,7 @@ function AddReviewModal({
                 variant="outlined"
                 onClick={async () => {
                   setIsLoading(true);
-                  await deleteNevuReview(
+                  await deletePlexFlipReview(
                     existingReview.itemID,
                     existingReview.visibility
                   );

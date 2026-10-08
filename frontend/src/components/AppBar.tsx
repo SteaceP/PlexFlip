@@ -159,7 +159,7 @@ function Appbar() {
         <MenuItem
           onClick={() => {
             setAnchorEl(null);
-            window.open("https://g.ipmake.dev/perplexed", "_blank");
+            window.open("https://github.com/SteaceP/PlexFlip", "_blank");
           }}
         >
           <ListItemIcon>
@@ -168,7 +168,7 @@ function Appbar() {
           <ListItemText>Sponsor</ListItemText>
         </MenuItem>
 
-        {!config.DISABLE_NEVU_SYNC && (
+        {!config.DISABLE_PLEXFLIP_SYNC && (
           <MenuItem
             onClick={() => {
               useSyncInterfaceState.getState().setOpen(true);
@@ -264,8 +264,8 @@ S - Skip onscreen markers (intro, credits, etc)
       >
         <img
           src="/logo.png"
-          alt=""
-          width={isMobile ? 80 : 100}
+          alt="PlexFlip Logo"
+          width={isMobile ? 90 : 120}
           style={{
             objectFit: "contain",
           }}
@@ -374,7 +374,7 @@ S - Skip onscreen markers (intro, credits, etc)
         }}
       >
         <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
-          <img src="/logo.png" alt="" width="100" style={{ objectFit: "contain" }} />
+          <img src="/logo.png" alt="PlexFlip Logo" width="120" style={{ objectFit: "contain" }} />
 
           <SearchBar inDrawer onResultSelected={() => setDrawerOpen(false)} />
 
@@ -421,7 +421,7 @@ S - Skip onscreen markers (intro, credits, etc)
               </ListItemButton>
             </ListItem>
 
-            {!config.DISABLE_NEVU_SYNC && (
+            {!config.DISABLE_PLEXFLIP_SYNC && (
               <ListItem disablePadding>
                 <ListItemButton
                   onClick={() => {

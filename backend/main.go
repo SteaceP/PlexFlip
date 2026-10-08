@@ -32,7 +32,7 @@ type ServerApp struct {
 	plexServerMu         sync.RWMutex
 	checkTrigger         chan struct{}
 	disableTLSVerify     bool
-	disableNevuSync      bool
+	disablePlexFlipSync  bool
 	disableRequestLog    bool
 	disableGlobalReviews bool
 	port                 int
@@ -101,7 +101,7 @@ func main() {
 	app.reviewsHandler = NewReviewsHandler(app.db, app.disableGlobalReviews)
 
 	// Initialize Socket.io servers
-	if !app.disableNevuSync {
+	if !app.disablePlexFlipSync {
 		app.syncServer = InitSyncServer("*")
 	}
 	app.remoteServer = InitRemoteServer("*")
@@ -161,7 +161,7 @@ func (a *ServerApp) initEnv() {
 
 	a.plexServer = os.Getenv("PLEX_SERVER")
 	a.disableTLSVerify = os.Getenv("DISABLE_TLS_VERIFY") == "true"
-	a.disableNevuSync = os.Getenv("DISABLE_NEVU_SYNC") == "true"
+	a.disablePlexFlipSync = os.Getenv("DISABLE_PLEXFLIP_SYNC") == "true"
 	a.disableRequestLog = os.Getenv("DISABLE_REQUEST_LOGGING") == "true"
 	a.disableGlobalReviews = os.Getenv("DISABLE_GLOBAL_REVIEWS") == "true"
 }
@@ -329,7 +329,7 @@ func (a *ServerApp) buildRouter() http.Handler {
 			return
 		}
 
-		if strings.HasPrefix(path, "/nevu-remote") {
+		if strings.HasPrefix(path, "/plexflip-remote") {
 			if a.remoteServer != nil {
 				a.remoteServer.io.ServeHandler(nil).ServeHTTP(w, r)
 			} else {
@@ -555,8 +555,8 @@ func (a *ServerApp) handleConfig(w http.ResponseWriter, _ *http.Request) {
 		DeploymentID: a.deploymentID,
 		Configured:   a.getPlexServer() != "",
 		Config: ConfigOpts{
-			DisableProxy:    false,
-			DisableNevuSync: a.disableNevuSync,
+			DisableProxy:        false,
+			DisablePlexFlipSync: a.disablePlexFlipSync,
 		},
 	})
 }

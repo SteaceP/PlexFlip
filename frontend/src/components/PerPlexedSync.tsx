@@ -73,7 +73,7 @@ function PerPlexedSync() {
             fontWeight: "bold",
           }}
         >
-          Nevu Sync
+          PlexFlip Sync
         </Typography>
 
         <Divider

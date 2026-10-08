@@ -4,6 +4,6 @@ node_modules
 /data
 /www/*
 !/www/.gitkeep
-nevu-backend
-nevu
+plexflip-backend
+plexflip
 backend

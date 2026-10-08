@@ -194,7 +194,7 @@ export default function Login() {
 
     let clientID = localStorage.getItem("clientID");
     if (!clientID) {
-      clientID = `nevu-${Math.random().toString(36).substring(2, 10)}`;
+      clientID = `plexflip-${Math.random().toString(36).substring(2, 10)}`;
       localStorage.setItem("clientID", clientID);
     }
 
@@ -271,7 +271,7 @@ export default function Login() {
             await completeLogin(res.authToken);
           } else {
             setError(
-              "Plex did not finish linking Nevu to your account. Go back to the Nevu app and click Continue again. You are probably signed in to Plex in this browser now, so it should only take one click."
+              "Plex did not finish linking PlexFlip to your account. Go back to the PlexFlip app and click Continue again. You are probably signed in to Plex in this browser now, so it should only take one click."
             );
             setIsCompleting(false);
             try {
@@ -449,7 +449,7 @@ export default function Login() {
             Sign-in Successful!
           </Typography>
           <Typography variant="body1" sx={{ color: "#94A3B8", mb: 3.5, lineHeight: 1.6 }}>
-            Your Plex account has been linked. You can safely close this browser window and return to Nevu.
+            Your Plex account has been linked. You can safely close this browser window and return to PlexFlip.
           </Typography>
 
           <Stack spacing={1.5}>
@@ -470,7 +470,7 @@ export default function Login() {
                 },
               }}
             >
-              Return to Nevu Desktop App
+              Return to PlexFlip Desktop App
             </Button>
 
             <Button
@@ -534,7 +534,7 @@ export default function Login() {
             }}
           >
             <Typography sx={{ fontWeight: 900, fontSize: "1.8rem", color: "#000" }}>
-              N
+              P
             </Typography>
           </Box>
           <Typography variant="h5" sx={{ fontWeight: 800, color: "#F8FAFC", letterSpacing: "-0.02em" }}>
@@ -953,8 +953,8 @@ export default function Login() {
               <CircularProgress size={16} sx={{ color: "#6366F1" }} />
               <Typography variant="caption" sx={{ color: "#94A3B8", fontWeight: 500 }}>
                 {browserOpened
-                  ? "Waiting for sign-in approval... Nevu connects automatically."
-                  : "Waiting for sign-in... Nevu connects automatically."}
+                  ? "Waiting for sign-in approval... PlexFlip connects automatically."
+                  : "Waiting for sign-in... PlexFlip connects automatically."}
               </Typography>
             </Stack>
 

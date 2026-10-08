@@ -240,7 +240,7 @@ export function getTranscodeImageURL(url: string, width: number, height: number)
 export async function getAccessToken(pin: string, clientIDOverride?: string): Promise<Plex.TokenData> {
     let clientID = clientIDOverride || localStorage.getItem("clientID");
     if (!clientID) {
-      clientID = `nevu-${Math.random().toString(36).substring(2, 10)}`;
+      clientID = `plexflip-${Math.random().toString(36).substring(2, 10)}`;
       try {
         localStorage.setItem("clientID", clientID);
       } catch (e) {}
@@ -271,7 +271,7 @@ export async function getAccessToken(pin: string, clientIDOverride?: string): Pr
 export async function getPin(): Promise<Plex.TokenData> {
     const res = await axios.post(`https://plex.tv/api/v2/pins?${queryBuilder({
         "X-Plex-Client-Identifier": localStorage.getItem("clientID"),
-        "X-Plex-Product": "Nevu"
+        "X-Plex-Product": "PlexFlip"
     })}`, undefined, {
         headers: {
             accept: "application/json",
@@ -295,7 +295,7 @@ export async function signInWithEmailPassword(
 ): Promise<{ authToken?: string; error?: string; requiresTwoFactor?: boolean }> {
     let clientID = localStorage.getItem("clientID");
     if (!clientID) {
-        clientID = `nevu-${Math.random().toString(36).substring(2, 10)}`;
+        clientID = `plexflip-${Math.random().toString(36).substring(2, 10)}`;
         try {
             localStorage.setItem("clientID", clientID);
         } catch (e) {}
@@ -313,7 +313,7 @@ export async function signInWithEmailPassword(
                 "Content-Type": "application/json",
                 accept: "application/json",
                 "X-Plex-Client-Identifier": clientID,
-                "X-Plex-Product": "Nevu",
+                "X-Plex-Product": "PlexFlip",
                 "X-Plex-Version": "0.1.0",
                 "X-Plex-Platform": "Desktop",
                 "X-Plex-Device": "Desktop",
@@ -363,7 +363,7 @@ export async function signInWithEmailPassword(
 export async function getLoggedInUser(): Promise<Plex.UserData | null> {
     const res = await axios.get(`https://plex.tv/api/v2/user?${queryBuilder({
         "X-Plex-Token": localStorage.getItem("accAccessToken") as string,
-        "X-Plex-Product": "NEVU",
+        "X-Plex-Product": "PLEXFLIP",
         "X-Plex-Client-Identifier": localStorage.getItem("clientID")
     })}`).catch((err) => {
         console.log(err);

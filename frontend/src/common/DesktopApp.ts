@@ -1,9 +1,8 @@
 import { getBrowserName } from "../plex/QuickFunctions";
 import {
-    OpenURL as WailsOpenURL,
     IsDesktop as WailsIsDesktop,
     GetVersion as WailsGetVersion,
-} from "../bindings/nevu/backend/desktopservice";
+} from "../bindings/plexflip/backend/desktopservice";
 import { getBackendURL } from "../backendURL";
 
 export interface DesktopPlatformVersion {

@@ -3,26 +3,26 @@
 #
 # The lines below are called `modelines`. See `:help modeline`
 
-name: "nevu"
+name: "plexflip"
 arch: ${GOARCH}
 platform: "linux"
 version: "0.1.0"
 section: "default"
 priority: "extra"
 maintainer: ${GIT_COMMITTER_NAME} <${GIT_COMMITTER_EMAIL}>
-description: "Nevu Plex Client"
-vendor: "Ipmake"
+description: "PlexFlip Plex Client"
+vendor: "Code Rage"
 homepage: "https://wails.io"
 license: "MIT"
 release: "1"
 
 contents:
-  - src: "./bin/nevu"
-    dst: "/usr/local/bin/nevu"
+  - src: "./bin/plexflip"
+    dst: "/usr/local/bin/plexflip"
   - src: "./build/appicon.png"
-    dst: "/usr/share/icons/hicolor/128x128/apps/nevu.png"
-  - src: "./build/linux/nevu.desktop"
-    dst: "/usr/share/applications/nevu.desktop"
+    dst: "/usr/share/icons/hicolor/128x128/apps/plexflip.png"
+  - src: "./build/linux/plexflip.desktop"
+    dst: "/usr/share/applications/plexflip.desktop"
 
 # Default dependencies for the GTK4 + WebKitGTK 6.0 stack (Ubuntu 24.04+ / Debian 13+)
 depends:
