@@ -236,6 +236,9 @@ export default function Home() {
 
         <Box
           sx={{
+            width: "100%",
+            maxWidth: "100%",
+            minWidth: 0,
             zIndex: 1,
             display: "flex",
             flexDirection: "column",

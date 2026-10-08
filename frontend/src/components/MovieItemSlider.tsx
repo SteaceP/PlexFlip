@@ -108,6 +108,8 @@ function MovieItemSlider({
         alignItems: "center",
         justifyContent: "center",
         width: "100%",
+        maxWidth: "100%",
+        minWidth: 0,
         height: "auto",
         gap: "10px",
       }}
@@ -142,7 +144,8 @@ function MovieItemSlider({
             transition: "all 0.5s ease",
             userSelect: "none",
           }}
-          onClick={() => {
+          onClick={(e) => {
+            e.stopPropagation();
             if (link)
               setSearchParams(
                 new URLSearchParams({
@@ -196,6 +199,7 @@ function MovieItemSlider({
             .map((_, i) => {
               return (
                 <Box
+                  key={i}
                   sx={{
                     width: "10px",
                     height: "4px",
@@ -204,7 +208,8 @@ function MovieItemSlider({
                     mx: "2px",
                     cursor: "pointer",
                   }}
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setCurrPage(i);
                   }}
                 />
@@ -214,7 +219,9 @@ function MovieItemSlider({
       </Box>
       <Box
         sx={{
-          width: "100vw",
+          width: "100%",
+          maxWidth: "100%",
+          minWidth: 0,
           height: "auto",
           display: "flex",
           justifyContent: "flex-start",
@@ -222,7 +229,6 @@ function MovieItemSlider({
 
           py: "10px",
           whiteSpace: "nowrap",
-          // clipPath: "inset(0px 0px -10px 0px)",
           overflowX: "clip",
           overflowY: "visible",
           position: "relative",
@@ -232,30 +238,35 @@ function MovieItemSlider({
       >
         <Box
           sx={{
-            width: { xs: "40px", sm: "calc(2.5vw)" },
-            minWidth: { sm: "30px" },
-            height: "16vh",
+            width: { xs: "36px", sm: "calc(2.5vw)" },
+            minWidth: { xs: "36px", sm: "40px" },
+            height: "100%",
+            maxHeight: "220px",
             position: "absolute",
             left: "0px",
-            backgroundColor: "#00000022",
-            zIndex: 2,
+            backgroundColor: "rgba(0, 0, 0, 0.45)",
+            backdropFilter: "blur(6px)",
+            zIndex: 25,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             cursor: "pointer",
+            borderRadius: "0 6px 6px 0",
             visibility: itemCount > itemsPerPage ? "visible" : "hidden",
 
             "&:hover": {
-              backgroundColor: "#000000AA",
+              backgroundColor: "rgba(0, 0, 0, 0.8)",
             },
 
-            transition: "all 0.5s ease",
+            transition: "all 0.3s ease",
           }}
-          onClick={() => {
-            setCurrPage((currPage) =>
-              currPage - 1 < 0
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            setCurrPage((curr) =>
+              curr - 1 < 0
                 ? Math.ceil(itemCount / itemsPerPage) - 1
-                : currPage - 1
+                : curr - 1
             );
           }}
         >
@@ -278,67 +289,50 @@ function MovieItemSlider({
             transition: { xs: "transform 0.35s ease", md: "transform 1s ease" },
           }}
         >
-          {items?.slice(0, itemsPerPage * 5).map((item, i) => {
-            const start = currPage * itemsPerPage - itemsPerPage;
-            const end = currPage * itemsPerPage + itemsPerPage * 2;
-
-            if (i >= start && i < end) {
-              return (
-                <MovieItem
-                  key={item.ratingKey}
-                  item={item}
-                  itemsPerPage={itemsPerPage}
-                  index={i}
-                  PlexTvSource={plexTvSource}
-                  refetchData={
-                    dir && dir.endsWith("onDeck") ? fetchData : undefined
-                  }
-                />
-              );
-            } else {
-              return (
-                <Box
-                  style={{
-                    width: `calc((100vw - 5vw) / ${itemsPerPage} - 10px)`,
-                    backgroundColor: "#1C1C1C",
-                  }}
-                  key={i}
-                >
-                  <Box
-                    sx={{ width: "100%", height: "auto", aspectRatio: "16/9" }}
-                  />
-                  <Box sx={{ width: "100%", height: "104px" }} />
-                </Box>
-              );
-            }
-          })}
+          {items?.slice(0, itemsPerPage * 5).map((item, i) => (
+            <MovieItem
+              key={item.ratingKey}
+              item={item}
+              itemsPerPage={itemsPerPage}
+              index={i}
+              PlexTvSource={plexTvSource}
+              refetchData={
+                dir && dir.endsWith("onDeck") ? fetchData : undefined
+              }
+            />
+          ))}
         </Box>
         <Box
           sx={{
-            width: { xs: "40px", sm: "calc(2.5vw)" },
-            minWidth: { sm: "30px" },
-            height: "16vh",
+            width: { xs: "36px", sm: "calc(2.5vw)" },
+            minWidth: { xs: "36px", sm: "40px" },
+            height: "100%",
+            maxHeight: "220px",
             position: "absolute",
             right: "0px",
-            backgroundColor: "#00000022",
-            zIndex: 2,
+            backgroundColor: "rgba(0, 0, 0, 0.45)",
+            backdropFilter: "blur(6px)",
+            zIndex: 25,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             cursor: "pointer",
+            borderRadius: "6px 0 0 6px",
             visibility: itemCount > itemsPerPage ? "visible" : "hidden",
 
             "&:hover": {
-              backgroundColor: "#000000AA",
+              backgroundColor: "rgba(0, 0, 0, 0.8)",
             },
 
-            transition: "all 0.5s ease",
+            transition: "all 0.3s ease",
           }}
-          onClick={() => {
-            setCurrPage(
-              currPage + 1 > Math.ceil(itemCount / itemsPerPage) - 1
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            setCurrPage((curr) =>
+              curr + 1 > Math.ceil(itemCount / itemsPerPage) - 1
                 ? 0
-                : currPage + 1
+                : curr + 1
             );
           }}
         >
