@@ -294,6 +294,27 @@ func (a *ServerApp) runStartupChecks(ctx context.Context) {
 	}
 }
 
+func isAllowedOrigin(origin, reqHost string) bool {
+	if origin == "" {
+		return true
+	}
+	u, err := url.Parse(origin)
+	if err != nil {
+		return false
+	}
+	hostname := strings.ToLower(u.Hostname())
+	if hostname == "localhost" || hostname == "127.0.0.1" || hostname == "::1" {
+		return true
+	}
+
+	hostOnly := reqHost
+	if colon := strings.LastIndex(hostOnly, ":"); colon != -1 {
+		hostOnly = hostOnly[:colon]
+	}
+	hostOnly = strings.Trim(hostOnly, "[]")
+	return hostname == strings.ToLower(hostOnly)
+}
+
 func (a *ServerApp) buildRouter() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !a.disableRequestLog {
@@ -302,10 +323,12 @@ func (a *ServerApp) buildRouter() http.Handler {
 
 		// CORS headers
 		origin := r.Header.Get("Origin")
-		if origin != "" {
+		allowedOrigin := isAllowedOrigin(origin, r.Host)
+
+		if origin != "" && allowedOrigin {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 			w.Header().Set("Access-Control-Allow-Credentials", "true")
-		} else {
+		} else if origin == "" {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
 		}
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
@@ -313,8 +336,21 @@ func (a *ServerApp) buildRouter() http.Handler {
 		w.Header().Set("Access-Control-Expose-Headers", "*")
 
 		if r.Method == http.MethodOptions {
+			if origin != "" && !allowedOrigin {
+				http.Error(w, "Forbidden origin", http.StatusForbidden)
+				return
+			}
 			w.WriteHeader(http.StatusOK)
 			return
+		}
+
+		// Block untrusted foreign origins from accessing state-changing sensitive endpoints
+		if origin != "" && !allowedOrigin {
+			switch r.URL.Path {
+			case "/config/plex-server", "/config/test-plex-server", "/api/auth-complete", "/api/open-browser", "/open-browser":
+				http.Error(w, "Forbidden origin", http.StatusForbidden)
+				return
+			}
 		}
 
 		path := r.URL.Path
@@ -437,6 +473,9 @@ func (a *ServerApp) handleAuthPin(w http.ResponseWriter, r *http.Request) {
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err == nil && req.ClientID != "" {
 			a.pendingAuthMu.Lock()
+			if len(a.pendingAuthPins) > 100 {
+				a.pendingAuthPins = make(map[string]string)
+			}
 			if req.PinID != "" {
 				a.pendingAuthPins[req.PinID] = req.ClientID
 			}

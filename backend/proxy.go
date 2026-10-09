@@ -134,18 +134,13 @@ func NewProxyService(plexServer string, disableTLSVerify, logRequests bool) (*Pr
 			clientIP := getClientIP(req)
 			req.Header.Set("X-Forwarded-For", clientIP)
 
-			// Extract or inject X-Plex-Token
+			// Extract and forward X-Plex-Token without cross-user state
 			token := req.URL.Query().Get("X-Plex-Token")
 			if token == "" {
 				token = req.Header.Get("X-Plex-Token")
 			}
 			if token == "" {
 				token = req.Header.Get("x-plex-token")
-			}
-			if token != "" {
-				p.SetLastToken(token)
-			} else {
-				token = p.GetLastToken()
 			}
 
 			if token != "" {
@@ -177,6 +172,9 @@ func NewProxyService(plexServer string, disableTLSVerify, logRequests bool) (*Pr
 				if u, err := url.Parse(loc); err == nil {
 					if u.Host == "" || u.Host == currentParsed.Host {
 						newPath := u.Path
+						if !strings.HasPrefix(newPath, "/") {
+							newPath = "/" + newPath
+						}
 						if !strings.HasPrefix(newPath, "/dynproxy") {
 							newPath = "/dynproxy" + newPath
 						}
@@ -209,13 +207,6 @@ func (p *ProxyService) ServeDynProxy(w http.ResponseWriter, r *http.Request) {
 	if server == "" {
 		http.Error(w, "Plex server is not configured. Please configure it in settings.", http.StatusServiceUnavailable)
 		return
-	}
-	if tok := r.URL.Query().Get("X-Plex-Token"); tok != "" {
-		p.SetLastToken(tok)
-	} else if tok := r.Header.Get("X-Plex-Token"); tok != "" {
-		p.SetLastToken(tok)
-	} else if tok := r.Header.Get("x-plex-token"); tok != "" {
-		p.SetLastToken(tok)
 	}
 	p.reverseProxy.ServeHTTP(w, r)
 }
@@ -280,11 +271,6 @@ func (p *ProxyService) HandlePostProxy(w http.ResponseWriter, r *http.Request) {
 	for k, v := range reqBody.Headers {
 		outReq.Header.Set(k, v)
 	}
-	if tok, ok := reqBody.Headers["X-Plex-Token"]; ok && tok != "" {
-		p.SetLastToken(tok)
-	} else if tok, ok := reqBody.Headers["x-plex-token"]; ok && tok != "" {
-		p.SetLastToken(tok)
-	}
 	outReq.Header.Set("Accept", "application/json")
 	if reqBody.Data != nil {
 		outReq.Header.Set("Content-Type", "application/json")
@@ -303,11 +289,18 @@ func (p *ProxyService) HandlePostProxy(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 
-	if ct := resp.Header.Get("Content-Type"); ct != "" {
-		w.Header().Set("Content-Type", ct)
-	}
-	if cl := resp.Header.Get("Content-Length"); cl != "" {
-		w.Header().Set("Content-Length", cl)
+	for k, vals := range resp.Header {
+		lowerK := strings.ToLower(k)
+		switch lowerK {
+		case "access-control-allow-origin", "access-control-allow-credentials",
+			"access-control-allow-methods", "access-control-allow-headers",
+			"access-control-expose-headers", "connection", "transfer-encoding":
+			continue
+		default:
+			for _, v := range vals {
+				w.Header().Add(k, v)
+			}
+		}
 	}
 
 	w.WriteHeader(resp.StatusCode)
@@ -371,16 +364,16 @@ func (p *ProxyService) HandleGetProxy(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for k, vals := range r.Header {
-		for _, v := range vals {
-			outReq.Header.Add(k, v)
+		lowerK := strings.ToLower(k)
+		switch lowerK {
+		case "connection", "keep-alive", "proxy-authenticate", "proxy-authorization",
+			"te", "trailers", "transfer-encoding", "upgrade", "host":
+			continue
+		default:
+			for _, v := range vals {
+				outReq.Header.Add(k, v)
+			}
 		}
-	}
-	if tok := r.Header.Get("X-Plex-Token"); tok != "" {
-		p.SetLastToken(tok)
-	} else if tok := r.Header.Get("x-plex-token"); tok != "" {
-		p.SetLastToken(tok)
-	} else if tok := r.URL.Query().Get("X-Plex-Token"); tok != "" {
-		p.SetLastToken(tok)
 	}
 	outReq.Header.Set("Accept", "application/json")
 	outReq.Header.Set("User-Agent", "Mozilla/5.0")
@@ -397,11 +390,18 @@ func (p *ProxyService) HandleGetProxy(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 
-	if ct := resp.Header.Get("Content-Type"); ct != "" {
-		w.Header().Set("Content-Type", ct)
-	}
-	if cl := resp.Header.Get("Content-Length"); cl != "" {
-		w.Header().Set("Content-Length", cl)
+	for k, vals := range resp.Header {
+		lowerK := strings.ToLower(k)
+		switch lowerK {
+		case "access-control-allow-origin", "access-control-allow-credentials",
+			"access-control-allow-methods", "access-control-allow-headers",
+			"access-control-expose-headers", "connection", "transfer-encoding":
+			continue
+		default:
+			for _, v := range vals {
+				w.Header().Add(k, v)
+			}
+		}
 	}
 
 	w.WriteHeader(resp.StatusCode)

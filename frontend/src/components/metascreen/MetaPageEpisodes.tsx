@@ -232,7 +232,7 @@ export function MetaPageEpisodes({
               onClick={() => {
                 navigate(
                   `/watch/${episode.ratingKey}${
-                    episode.viewOffset ? `?t=${episode.viewOffset} ` : ""
+                    episode.viewOffset ? `?t=${episode.viewOffset}` : ""
                   }`
                 );
               }}

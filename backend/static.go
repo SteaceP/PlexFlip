@@ -91,12 +91,28 @@ func (a *ServerApp) serveStaticOrSPA(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *ServerApp) serveFromDisk(w http.ResponseWriter, r *http.Request) {
+	if strings.Contains(r.URL.Path, "\\") {
+		http.NotFound(w, r)
+		return
+	}
+
 	cleanPath := strings.TrimPrefix(path.Clean(r.URL.Path), "/")
 	if cleanPath == "" || cleanPath == "." {
 		cleanPath = "index.html"
 	}
 
-	targetFilePath := filepath.Join(a.wwwDir, filepath.FromSlash(cleanPath))
+	absWWWDir, err := filepath.Abs(a.wwwDir)
+	if err != nil {
+		absWWWDir = a.wwwDir
+	}
+
+	targetFilePath := filepath.Join(absWWWDir, filepath.FromSlash(cleanPath))
+	rel, err := filepath.Rel(absWWWDir, targetFilePath)
+	if err != nil || strings.HasPrefix(rel, "..") || strings.Contains(rel, ".."+string(filepath.Separator)) {
+		http.NotFound(w, r)
+		return
+	}
+
 	info, err := os.Stat(targetFilePath)
 	if err == nil && !info.IsDir() {
 		http.ServeFile(w, r, targetFilePath)

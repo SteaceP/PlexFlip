@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"sort"
 	"strings"
+	"time"
 )
 
 const plexFlipHubUrl = "https://plexflip-cloud.coderage.workers.dev/"
@@ -23,7 +24,9 @@ func NewReviewsHandler(db *Database, disableGlobalReviews bool) *ReviewsHandler 
 	return &ReviewsHandler{
 		db:                   db,
 		disableGlobalReviews: disableGlobalReviews,
-		httpClient:           &http.Client{},
+		httpClient: &http.Client{
+			Timeout: 10 * time.Second,
+		},
 	}
 }
 
@@ -212,7 +215,6 @@ func (h *ReviewsHandler) HandlePostReviews(w http.ResponseWriter, r *http.Reques
 		}
 	}
 
-	w.Header().Set("Cache-Control", "public, max-age=3600")
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]any{"error": errVal})
 }

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -21,12 +20,9 @@ var (
 	}
 )
 
-func initPlexClient(disableTLS bool) {
-	if disableTLS {
-		plexClient.Transport = &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		}
-	}
+func initPlexClient(_ bool) {
+	// Public plex.tv communication always enforces TLS certificate verification.
+	// Insecure TLS skipping is only applied to local upstream Plex media server proxying.
 }
 
 // CheckPlexUser validates a Plex token with plex.tv and returns the user object.

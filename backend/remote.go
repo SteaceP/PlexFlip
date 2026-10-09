@@ -184,6 +184,13 @@ func InitRemoteServer(corsOrigin string) *RemoteServer {
 				return
 			}
 
+			if targetInfo.user.UUID != user.UUID {
+				if ack != nil {
+					ack([]any{map[string]any{"success": false, "message": "Unauthorized: device belongs to another user"}}, nil)
+				}
+				return
+			}
+
 			targetInfo.socket.Emit("remoteAction", action)
 			if ack != nil {
 				ack([]any{map[string]any{"success": true, "message": "Action sent"}}, nil)

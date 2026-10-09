@@ -11,7 +11,7 @@ export async function authedGet(url: string) {
         return { status: err.response?.status || 500, data: err.response?.data || 'Internal server error' }
     });
 
-    if (res.status === 200) return res.data;
+    if (res.status >= 200 && res.status < 300) return res.data ?? {};
     else return null;
 }
 
@@ -24,7 +24,7 @@ export async function authedPost(url: string, body?: any) {
         return { status: err.response?.status || 500, data: err.response?.data || 'Internal server error' }
     });
 
-    if (res.status === 200) return res.data;
+    if (res.status >= 200 && res.status < 300) return res.data ?? {};
     else return null;
 }
 
@@ -37,7 +37,7 @@ export async function authedPut(url: string, body: any) {
         return { status: err.response?.status || 500, data: err.response?.data || 'Internal server error' }
     });
 
-    if (res.status === 200) return res.data;
+    if (res.status >= 200 && res.status < 300) return res.data ?? {};
     else return null;
 }
 

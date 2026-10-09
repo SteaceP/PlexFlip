@@ -252,16 +252,28 @@ function Watch() {
   }, [playing]);
 
   const [showInfo, setShowInfo] = useState(false);
+  const showInfoTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     playingRef.current = playing;
+    if (showInfoTimeoutRef.current) {
+      clearTimeout(showInfoTimeoutRef.current);
+      showInfoTimeoutRef.current = null;
+    }
 
     if (!playingRef.current) {
-      setTimeout(() => {
+      showInfoTimeoutRef.current = setTimeout(() => {
         if (!playingRef.current) setShowInfo(true);
       }, 5000);
     } else {
       setShowInfo(false);
     }
+
+    return () => {
+      if (showInfoTimeoutRef.current) {
+        clearTimeout(showInfoTimeoutRef.current);
+        showInfoTimeoutRef.current = null;
+      }
+    };
   }, [playing]);
 
   useEffect(() => {
@@ -309,7 +321,7 @@ function Watch() {
 
     const resyncPlayback = async (data: PlexFlip.Sync.PlayBackState) => {
       if (data.key !== itemID) {
-        navigate(`/watch/${data.key}?t=${data.time}`);
+        navigate(`/watch/${data.key}?t=${Math.floor((data.time ?? 0) * 1000)}`);
         return;
       }
 
@@ -410,13 +422,14 @@ function Watch() {
       const autoMatchTracks =
         useUserSettings.getState().settings["AUTO_MATCH_TRACKS"] === "true";
 
+      const prefKey = metadata.grandparentRatingKey || metadata.ratingKey;
       const audioTrackPref =
         useUserSettings.getState().settings[
-          `MEDIA_PREF_AUDIO-${metadata.grandparentRatingKey}`
+          `MEDIA_PREF_AUDIO-${prefKey}`
         ];
       const subtitleTrackPref =
         useUserSettings.getState().settings[
-          `MEDIA_PREF_SUBTITLE-${metadata.grandparentRatingKey}`
+          `MEDIA_PREF_SUBTITLE-${prefKey}`
         ];
 
       const streams = metadata.Media?.[0]?.Part?.[0]?.Stream ?? [];
@@ -508,6 +521,12 @@ function Watch() {
       setURL(getUrl(metadata, quality));
       setShowError(false);
     })();
+
+    return () => {
+      if (style.parentNode) {
+        style.parentNode.removeChild(style);
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [itemID, theme.palette.primary.main]);
 
@@ -539,6 +558,16 @@ function Watch() {
   // . (period): Forward 1 frame
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+
       const actions: { [key: string]: () => void } = {
         " ": () => togglePlay(),
         k: () => togglePlay(),
@@ -682,7 +711,7 @@ function Watch() {
                 setShowError(false);
 
                 // If the video is already 5 seconds in, reload the page with the current time
-                if (player.current?.getCurrentTime() ?? 0 > 5) {
+                if ((player.current?.getCurrentTime() ?? 0) > 5) {
                   const url = new URL(window.location.href);
                   url.searchParams.set(
                     "t",
@@ -1150,12 +1179,13 @@ function Watch() {
                         maxVideoBitrate: qualityOption.bitrate,
                         autoAdjustQuality: quality.auto,
                       });
-                      setQuality({
+                      const nextQuality = {
                         bitrate: qualityOption.original
                           ? undefined
                           : qualityOption.bitrate,
                         auto: undefined,
-                      });
+                      };
+                      setQuality(nextQuality);
 
                       if (qualityOption.original)
                         localStorage.removeItem("quality");
@@ -1171,7 +1201,7 @@ function Watch() {
                         seekToAfterLoad.current = progress;
                       setURL("");
                       setTimeout(() => {
-                        setURL(getUrl(metadata, quality));
+                        setURL(getUrl(metadata, nextQuality));
                       }, 100);
                     }}
                   >
@@ -1249,8 +1279,9 @@ function Watch() {
                         autoAdjustQuality: quality.auto,
                       });
 
+                      const prefKey = metadata.grandparentRatingKey || metadata.ratingKey;
                       useUserSettings.getState().setSetting(
-                        `MEDIA_PREF_AUDIO-${metadata.grandparentRatingKey}`,
+                        `MEDIA_PREF_AUDIO-${prefKey}`,
                         JSON.stringify({
                           index: stream.index,
                           title: stream.extendedDisplayTitle,
@@ -1329,8 +1360,9 @@ function Watch() {
                       autoAdjustQuality: quality.auto,
                     });
 
+                    const prefKey = metadata.grandparentRatingKey || metadata.ratingKey;
                     useUserSettings.getState().setSetting(
-                      `MEDIA_PREF_SUBTITLE-${metadata.grandparentRatingKey}`,
+                      `MEDIA_PREF_SUBTITLE-${prefKey}`,
                       JSON.stringify({
                         index: -1,
                         title: "None",
@@ -1396,8 +1428,9 @@ function Watch() {
                         autoAdjustQuality: quality.auto,
                       });
 
+                      const prefKey = metadata.grandparentRatingKey || metadata.ratingKey;
                       useUserSettings.getState().setSetting(
-                        `MEDIA_PREF_SUBTITLE-${metadata.grandparentRatingKey}`,
+                        `MEDIA_PREF_SUBTITLE-${prefKey}`,
                         JSON.stringify({
                           index: stream.index,
                           title: stream.extendedDisplayTitle,
@@ -2143,7 +2176,7 @@ function Watch() {
 
                   const seekTo = params.has("t")
                     ? parseInt(params.get("t") as string)
-                    : ((metadata?.viewOffset && metadata?.viewOffset > 5
+                    : ((metadata?.viewOffset && metadata?.viewOffset > 5000
                         ? metadata?.viewOffset
                         : null) ?? null);
 

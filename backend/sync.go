@@ -190,7 +190,7 @@ func InitSyncServer(corsOrigin string) *SyncServer {
 			}
 			args := events[1:]
 
-			if strings.HasPrefix(eventName, "SYNC_") {
+			if isHost && strings.HasPrefix(eventName, "SYNC_") {
 				log.Printf("SYNC [%s] emitting HOST %s to %s", socketID, eventName, room)
 				io.To(socket.Room(room)).Emit("HOST_"+eventName, args...)
 				return

@@ -48,7 +48,7 @@ func StartDiscovery(ctx context.Context, port int, deploymentID string, getPlexS
 	}
 	defer conn.Close()
 
-	ticker := time.NewTicker(500 * time.Millisecond)
+	ticker := time.NewTicker(15 * time.Second)
 	defer ticker.Stop()
 
 	var lastServer string
@@ -64,7 +64,7 @@ func StartDiscovery(ctx context.Context, port int, deploymentID string, getPlexS
 				lastServer = currentServer
 				packet := DiscoveryPacket{
 					Name:      "PlexFlip",
-					Interval:  500,
+					Interval:  15000,
 					Available: true,
 					Data: DiscoveryData{
 						Port:     port,
