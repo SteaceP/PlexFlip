@@ -122,7 +122,7 @@ export function getStreamProps(key: string, limitation: {
         mediaIndex: 0,
         partIndex: 0,
         path: "/library/metadata/" + key,
-        protocol: platformCache.isDesktop ? "hls" : "dash",
+        protocol: "hls",
         addDebugOverlay: 0,
         subtitleSize: 100,
         subtitles: limitation.maxVideoBitrate === -1 ? "sidecar" : "burn",

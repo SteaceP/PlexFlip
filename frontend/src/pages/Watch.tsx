@@ -3,6 +3,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   getLibraryDir,
   getLibraryMeta,
+  getLibraryMetaChildren,
   getPlayQueue,
   getServerPreferences,
   getStreamProps,
@@ -29,7 +30,7 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import ReactPlayer from "react-player";
+import ReactPlayer from "../common/ReactPlayer";
 import {
   getIncludeProps,
   getXPlexProps,
@@ -82,9 +83,7 @@ const getUrl = (
       ...getXPlexProps(),
     })}`;
 
-  return `${getBackendURL()}/dynproxy/video/:/transcode/universal/start.${
-    platformCache.isDesktop ? "m3u8" : "mpd"
-  }?${queryBuilder({
+  return `${getBackendURL()}/dynproxy/video/:/transcode/universal/start.m3u8?${queryBuilder({
     ...getStreamProps(data.ratingKey as string, {
       ...(quality.bitrate && {
         maxVideoBitrate: bitrate,
@@ -152,20 +151,51 @@ function Watch() {
   }, [volumePopoverOpen, showTune]);
 
   const loadMetadata = async (itemID: string) => {
-    await getUniversalDecision(itemID, {
-      maxVideoBitrate: quality.bitrate,
-      autoAdjustQuality: quality.auto,
-    });
-
     let Metadata: Plex.Metadata | null = null;
-    await getLibraryDir(`/library/metadata/${itemID}`, {
-      ...getIncludeProps(),
-    }).then((mediacontainer) => {
+    try {
+      const mediacontainer = await getLibraryDir(`/library/metadata/${itemID}`, {
+        ...getIncludeProps(),
+      });
       Metadata = mediacontainer.Metadata?.[0] ?? null;
-      if (["movie", "episode"].includes(Metadata?.type as string)) {
+      if (!Metadata) return;
+
+      if (Metadata.type === "show") {
+        const show = await getLibraryMeta(itemID);
+        if (show?.OnDeck?.Metadata?.ratingKey) {
+          navigate(
+            `/watch/${show.OnDeck.Metadata.ratingKey}${
+              show.OnDeck.Metadata.viewOffset
+                ? `?t=${show.OnDeck.Metadata.viewOffset}`
+                : ""
+            }`,
+            { replace: true }
+          );
+          return;
+        }
+        const seasons = await getLibraryMetaChildren(itemID);
+        if (seasons && seasons.length > 0) {
+          const episodes = await getLibraryMetaChildren(seasons[0].ratingKey);
+          if (episodes && episodes.length > 0) {
+            navigate(`/watch/${episodes[0].ratingKey}`, { replace: true });
+            return;
+          }
+        }
+        return;
+      }
+
+      if (Metadata.type === "season") {
+        const episodes = await getLibraryMetaChildren(itemID);
+        if (episodes && episodes.length > 0) {
+          navigate(`/watch/${episodes[0].ratingKey}`, { replace: true });
+          return;
+        }
+        return;
+      }
+
+      if (["movie", "episode"].includes(Metadata.type as string)) {
         setMetadata(Metadata);
-        if (Metadata?.type === "episode") {
-          getLibraryMeta(Metadata?.grandparentRatingKey as string).then(
+        if (Metadata.type === "episode") {
+          getLibraryMeta(Metadata.grandparentRatingKey as string).then(
             (show) => {
               setShowMetadata(show);
             },
@@ -174,9 +204,21 @@ function Watch() {
       } else {
         console.error("Invalid metadata type");
       }
-    });
+    } catch (e) {
+      console.error("Error loading library metadata:", e);
+      return;
+    }
 
     if (!Metadata) return;
+
+    try {
+      await getUniversalDecision(itemID, {
+        maxVideoBitrate: quality.bitrate,
+        autoAdjustQuality: quality.auto,
+      });
+    } catch (e) {
+      console.warn("getUniversalDecision warning:", e);
+    }
     const serverPreferences = await getServerPreferences();
 
     getPlayQueue(
@@ -377,76 +419,86 @@ function Watch() {
           `MEDIA_PREF_SUBTITLE-${metadata.grandparentRatingKey}`
         ];
 
+      const streams = metadata.Media?.[0]?.Part?.[0]?.Stream ?? [];
+
       // Match audio track and subtitle track with the preferences
-      if (audioTrackPref && autoMatchTracks) {
-        const audioTrackPrefParsed: {
-          index: number;
-          title: string;
-        } = JSON.parse(audioTrackPref);
+      if (audioTrackPref && autoMatchTracks && streams.length > 0) {
+        try {
+          const audioTrackPrefParsed: {
+            index: number;
+            title: string;
+          } = JSON.parse(audioTrackPref);
 
-        console.log(
-          `Preferred Audio Track - Index: ${audioTrackPrefParsed.index}, Title: ${audioTrackPrefParsed.title}`,
-        );
-
-        const audioTrack = metadata.Media?.[0].Part[0].Stream.sort((a, b) => {
-          return (
-            Math.abs(a.index - audioTrackPrefParsed.index) -
-            Math.abs(b.index - audioTrackPrefParsed.index)
-          );
-        }).find((stream) => {
-          return (
-            stream.streamType === 2 &&
-            stream.extendedDisplayTitle === audioTrackPrefParsed.title
-          );
-        });
-
-        if (audioTrack) {
           console.log(
-            `Selected Audio Track - Index: ${audioTrack.index}, Title: ${audioTrack.extendedDisplayTitle}`,
+            `Preferred Audio Track - Index: ${audioTrackPrefParsed.index}, Title: ${audioTrackPrefParsed.title}`,
           );
-          await putAudioStream(
-            metadata.Media?.[0].Part[0].id ?? 0,
-            audioTrack.id,
-          );
-        }
-      }
 
-      if (subtitleTrackPref && autoMatchTracks) {
-        const subtitleTrackPrefParsed: {
-          index: number;
-          title: string;
-        } = JSON.parse(subtitleTrackPref);
-
-        console.log(
-          `Preferred Subtitle Track - Index: ${subtitleTrackPrefParsed.index}, Title: ${subtitleTrackPrefParsed.title}`,
-        );
-
-        if (subtitleTrackPrefParsed.index === -1) {
-          await putSubtitleStream(metadata.Media?.[0].Part[0].id ?? 0, 0);
-        } else {
-          const subtitleTrack = metadata.Media?.[0].Part[0].Stream.sort(
-            (a, b) => {
-              return (
-                Math.abs(a.index - subtitleTrackPrefParsed.index) -
-                Math.abs(b.index - subtitleTrackPrefParsed.index)
-              );
-            },
-          ).find((stream) => {
+          const audioTrack = [...streams].sort((a, b) => {
             return (
-              stream.streamType === 3 &&
-              stream.extendedDisplayTitle === subtitleTrackPrefParsed.title
+              Math.abs(a.index - audioTrackPrefParsed.index) -
+              Math.abs(b.index - audioTrackPrefParsed.index)
+            );
+          }).find((stream) => {
+            return (
+              stream.streamType === 2 &&
+              stream.extendedDisplayTitle === audioTrackPrefParsed.title
             );
           });
 
-          if (subtitleTrack) {
+          if (audioTrack && metadata.Media?.[0]?.Part?.[0]?.id) {
             console.log(
-              `Selected Subtitle Track - Index: ${subtitleTrack.index}, Title: ${subtitleTrack.extendedDisplayTitle}`,
+              `Selected Audio Track - Index: ${audioTrack.index}, Title: ${audioTrack.extendedDisplayTitle}`,
             );
-            await putSubtitleStream(
-              metadata.Media?.[0].Part[0].id ?? 0,
-              subtitleTrack.id,
+            await putAudioStream(
+              metadata.Media[0].Part[0].id,
+              audioTrack.id,
             );
           }
+        } catch (e) {
+          console.warn("Audio track matching error:", e);
+        }
+      }
+
+      if (subtitleTrackPref && autoMatchTracks && streams.length > 0) {
+        try {
+          const subtitleTrackPrefParsed: {
+            index: number;
+            title: string;
+          } = JSON.parse(subtitleTrackPref);
+
+          console.log(
+            `Preferred Subtitle Track - Index: ${subtitleTrackPrefParsed.index}, Title: ${subtitleTrackPrefParsed.title}`,
+          );
+
+          if (subtitleTrackPrefParsed.index === -1 && metadata.Media?.[0]?.Part?.[0]?.id) {
+            await putSubtitleStream(metadata.Media[0].Part[0].id, 0);
+          } else if (metadata.Media?.[0]?.Part?.[0]?.id) {
+            const subtitleTrack = [...streams].sort(
+              (a, b) => {
+                return (
+                  Math.abs(a.index - subtitleTrackPrefParsed.index) -
+                  Math.abs(b.index - subtitleTrackPrefParsed.index)
+                );
+              },
+            ).find((stream) => {
+              return (
+                stream.streamType === 3 &&
+                stream.extendedDisplayTitle === subtitleTrackPrefParsed.title
+              );
+            });
+
+            if (subtitleTrack) {
+              console.log(
+                `Selected Subtitle Track - Index: ${subtitleTrack.index}, Title: ${subtitleTrack.extendedDisplayTitle}`,
+              );
+              await putSubtitleStream(
+                metadata.Media[0].Part[0].id,
+                subtitleTrack.id,
+              );
+            }
+          }
+        } catch (e) {
+          console.warn("Subtitle track matching error:", e);
         }
       }
 
@@ -463,12 +515,19 @@ function Watch() {
     SessionID = sessionID;
   }, [sessionID]);
 
-  useEffect(() => {
-    if (!player.current) return;
-
-    if (ready && !playing) setPlaying(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready]);
+  const togglePlay = () => {
+    const internalPlayer = player.current?.getInternalPlayer() as HTMLVideoElement | null;
+    const isPaused = internalPlayer ? internalPlayer.paused : !playing;
+    if (isPaused) {
+      setPlaying(true);
+      socket?.emit("EVNT_SYNC_RESUME");
+      internalPlayer?.play().catch(() => {});
+    } else {
+      setPlaying(false);
+      socket?.emit("EVNT_SYNC_PAUSE");
+      internalPlayer?.pause();
+    }
+  };
 
   // playback controll buttons
   // SPACE: play/pause
@@ -481,18 +540,8 @@ function Watch() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const actions: { [key: string]: () => void } = {
-        " ": () =>
-          setPlaying((state) => {
-            if (state) socket?.emit("EVNT_SYNC_PAUSE");
-            else socket?.emit("EVNT_SYNC_RESUME");
-            return !state;
-          }),
-        k: () =>
-          setPlaying((state) => {
-            if (state) socket?.emit("EVNT_SYNC_PAUSE");
-            else socket?.emit("EVNT_SYNC_RESUME");
-            return !state;
-          }),
+        " ": () => togglePlay(),
+        k: () => togglePlay(),
         j: () => {
           const l = player.current?.getCurrentTime() ?? 0;
           player.current?.seekTo(l - 10);
@@ -1819,9 +1868,7 @@ function Watch() {
                       >
                         <IconButton
                           onClick={() => {
-                            setPlaying(!playing);
-                            if (playing) socket?.emit("EVNT_SYNC_PAUSE");
-                            else socket?.emit("EVNT_SYNC_RESUME");
+                            togglePlay();
                           }}
                           onKeyDown={(e) => {
                             e.preventDefault();
@@ -2072,11 +2119,7 @@ function Watch() {
 
                   switch (e.detail) {
                     case 1:
-                      setPlaying((state) => {
-                        if (state) socket?.emit("EVNT_SYNC_PAUSE");
-                        else socket?.emit("EVNT_SYNC_RESUME");
-                        return !state;
-                      });
+                      togglePlay();
                       break;
                     case 2:
                       if (!document.fullscreenElement) {
@@ -2147,6 +2190,14 @@ function Watch() {
                   file: {
                     hlsVersion: "1.6.7",
                     dashVersion: "4.7.4",
+                    hlsOptions: {
+                      xhrSetup: (xhr: XMLHttpRequest) => {
+                        const token = localStorage.getItem("accessToken");
+                        if (token) {
+                          xhr.setRequestHeader("X-Plex-Token", token);
+                        }
+                      },
+                    },
                     attributes: {
                       controlsList: "nodownload",
                       disablePictureInPicture: true,

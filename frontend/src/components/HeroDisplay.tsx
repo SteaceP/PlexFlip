@@ -9,12 +9,12 @@ import { Box, Typography, Button, IconButton } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { usePreviewPlayer } from "../states/PreviewPlayerState";
-import ReactPlayer from "react-player";
+import ReactPlayer from "../common/ReactPlayer";
 import { useBigReader } from "./BigReader";
 import { HeroWatchListButton } from "./MovieItem";
 import { getBackendURL } from "../backendURL";
 import { queryBuilder } from "../plex/QuickFunctions";
-import { getLibraryMetaChildren, getTranscodeImageURL } from "../plex";
+import { getLibraryMeta, getLibraryMetaChildren, getTranscodeImageURL } from "../plex";
 import { useAudioPlayerStore } from "../states/AudioPlayerState";
 
 function HeroDisplay({ item }: { item: Plex.Metadata }) {
@@ -291,8 +291,38 @@ function HeroDisplay({ item }: { item: Plex.Metadata }) {
                       useAudioPlayerStore.getState().playAlbum(albums[0], tracks);
                     }
                   }
-                } else {
+                } else if (item.type === "show") {
+                  try {
+                    const data = await getLibraryMeta(item.ratingKey);
+                    if (data?.OnDeck?.Metadata) {
+                      navigate(
+                        `/watch/${data.OnDeck.Metadata.ratingKey}${
+                          data.OnDeck.Metadata.viewOffset
+                            ? `?t=${data.OnDeck.Metadata.viewOffset}`
+                            : ""
+                        }`
+                      );
+                      return;
+                    }
+                    if (data?.Children?.Metadata?.[0]) {
+                      const episodes = await getLibraryMetaChildren(
+                        data.Children.Metadata[0].ratingKey
+                      );
+                      if (episodes && episodes.length > 0) {
+                        navigate(`/watch/${episodes[0].ratingKey}`);
+                        return;
+                      }
+                    }
+                  } catch (e) {
+                    console.error("Failed to resolve show episode:", e);
+                  }
                   navigate(`/watch/${item.ratingKey}`);
+                } else {
+                  navigate(
+                    `/watch/${item.ratingKey}${
+                      item.viewOffset ? `?t=${item.viewOffset}` : ""
+                    }`
+                  );
                 }
               }}
             >

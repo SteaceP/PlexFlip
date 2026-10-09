@@ -40,7 +40,7 @@ import {
 import { useBigReader } from "./BigReader";
 import { create } from "zustand";
 import { usePreviewPlayer } from "../states/PreviewPlayerState";
-import ReactPlayer from "react-player";
+import ReactPlayer from "../common/ReactPlayer";
 import { useConfirmModal } from "./ConfirmModal";
 import { getBackendURL } from "../backendURL";
 import { queryBuilder } from "../plex/QuickFunctions";

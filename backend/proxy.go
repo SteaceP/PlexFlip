@@ -25,6 +25,23 @@ type ProxyService struct {
 	httpClient       *http.Client
 	reverseProxy     *httputil.ReverseProxy
 	logRequests      bool
+	lastTokenMu      sync.RWMutex
+	lastToken        string
+}
+
+func (p *ProxyService) GetLastToken() string {
+	p.lastTokenMu.RLock()
+	defer p.lastTokenMu.RUnlock()
+	return p.lastToken
+}
+
+func (p *ProxyService) SetLastToken(token string) {
+	if token == "" {
+		return
+	}
+	p.lastTokenMu.Lock()
+	defer p.lastTokenMu.Unlock()
+	p.lastToken = token
 }
 
 func getClientIP(r *http.Request) string {
@@ -130,12 +147,34 @@ func NewProxyService(plexServer string, disableTLSVerify, logRequests bool) (*Pr
 
 			req.Host = currentParsed.Host
 
-			// Strip cookies
-			req.Header.Del("Cookie")
-
 			// Clean and set X-Forwarded-For
 			clientIP := getClientIP(req)
 			req.Header.Set("X-Forwarded-For", clientIP)
+
+			// Extract or inject X-Plex-Token
+			token := req.URL.Query().Get("X-Plex-Token")
+			if token == "" {
+				token = req.Header.Get("X-Plex-Token")
+			}
+			if token == "" {
+				token = req.Header.Get("x-plex-token")
+			}
+			if token != "" {
+				p.SetLastToken(token)
+			} else {
+				token = p.GetLastToken()
+			}
+
+			if token != "" {
+				req.Header.Set("X-Plex-Token", token)
+				if !strings.Contains(req.URL.RawQuery, "X-Plex-Token") {
+					if req.URL.RawQuery == "" {
+						req.URL.RawQuery = "X-Plex-Token=" + url.QueryEscape(token)
+					} else {
+						req.URL.RawQuery += "&X-Plex-Token=" + url.QueryEscape(token)
+					}
+				}
+			}
 		},
 		ModifyResponse: func(resp *http.Response) error {
 			// Strip upstream CORS headers to avoid duplicate headers that browsers block
@@ -187,6 +226,13 @@ func (p *ProxyService) ServeDynProxy(w http.ResponseWriter, r *http.Request) {
 	if server == "" {
 		http.Error(w, "Plex server is not configured. Please configure it in settings.", http.StatusServiceUnavailable)
 		return
+	}
+	if tok := r.URL.Query().Get("X-Plex-Token"); tok != "" {
+		p.SetLastToken(tok)
+	} else if tok := r.Header.Get("X-Plex-Token"); tok != "" {
+		p.SetLastToken(tok)
+	} else if tok := r.Header.Get("x-plex-token"); tok != "" {
+		p.SetLastToken(tok)
 	}
 	p.reverseProxy.ServeHTTP(w, r)
 }
@@ -250,6 +296,11 @@ func (p *ProxyService) HandlePostProxy(w http.ResponseWriter, r *http.Request) {
 
 	for k, v := range reqBody.Headers {
 		outReq.Header.Set(k, v)
+	}
+	if tok, ok := reqBody.Headers["X-Plex-Token"]; ok && tok != "" {
+		p.SetLastToken(tok)
+	} else if tok, ok := reqBody.Headers["x-plex-token"]; ok && tok != "" {
+		p.SetLastToken(tok)
 	}
 	outReq.Header.Set("Accept", "application/json")
 	if reqBody.Data != nil {
@@ -340,6 +391,13 @@ func (p *ProxyService) HandleGetProxy(w http.ResponseWriter, r *http.Request) {
 		for _, v := range vals {
 			outReq.Header.Add(k, v)
 		}
+	}
+	if tok := r.Header.Get("X-Plex-Token"); tok != "" {
+		p.SetLastToken(tok)
+	} else if tok := r.Header.Get("x-plex-token"); tok != "" {
+		p.SetLastToken(tok)
+	} else if tok := r.URL.Query().Get("X-Plex-Token"); tok != "" {
+		p.SetLastToken(tok)
 	}
 	outReq.Header.Set("Accept", "application/json")
 	outReq.Header.Set("User-Agent", "Mozilla/5.0")

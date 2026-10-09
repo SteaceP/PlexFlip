@@ -5,7 +5,7 @@ import {
   VolumeOffRounded,
   VolumeUpRounded,
 } from "@mui/icons-material";
-import ReactPlayer from "react-player";
+import ReactPlayer from "../../common/ReactPlayer";
 import { getTranscodeImageURL } from "../../plex";
 import { usePreviewPlayer } from "../../states/PreviewPlayerState";
 

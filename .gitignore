@@ -12,6 +12,7 @@ coverage
 /frontend/build
 dist
 .task/
+*.tsbuildinfo
 
 # Wails auto-generated bindings
 /frontend/bindings/
