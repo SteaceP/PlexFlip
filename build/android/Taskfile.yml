@@ -9,22 +9,22 @@ vars:
   TARGET_SDK: '35'
   # The emulator runs the host architecture; physical devices are arm64
   HOST_ARCH:
-    sh: '[ "$(uname -m)" = "x86_64" ] && echo "amd64" || echo "arm64"'
+    sh: '{{if eq OS "windows"}}echo amd64{{else}}[ "$(uname -m)" = "x86_64" ] && echo "amd64" || echo "arm64"{{end}}'
   # System-image ABI for the host, used in the "create an AVD" hint below.
   ANDROID_ABI:
-    sh: '[ "$(uname -m)" = "arm64" ] && echo "arm64-v8a" || echo "x86_64"'
+    sh: '{{if eq OS "windows"}}echo x86_64{{else}}[ "$(uname -m)" = "arm64" ] && echo "arm64-v8a" || echo "x86_64"{{end}}'
   # SDK location: $ANDROID_HOME / $ANDROID_SDK_ROOT, else the per-OS default
   # (macOS: ~/Library/Android/sdk, Linux/other: ~/Android/Sdk)
   SDK_ROOT:
-    sh: 'echo "${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$([ -d "$HOME/Library/Android/sdk" ] && echo "$HOME/Library/Android/sdk" || echo "$HOME/Android/Sdk")}}"'
+    sh: '{{if eq OS "windows"}}echo "${LOCALAPPDATA}/Android/Sdk"{{else}}echo "${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$([ -d "$HOME/Library/Android/sdk" ] && echo "$HOME/Library/Android/sdk" || echo "$HOME/Android/Sdk")}}"{{end}}'
   ADB:
-    sh: 'command -v adb || echo "${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$([ -d "$HOME/Library/Android/sdk" ] && echo "$HOME/Library/Android/sdk" || echo "$HOME/Android/Sdk")}}/platform-tools/adb"'
+    sh: '{{if eq OS "windows"}}command -v adb || echo "${LOCALAPPDATA}/Android/Sdk/platform-tools/adb.exe"{{else}}command -v adb || echo "${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$([ -d "$HOME/Library/Android/sdk" ] && echo "$HOME/Library/Android/sdk" || echo "$HOME/Android/Sdk")}}/platform-tools/adb"{{end}}'
   EMULATOR:
-    sh: 'command -v emulator || echo "${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$([ -d "$HOME/Library/Android/sdk" ] && echo "$HOME/Library/Android/sdk" || echo "$HOME/Android/Sdk")}}/emulator/emulator"'
+    sh: '{{if eq OS "windows"}}command -v emulator || echo "${LOCALAPPDATA}/Android/Sdk/emulator/emulator.exe"{{else}}command -v emulator || echo "${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$([ -d "$HOME/Library/Android/sdk" ] && echo "$HOME/Library/Android/sdk" || echo "$HOME/Android/Sdk")}}/emulator/emulator"{{end}}'
   # avdmanager lives under cmdline-tools/<version>/bin; used to auto-create an
   # AVD when none exists (mirrors the iOS `ensure-simulator` auto-create flow).
   AVDMANAGER:
-    sh: 'command -v avdmanager || ls "${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$([ -d "$HOME/Library/Android/sdk" ] && echo "$HOME/Library/Android/sdk" || echo "$HOME/Android/Sdk")}}"/cmdline-tools/*/bin/avdmanager 2>/dev/null | sort -V | tail -1 || true'
+    sh: '{{if eq OS "windows"}}command -v avdmanager || echo ""{{else}}command -v avdmanager || ls "${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$([ -d "$HOME/Library/Android/sdk" ] && echo "$HOME/Library/Android/sdk" || echo "$HOME/Android/Sdk")}}"/cmdline-tools/*/bin/avdmanager 2>/dev/null | sort -V | tail -1 || true{{end}}'
 
 tasks:
   install:deps:

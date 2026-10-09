@@ -20,7 +20,7 @@ import {
 import React, { useEffect } from "react";
 import { useState } from "react";
 import { getLibraryDir, getTranscodeImageURL } from "../plex";
-import { getMinutes } from "./MetaScreen";
+import { getMinutes } from "./metascreen/utils";
 import { useNavigate } from "react-router-dom";
 
 function WatchShowChildView({

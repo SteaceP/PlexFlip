@@ -105,10 +105,14 @@ tasks:
     deps:
       - task: build:frontend
     cmds:
-      - mkdir -p backend/www
-      - rm -rf backend/www/*
-      - cp -r frontend/build/* backend/www/
-      - touch backend/www/.gitkeep
+      - cmd: powershell -NoProfile -Command "if (!(Test-Path 'backend/www')) { New-Item -ItemType Directory -Path 'backend/www' -Force | Out-Null }; Get-ChildItem -Path 'backend/www' -Exclude '.gitkeep' | Remove-Item -Recurse -Force; Copy-Item -Path 'frontend/build/*' -Destination 'backend/www' -Recurse -Force; if (!(Test-Path 'backend/www/.gitkeep')) { New-Item -ItemType File -Path 'backend/www/.gitkeep' -Force | Out-Null }"
+        platforms: [windows]
+      - cmd: |
+          mkdir -p backend/www
+          rm -rf backend/www/*
+          cp -r frontend/build/* backend/www/
+          touch backend/www/.gitkeep
+        platforms: [linux, darwin]
 
   frontend:run:
     summary: Run a frontend script with selected runner
@@ -200,7 +204,10 @@ tasks:
       - frontend/src/bindings/**/*
     cmds:
       - wails3 generate bindings -d frontend/src/bindings -f '{{.BUILD_FLAGS}}' -clean=true{{if eq .OBFUSCATED "true"}} -obfuscated{{end}} -ts -i ./backend
-      - mkdir -p frontend/bindings && cp -r frontend/src/bindings/* frontend/bindings/
+      - cmd: powershell -NoProfile -Command "if (!(Test-Path 'frontend/bindings')) { New-Item -ItemType Directory -Path 'frontend/bindings' -Force | Out-Null }; Copy-Item -Path 'frontend/src/bindings/*' -Destination 'frontend/bindings' -Recurse -Force"
+        platforms: [windows]
+      - cmd: mkdir -p frontend/bindings && cp -r frontend/src/bindings/* frontend/bindings/
+        platforms: [linux, darwin]
 
   generate:icons:
     summary: Generates Windows `.ico` and Mac `.icns` from an image; on macOS, `-iconcomposerinput appicon.icon -macassetdir darwin` also produces `Assets.car` from a `.icon` file (skipped on other platforms).

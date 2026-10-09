@@ -13,6 +13,10 @@ coverage
 dist
 .task/
 
+# Wails auto-generated bindings
+/frontend/bindings/
+/frontend/src/bindings/
+
 # misc
 .DS_Store
 .env
@@ -34,7 +38,7 @@ yarn-error.log*
 /bin/
 /data
 .gradle/
-**/build/
+build/android/**/build/
 *.apk
 *.aab
 

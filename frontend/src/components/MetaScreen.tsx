@@ -20,9 +20,9 @@ import {
   MetaPageRecommendations,
   MetaPageReviews,
   TabButton,
-} from "./metascreen";
+} from "./metascreen/index";
 
-export { getMinutes } from "./metascreen";
+export { getMinutes } from "./metascreen/utils";
 
 function MetaScreen() {
   const [searchParams, setSearchParams] = useSearchParams();
