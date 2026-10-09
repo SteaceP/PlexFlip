@@ -47,15 +47,17 @@ export default function QueueDrawer() {
       anchor="right"
       open={isQueueOpen}
       onClose={() => setQueueOpen(false)}
-      PaperProps={{
-        sx: {
-          width: { xs: "100%", sm: "400px" },
-          bgcolor: "#0b0f19",
-          color: "#fff",
-          borderLeft: "1px solid rgba(255,255,255,0.08)",
-          p: 2.5,
-          display: "flex",
-          flexDirection: "column",
+      slotProps={{
+        paper: {
+          sx: {
+            width: { xs: "100%", sm: "400px" },
+            bgcolor: "#0b0f19",
+            color: "#fff",
+            borderLeft: "1px solid rgba(255,255,255,0.08)",
+            p: 2.5,
+            display: "flex",
+            flexDirection: "column",
+          },
         },
       }}
     >

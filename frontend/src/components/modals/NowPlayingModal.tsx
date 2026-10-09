@@ -80,12 +80,14 @@ export default function NowPlayingModal() {
       fullScreen
       open={isNowPlayingOpen}
       onClose={() => setNowPlayingOpen(false)}
-      PaperProps={{
-        sx: {
-          bgcolor: "#07090e",
-          color: "#fff",
-          position: "relative",
-          overflow: "hidden",
+      slotProps={{
+        paper: {
+          sx: {
+            bgcolor: "#07090e",
+            color: "#fff",
+            position: "relative",
+            overflow: "hidden",
+          },
         },
       }}
     >
