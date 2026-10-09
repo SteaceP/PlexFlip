@@ -33,6 +33,10 @@ yarn-error.log*
 # build output
 /bin/
 /data
+.gradle/
+**/build/
+*.apk
+*.aab
 
 # packaging build output
 /build/linux/appimage/build/
