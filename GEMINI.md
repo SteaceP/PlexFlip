@@ -95,6 +95,24 @@ The following MCP servers are configured and active for this project. Agents mus
 - **Transport**: Docker container (`ghcr.io/github/github-mcp-server`)
 - **Scope**: Issues, Pull Requests, releases, and repository workflows for `SteaceP/PlexFlip`.
 
+### 2.7. Material UI MCP Server (`mui-mcp`)
+- **Transport**: `stdio` (`cmd /c npx -y @mui/mcp@latest`)
+- **Scope**: Official Material UI and MUI X documentation catalog and React component generation tools.
+- **Available Tools**:
+  - `useMuiDocs`: Fetches the documentation catalog (URLs + summaries) for `@mui/material`, `@mui/x-data-grid`, etc.
+  - `fetchDocs`: Fetches full content of official MUI documentation pages.
+  - `generateReactCode`: Generates Material UI React components grounded in official patterns.
+- **Agent Directives**:
+  - Use `useMuiDocs` and `fetchDocs` when verifying Material UI component APIs, props, theme overrides, and styling patterns in [`frontend/src/`](file:///f:/PlexFlip/frontend/src).
+
+### 2.8. React Documentation MCP Server (`react-docs-mcp`)
+- **Transport**: `stdio` (`cmd /c node C:/Users/steac/.gemini/antigravity/mcp-wrapper.js npx -y react-docs-mcp`)
+- **Scope**: Offline semantic and hybrid keyword search over official React documentation (react.dev).
+- **Available Tools**:
+  - Semantic search and documentation lookup for React APIs, hooks, and patterns.
+- **Agent Directives**:
+  - Use when querying React 19 APIs, hooks, and lifecycle patterns in [`frontend/src/`](file:///f:/PlexFlip/frontend/src).
+
 ---
 
 ## 3. Development and Build Workflows

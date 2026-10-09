@@ -25,23 +25,6 @@ type ProxyService struct {
 	httpClient       *http.Client
 	reverseProxy     *httputil.ReverseProxy
 	logRequests      bool
-	lastTokenMu      sync.RWMutex
-	lastToken        string
-}
-
-func (p *ProxyService) GetLastToken() string {
-	p.lastTokenMu.RLock()
-	defer p.lastTokenMu.RUnlock()
-	return p.lastToken
-}
-
-func (p *ProxyService) SetLastToken(token string) {
-	if token == "" {
-		return
-	}
-	p.lastTokenMu.Lock()
-	defer p.lastTokenMu.Unlock()
-	p.lastToken = token
 }
 
 func getClientIP(r *http.Request) string {
