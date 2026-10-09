@@ -242,7 +242,7 @@ tasks:
   frontend:dev:pnpm:
     dir: frontend
     cmds:
-      - pnpm start
+      - pnpm run dev --port {{.VITE_PORT}} --strictPort
 
   frontend:dev:bun:
     dir: frontend

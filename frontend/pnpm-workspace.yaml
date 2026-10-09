@@ -1,5 +1,4 @@
 allowBuilds:
   core-js: true
   core-js-pure: true
-patchedDependencies:
-  react-dev-utils@12.0.1: patches/react-dev-utils@12.0.1.patch
+  esbuild: true

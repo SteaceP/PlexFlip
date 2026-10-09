@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export const isDev = !process.env.NODE_ENV || process.env.NODE_ENV === 'development'
+export const isDev = import.meta.env.DEV;
 
 export function getBackendURL() {
     if (isDev) return "http://localhost:3000";
