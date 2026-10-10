@@ -1,29 +1,40 @@
-import axios from "axios";
-import { appendQuery, authedGet, authedPost, authedPut, getIncludeProps, getXPlexProps, queryBuilder } from "./QuickFunctions";
-import './plex.d.ts'
-import { getBackendURL } from "../backendURL";
-import { platformCache } from "../common/DesktopApp";
+import "./plex.d.ts";
 
-axios.defaults.headers.common['accept'] = 'application/json';
+import axios from "axios";
+
+import { getBackendURL } from "../backendURL";
+import {
+  appendQuery,
+  authedGet,
+  authedPost,
+  authedPut,
+  getIncludeProps,
+  getXPlexProps,
+  queryBuilder,
+} from "./QuickFunctions";
+
+axios.defaults.headers.common["accept"] = "application/json";
 
 export async function getAllLibraries(): Promise<Plex.LibarySection[]> {
-    const res = await authedGet(`/library/sections`);
-    return res?.MediaContainer?.Directory || [];
+  const res = await authedGet(`/library/sections`);
+  return res?.MediaContainer?.Directory || [];
 }
 
 export async function getLibrary(key: string): Promise<Plex.MediaContainer> {
-    const res = await authedGet(`/library/sections/${key}?${queryBuilder({
-        ...getIncludeProps(),
-    })}`);
-    return res?.MediaContainer || ({ Metadata: [], size: 0 } as any);
+  const res = await authedGet(
+    `/library/sections/${key}?${queryBuilder({
+      ...getIncludeProps(),
+    })}`
+  );
+  return res?.MediaContainer || ({ Metadata: [], size: 0 } as any);
 }
 
 /**
  * @deprecated This function is deprecated. Use `getLibraryDir` instead.
  */
 export async function getLibraryMedia(path: string): Promise<Plex.Metadata[]> {
-    const res = await authedGet(`/library${path}`);
-    return res?.MediaContainer?.Metadata || [];
+  const res = await authedGet(`/library${path}`);
+  return res?.MediaContainer?.Metadata || [];
 }
 
 /**
@@ -33,66 +44,85 @@ export async function getLibraryMedia(path: string): Promise<Plex.Metadata[]> {
  * @param {Object.<string, any>} props - Additional properties to include in the query.
  * @returns {Promise<Plex.Metadata[]>} - A promise that resolves to an array of metadata items.
  */
-export async function getLibraryDir(key: string, props?: { [key: string]: any }): Promise<Plex.MediaContainer> {
-    const url = appendQuery(key, {
-        ...props,
-        ...getIncludeProps(),
-    });
-    const res = await authedGet(url);
-    return res?.MediaContainer || ({ Metadata: [], size: 0 } as unknown as Plex.MediaContainer);
+export async function getLibraryDir(
+  key: string,
+  props?: { [key: string]: any }
+): Promise<Plex.MediaContainer> {
+  const url = appendQuery(key, {
+    ...props,
+    ...getIncludeProps(),
+  });
+  const res = await authedGet(url);
+  return res?.MediaContainer || ({ Metadata: [], size: 0 } as unknown as Plex.MediaContainer);
 }
 
-export async function getLibrarySecondary(key: string, directory: string): Promise<Plex.Directory[]> {
-    const res = await authedGet(`/library/sections/${key}/${directory}`);
-    return res?.MediaContainer?.Directory || [];
+export async function getLibrarySecondary(
+  key: string,
+  directory: string
+): Promise<Plex.Directory[]> {
+  const res = await authedGet(`/library/sections/${key}/${directory}`);
+  return res?.MediaContainer?.Directory || [];
 }
 
 export async function getLibraryMeta(id: string): Promise<Plex.Metadata> {
-    if (!id) return {} as Plex.Metadata;
-    const res = await authedGet(`/library/metadata/${id}?${queryBuilder({
-        ...getIncludeProps(),
-        ...getXPlexProps()
-    })}`);
-    return res?.MediaContainer?.Metadata?.[0] || ({} as Plex.Metadata);
+  if (!id) return {} as Plex.Metadata;
+  const res = await authedGet(
+    `/library/metadata/${id}?${queryBuilder({
+      ...getIncludeProps(),
+      ...getXPlexProps(),
+    })}`
+  );
+  return res?.MediaContainer?.Metadata?.[0] || ({} as Plex.Metadata);
 }
 
 export async function getLibraryMetaChildren(id: string): Promise<Plex.Metadata[]> {
-    const res = await authedGet(`/library/metadata/${id}/children?${queryBuilder({
-        ...getIncludeProps(),
-        ...getXPlexProps()
-    })}`);
-    return res?.MediaContainer?.Metadata || [];
+  const res = await authedGet(
+    `/library/metadata/${id}/children?${queryBuilder({
+      ...getIncludeProps(),
+      ...getXPlexProps(),
+    })}`
+  );
+  return res?.MediaContainer?.Metadata || [];
 }
 
 export async function getSimilar(id: string): Promise<Plex.Metadata[]> {
-    if (!id) return [];
-    const res = await authedGet(`/library/metadata/${id}/similar?${queryBuilder({
-        limit: 10,
-        excludeFields: "summary",
-        includeMarkerCounts: 1,
-        includeRelated: 1,
-        includeExternalMedia: 1,
-        async: 1,
-        ...getXPlexProps()
-    })}`);
-    return res?.MediaContainer?.Metadata || [];
+  if (!id) return [];
+  const res = await authedGet(
+    `/library/metadata/${id}/similar?${queryBuilder({
+      limit: 10,
+      excludeFields: "summary",
+      includeMarkerCounts: 1,
+      includeRelated: 1,
+      includeExternalMedia: 1,
+      async: 1,
+      ...getXPlexProps(),
+    })}`
+  );
+  return res?.MediaContainer?.Metadata || [];
 }
 
-export async function getUniversalDecision(id: string, limitation: {
-    autoAdjustQuality?: boolean,
-    maxVideoBitrate?: number,
-}): Promise<void> {
-    await authedGet(`/video/:/transcode/universal/decision?${queryBuilder({
-        ...getStreamProps(id, limitation),
-    })}`);
-    return;
+export async function getUniversalDecision(
+  id: string,
+  limitation: {
+    autoAdjustQuality?: boolean;
+    maxVideoBitrate?: number;
+  }
+): Promise<void> {
+  await authedGet(
+    `/video/:/transcode/universal/decision?${queryBuilder({
+      ...getStreamProps(id, limitation),
+    })}`
+  );
+  return;
 }
 
 export async function sendUniversalPing() {
-    await authedGet(`/video/:/transcode/universal/ping?${queryBuilder({
-        ...getXPlexProps()
-    })}`);
-    return;
+  await authedGet(
+    `/video/:/transcode/universal/ping?${queryBuilder({
+      ...getXPlexProps(),
+    })}`
+  );
+  return;
 }
 
 /**
@@ -104,37 +134,41 @@ export async function sendUniversalPing() {
  * @param limitation.maxVideoBitrate - The maximum video bitrate for the stream.
  * @returns An object containing the stream properties.
  */
-export function getStreamProps(key: string, limitation: {
-    autoAdjustQuality?: boolean,
-    maxVideoBitrate?: number,
-}) {
-    return {
-        audioBoost: 700,
-        autoAdjustQuality: limitation.autoAdjustQuality ? 1 : 0,
-        autoAdjustSubtitle: 0,
-        directPlay: limitation.maxVideoBitrate === -1 ? 1 : 0,
-        directStream: 1,
-        directStreamAudio: 1,
-        fastSeek: 1,
-        hasMDE: 1,
-        location: "lan",
-        mediaBufferSize: 102400,
-        mediaIndex: 0,
-        partIndex: 0,
-        path: "/library/metadata/" + key,
-        protocol: "hls",
-        addDebugOverlay: 0,
-        subtitleSize: 100,
-        subtitles: limitation.maxVideoBitrate === -1 ? "sidecar" : "burn",
-        "Accept-Language": "en",
-        ...getXPlexProps(),
-        ...(limitation.autoAdjustQuality && {
-            autoAdjustQuality: limitation.autoAdjustQuality ? 1 : 0
-        }),
-        ...(limitation.maxVideoBitrate && limitation.maxVideoBitrate !== -1 && {
-            maxVideoBitrate: limitation.maxVideoBitrate,
-        })
-    }
+export function getStreamProps(
+  key: string,
+  limitation: {
+    autoAdjustQuality?: boolean;
+    maxVideoBitrate?: number;
+  }
+) {
+  return {
+    audioBoost: 700,
+    autoAdjustQuality: limitation.autoAdjustQuality ? 1 : 0,
+    autoAdjustSubtitle: 0,
+    directPlay: limitation.maxVideoBitrate === -1 ? 1 : 0,
+    directStream: 1,
+    directStreamAudio: 1,
+    fastSeek: 1,
+    hasMDE: 1,
+    location: "lan",
+    mediaBufferSize: 102400,
+    mediaIndex: 0,
+    partIndex: 0,
+    path: "/library/metadata/" + key,
+    protocol: "hls",
+    addDebugOverlay: 0,
+    subtitleSize: 100,
+    subtitles: limitation.maxVideoBitrate === -1 ? "sidecar" : "burn",
+    "Accept-Language": "en",
+    ...getXPlexProps(),
+    ...(limitation.autoAdjustQuality && {
+      autoAdjustQuality: limitation.autoAdjustQuality ? 1 : 0,
+    }),
+    ...(limitation.maxVideoBitrate &&
+      limitation.maxVideoBitrate !== -1 && {
+        maxVideoBitrate: limitation.maxVideoBitrate,
+      }),
+  };
 }
 
 /**
@@ -145,10 +179,13 @@ export function getStreamProps(key: string, limitation: {
  * @returns A promise that resolves when the update is complete.
  */
 export async function putAudioStream(partID: number, streamID: number): Promise<void> {
-    await authedPut(`/library/parts/${partID}?${queryBuilder({
-        audioStreamID: streamID,
-        ...getXPlexProps()
-    })}`, {});
+  await authedPut(
+    `/library/parts/${partID}?${queryBuilder({
+      audioStreamID: streamID,
+      ...getXPlexProps(),
+    })}`,
+    {}
+  );
 }
 
 /**
@@ -159,10 +196,13 @@ export async function putAudioStream(partID: number, streamID: number): Promise<
  * @returns A promise that resolves when the request is complete.
  */
 export async function putSubtitleStream(partID: number, streamID: number): Promise<void> {
-    await authedPut(`/library/parts/${partID}?${queryBuilder({
-        subtitleStreamID: streamID,
-        ...getXPlexProps()
-    })}`, {});
+  await authedPut(
+    `/library/parts/${partID}?${queryBuilder({
+      subtitleStreamID: streamID,
+      ...getXPlexProps(),
+    })}`,
+    {}
+  );
 }
 
 /**
@@ -174,17 +214,24 @@ export async function putSubtitleStream(partID: number, streamID: number): Promi
  * @param time - The current playback time in milliseconds.
  * @returns A promise that resolves to a `Plex.TimelineUpdateResult` object containing the timeline update information.
  */
-export async function getTimelineUpdate(key: number, duration: number, state: string, time: number): Promise<Plex.TimelineUpdateResult> {
-    return await authedGet(`/:/timeline?${queryBuilder({
-        ratingKey: key,
-        key: `/library/metadata/${key}/`,
-        duration: duration,
-        state: state,
-        playbackTime: time,
-        time: time,
-        context: "library",
-        ...getXPlexProps()
-    })}`);
+export async function getTimelineUpdate(
+  key: number,
+  duration: number,
+  state: string,
+  time: number
+): Promise<Plex.TimelineUpdateResult> {
+  return await authedGet(
+    `/:/timeline?${queryBuilder({
+      ratingKey: key,
+      key: `/library/metadata/${key}/`,
+      duration: duration,
+      state: state,
+      playbackTime: time,
+      time: time,
+      context: "library",
+      ...getXPlexProps(),
+    })}`
+  );
 }
 
 /**
@@ -193,8 +240,8 @@ export async function getTimelineUpdate(key: number, duration: number, state: st
  * @returns {Promise<Plex.ServerPreferences>} A promise that resolves to the server preferences.
  */
 export async function getServerPreferences(): Promise<Plex.ServerPreferences> {
-    const res = await authedGet(`/`);
-    return res.MediaContainer;
+  const res = await authedGet(`/`);
+  return res.MediaContainer;
 }
 
 /**
@@ -204,14 +251,16 @@ export async function getServerPreferences(): Promise<Plex.ServerPreferences> {
  * @returns A promise that resolves to an array of Plex metadata objects.
  */
 export async function getPlayQueue(uri: string): Promise<Plex.Metadata[]> {
-    const res = await authedPost(`/playQueues?${queryBuilder({
-        type: "video",
-        uri,
-        continuous: 1,
-        ...getIncludeProps(),
-        ...getXPlexProps()
-    })}`);
-    return res.MediaContainer.Metadata;
+  const res = await authedPost(
+    `/playQueues?${queryBuilder({
+      type: "video",
+      uri,
+      continuous: 1,
+      ...getIncludeProps(),
+      ...getXPlexProps(),
+    })}`
+  );
+  return res.MediaContainer.Metadata;
 }
 
 /**
@@ -223,13 +272,13 @@ export async function getPlayQueue(uri: string): Promise<Plex.Metadata[]> {
  * @returns The URL for the transcoded image.
  */
 export function getTranscodeImageURL(url: string | undefined, width: number, height: number) {
-    if (!url) return "";
-    return `${getBackendURL()}/dynproxy/photo/:/transcode?${queryBuilder({
-        width,
-        height,
-        url,
-        "X-Plex-Token": localStorage.getItem("accessToken") as string,
-    })}`;
+  if (!url) return "";
+  return `${getBackendURL()}/dynproxy/photo/:/transcode?${queryBuilder({
+    width,
+    height,
+    url,
+    "X-Plex-Token": localStorage.getItem("accessToken") as string,
+  })}`;
 }
 
 /**
@@ -238,25 +287,28 @@ export function getTranscodeImageURL(url: string | undefined, width: number, hei
  * @param {string} pin - The PIN code used to request the access token.
  * @returns {Promise<Plex.TokenData>} A promise that resolves to the token data.
  */
-export async function getAccessToken(pin: string, clientIDOverride?: string): Promise<Plex.TokenData> {
-    let clientID = clientIDOverride || localStorage.getItem("clientID");
-    if (!clientID) {
-      clientID = `plexflip-${Math.random().toString(36).substring(2, 10)}`;
-      try {
-        localStorage.setItem("clientID", clientID);
-      } catch (e) {}
-    }
-    const res = await axios.get(
-      `https://plex.tv/api/v2/pins/${pin}?${queryBuilder({
-        "X-Plex-Client-Identifier": clientID,
-      })}`,
-      {
-        headers: {
-          accept: "application/json",
-        },
+export async function getAccessToken(
+  pin: string,
+  clientIDOverride?: string
+): Promise<Plex.TokenData> {
+  let clientID = clientIDOverride || localStorage.getItem("clientID");
+  if (!clientID) {
+    clientID = `plexflip-${Math.random().toString(36).substring(2, 10)}`;
+    try {
+      localStorage.setItem("clientID", clientID);
+    } catch {}
+  }
+  const res = await axios.get(
+    `https://plex.tv/api/v2/pins/${pin}?${queryBuilder({
+      "X-Plex-Client-Identifier": clientID,
+    })}`,
+    {
+      headers: {
+        accept: "application/json",
       },
-    );
-    return res.data;
+    }
+  );
+  return res.data;
 }
 
 /**
@@ -270,15 +322,19 @@ export async function getAccessToken(pin: string, clientIDOverride?: string): Pr
  * @throws {Error} Throws an error if the request fails.
  */
 export async function getPin(): Promise<Plex.TokenData> {
-    const res = await axios.post(`https://plex.tv/api/v2/pins?${queryBuilder({
-        "X-Plex-Client-Identifier": localStorage.getItem("clientID"),
-        "X-Plex-Product": "PlexFlip"
-    })}`, undefined, {
-        headers: {
-            accept: "application/json",
-        },
-    });
-    return res.data;
+  const res = await axios.post(
+    `https://plex.tv/api/v2/pins?${queryBuilder({
+      "X-Plex-Client-Identifier": localStorage.getItem("clientID"),
+      "X-Plex-Product": "PlexFlip",
+    })}`,
+    undefined,
+    {
+      headers: {
+        accept: "application/json",
+      },
+    }
+  );
+  return res.data;
 }
 
 /**
@@ -290,66 +346,65 @@ export async function getPin(): Promise<Plex.TokenData> {
  * @returns An object containing authToken on success, or error/requiresTwoFactor on failure.
  */
 export async function signInWithEmailPassword(
-    login: string,
-    password: string,
-    verificationCode?: string
+  login: string,
+  password: string,
+  verificationCode?: string
 ): Promise<{ authToken?: string; error?: string; requiresTwoFactor?: boolean }> {
-    let clientID = localStorage.getItem("clientID");
-    if (!clientID) {
-        clientID = `plexflip-${Math.random().toString(36).substring(2, 10)}`;
-        try {
-            localStorage.setItem("clientID", clientID);
-        } catch (e) {}
-    }
+  let clientID = localStorage.getItem("clientID");
+  if (!clientID) {
+    clientID = `plexflip-${Math.random().toString(36).substring(2, 10)}`;
     try {
-        const payload: Record<string, string> = {
-            login,
-            password,
-        };
-        if (verificationCode) {
-            payload.verificationCode = verificationCode;
-        }
-        const res = await axios.post("https://plex.tv/api/v2/users/signin", payload, {
-            headers: {
-                "Content-Type": "application/json",
-                accept: "application/json",
-                "X-Plex-Client-Identifier": clientID,
-                "X-Plex-Product": "PlexFlip",
-                "X-Plex-Version": "0.1.0",
-                "X-Plex-Platform": "Desktop",
-                "X-Plex-Device": "Desktop",
-            },
-        });
-
-        if (res.data && res.data.authToken) {
-            return { authToken: res.data.authToken };
-        }
-        return { error: "Unexpected response from Plex server. No auth token returned." };
-    } catch (err: any) {
-        const errData = err.response?.data;
-        const errors = errData?.errors;
-        if (errors && errors.length > 0) {
-            const firstErr = errors[0];
-            if (
-                firstErr.code === 1027 ||
-                firstErr.code === 1028 ||
-                firstErr.message?.toLowerCase().includes("verification") ||
-                firstErr.message?.toLowerCase().includes("two-factor")
-            ) {
-                return {
-                    requiresTwoFactor: true,
-                    error: "Two-factor verification code required. Please enter your 6-digit code.",
-                };
-            }
-            if (firstErr.code === 1001) {
-                return { error: "Invalid email, username, or password." };
-            }
-            return { error: firstErr.message || "Failed to sign in. Please check your credentials." };
-        }
-        return { error: err.message || "Network error while connecting to Plex." };
+      localStorage.setItem("clientID", clientID);
+    } catch {}
+  }
+  try {
+    const payload: Record<string, string> = {
+      login,
+      password,
+    };
+    if (verificationCode) {
+      payload.verificationCode = verificationCode;
     }
-}
+    const res = await axios.post("https://plex.tv/api/v2/users/signin", payload, {
+      headers: {
+        "Content-Type": "application/json",
+        accept: "application/json",
+        "X-Plex-Client-Identifier": clientID,
+        "X-Plex-Product": "PlexFlip",
+        "X-Plex-Version": "0.1.0",
+        "X-Plex-Platform": "Desktop",
+        "X-Plex-Device": "Desktop",
+      },
+    });
 
+    if (res.data && res.data.authToken) {
+      return { authToken: res.data.authToken };
+    }
+    return { error: "Unexpected response from Plex server. No auth token returned." };
+  } catch (err: any) {
+    const errData = err.response?.data;
+    const errors = errData?.errors;
+    if (errors && errors.length > 0) {
+      const firstErr = errors[0];
+      if (
+        firstErr.code === 1027 ||
+        firstErr.code === 1028 ||
+        firstErr.message?.toLowerCase().includes("verification") ||
+        firstErr.message?.toLowerCase().includes("two-factor")
+      ) {
+        return {
+          requiresTwoFactor: true,
+          error: "Two-factor verification code required. Please enter your 6-digit code.",
+        };
+      }
+      if (firstErr.code === 1001) {
+        return { error: "Invalid email, username, or password." };
+      }
+      return { error: firstErr.message || "Failed to sign in. Please check your credentials." };
+    }
+    return { error: err.message || "Network error while connecting to Plex." };
+  }
+}
 
 /**
  * Fetches the logged-in user's data from the Plex API.
@@ -362,16 +417,23 @@ export async function signInWithEmailPassword(
  * Otherwise, it returns null.
  */
 export async function getLoggedInUser(): Promise<Plex.UserData | null> {
-    const res = await axios.get(`https://plex.tv/api/v2/user?${queryBuilder({
+  const res = await axios
+    .get(
+      `https://plex.tv/api/v2/user?${queryBuilder({
         "X-Plex-Token": localStorage.getItem("accAccessToken") as string,
         "X-Plex-Product": "PLEXFLIP",
-        "X-Plex-Client-Identifier": localStorage.getItem("clientID")
-    })}`).catch((err) => {
-        console.log(err);
-        return { status: err.response?.status || 500, data: err.response?.data || 'Internal server error' }
+        "X-Plex-Client-Identifier": localStorage.getItem("clientID"),
+      })}`
+    )
+    .catch((err) => {
+      console.log(err);
+      return {
+        status: err.response?.status || 500,
+        data: err.response?.data || "Internal server error",
+      };
     });
-    if (res.status === 200) return res.data;
-    else return null;
+  if (res.status === 200) return res.data;
+  else return null;
 }
 
 /**
@@ -387,15 +449,17 @@ export async function getLoggedInUser(): Promise<Plex.UserData | null> {
  * @throws Will throw an error if the request fails.
  */
 export async function getSearch(query: string): Promise<Plex.SearchResult[]> {
-    const res = await authedGet(`/library/search?${queryBuilder({
-        query,
-        "includeCollections": 1,
-        "includeExtras": 1,
-        "searchTypes": "movies,otherVideos,tv,music",
-        "limit": 100,
-        "X-Plex-Token": localStorage.getItem("accessToken") as string
-    })}`);
-    return res?.MediaContainer?.SearchResult || [];
+  const res = await authedGet(
+    `/library/search?${queryBuilder({
+      query,
+      includeCollections: 1,
+      includeExtras: 1,
+      searchTypes: "movies,otherVideos,tv,music",
+      limit: 100,
+      "X-Plex-Token": localStorage.getItem("accessToken") as string,
+    })}`
+  );
+  return res?.MediaContainer?.SearchResult || [];
 }
 
 /**
@@ -411,19 +475,23 @@ export async function getSearch(query: string): Promise<Plex.SearchResult[]> {
  * @returns A promise that resolves when the request is complete.
  */
 export async function setMediaPlayedStatus(watched: boolean, ratingKey: string): Promise<void> {
-    if (watched) {
-        await authedGet(`/:/scrobble?${queryBuilder({
-            key: ratingKey,
-            identifier: "com.plexapp.plugins.library",
-            ...getXPlexProps()
-        })}`);
-    } else {
-        await authedGet(`/:/unscrobble?${queryBuilder({
-            key: ratingKey,
-            identifier: "com.plexapp.plugins.library",
-            ...getXPlexProps()
-        })}`);
-    }
+  if (watched) {
+    await authedGet(
+      `/:/scrobble?${queryBuilder({
+        key: ratingKey,
+        identifier: "com.plexapp.plugins.library",
+        ...getXPlexProps(),
+      })}`
+    );
+  } else {
+    await authedGet(
+      `/:/unscrobble?${queryBuilder({
+        key: ratingKey,
+        identifier: "com.plexapp.plugins.library",
+        ...getXPlexProps(),
+      })}`
+    );
+  }
 }
 
 /**
@@ -434,20 +502,21 @@ export async function setMediaPlayedStatus(watched: boolean, ratingKey: string):
  * @returns A promise that resolves when the rating has been set.
  */
 export async function setMediaRating(rating: number, ratingKey: string): Promise<void> {
-    await authedGet(`/:/rate?${queryBuilder({
-        identifier: "com.plexapp.plugins.library",
-        key: ratingKey,
-        rating,
-        ...getXPlexProps()
-    })}`);
+  await authedGet(
+    `/:/rate?${queryBuilder({
+      identifier: "com.plexapp.plugins.library",
+      key: ratingKey,
+      rating,
+      ...getXPlexProps(),
+    })}`
+  );
 }
 
 export interface LibraryDir {
-    title: string;
-    library: string;
-    Metadata: Plex.Metadata[];
+  title: string;
+  library: string;
+  Metadata: Plex.Metadata[];
 }
-
 
 /**
  * Retrieves an item by its GUID from the Plex library.
@@ -471,16 +540,18 @@ export interface LibraryDir {
  * ```
  */
 export async function getItemByGUID(guid: string): Promise<Plex.Metadata | null> {
-    const res = await authedGet(`/library/all?${queryBuilder({
-        guid,
-        "includeExternalMedia": 1,
-        "includeMeta": 1,
-        "includeMarkerCounts": 1,
-        "includeRelated": 1,
-        "X-Plex-Token": localStorage.getItem("accessToken") as string
-    })}`);
+  const res = await authedGet(
+    `/library/all?${queryBuilder({
+      guid,
+      includeExternalMedia: 1,
+      includeMeta: 1,
+      includeMarkerCounts: 1,
+      includeRelated: 1,
+      "X-Plex-Token": localStorage.getItem("accessToken") as string,
+    })}`
+  );
 
-    if (res.MediaContainer.Metadata?.[0]?.guid !== guid) return null;
+  if (res.MediaContainer.Metadata?.[0]?.guid !== guid) return null;
 
-    return res.MediaContainer.Metadata?.[0];
+  return res.MediaContainer.Metadata?.[0];
 }

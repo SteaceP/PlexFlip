@@ -1,20 +1,19 @@
 import { SkipNext } from "@mui/icons-material";
 import { alpha, Box, Button, Typography, useTheme } from "@mui/material";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useCallback, useEffect, useState } from "react";
+
 import { queryBuilder } from "../plex/QuickFunctions";
 import { useUserSettings } from "../states/UserSettingsState";
 
 function PlaybackNextEPButton({
   player,
   playing,
-  playbackBarRef,
   metadata,
   playQueue,
   navigate,
 }: {
   player: React.MutableRefObject<any>;
   playing: boolean;
-  playbackBarRef: React.MutableRefObject<HTMLDivElement | null>;
   metadata: any;
   playQueue: any;
   navigate: (path: string) => void;
@@ -24,8 +23,7 @@ function PlaybackNextEPButton({
   const [showWatchCredits, setShowWatchCredits] = useState(false);
   const countdownDuration = metadata.type === "movie" ? 30 : 5;
 
-  const enableAutoNext =
-    useUserSettings.getState().settings.AUTO_NEXT_EP === "true";
+  const enableAutoNext = useUserSettings.getState().settings.AUTO_NEXT_EP === "true";
 
   // Start countdown when a next episode is available
   useEffect(() => {
@@ -83,9 +81,7 @@ function PlaybackNextEPButton({
 
   // Calculate progress percentage
   const progressPercentage =
-    countdown !== null
-      ? ((countdownDuration - countdown) / countdownDuration) * 100
-      : 0;
+    countdown !== null ? ((countdownDuration - countdown) / countdownDuration) * 100 : 0;
 
   return (
     <Box sx={{ display: "flex", gap: 2 }}>
@@ -118,7 +114,7 @@ function PlaybackNextEPButton({
           </Typography>
         </Button>
       )}
-      
+
       <Button
         sx={{
           px: 3,
@@ -163,12 +159,10 @@ function PlaybackNextEPButton({
             {metadata.type === "movie"
               ? "Skip Credits"
               : playQueue && playQueue[1]
-              ? `Next Episode`
-              : "Return to Show"}
+                ? `Next Episode`
+                : "Return to Show"}
             {countdown !== null && countdown > 0 && (
-              <span style={{ marginLeft: "8px" }}>
-                ({Math.ceil(countdown)}s)
-              </span>
+              <span style={{ marginLeft: "8px" }}>({Math.ceil(countdown)}s)</span>
             )}
           </Typography>
         </Box>

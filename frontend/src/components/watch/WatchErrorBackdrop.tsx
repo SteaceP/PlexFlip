@@ -1,15 +1,9 @@
+import { Backdrop, Box, Button, Paper, Typography, useTheme } from "@mui/material";
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Backdrop,
-  Box,
-  Button,
-  Paper,
-  Typography,
-  useTheme,
-} from "@mui/material";
-import { queryBuilder } from "../../plex/QuickFunctions";
+
 import ReactPlayer from "../../common/ReactPlayer";
+import { queryBuilder } from "../../plex/QuickFunctions";
 
 interface WatchErrorBackdropProps {
   error: string | false;
@@ -73,10 +67,7 @@ export const WatchErrorBackdrop: React.FC<WatchErrorBackdropProps> = ({
               const currentTime = playerRef.current?.getCurrentTime() ?? 0;
               if (currentTime > 5) {
                 const url = new URL(window.location.href);
-                url.searchParams.set(
-                  "t",
-                  Math.floor(currentTime * 1000).toString(),
-                );
+                url.searchParams.set("t", Math.floor(currentTime * 1000).toString());
                 window.location.href = url.toString();
               } else {
                 window.location.reload();
@@ -96,7 +87,7 @@ export const WatchErrorBackdrop: React.FC<WatchErrorBackdropProps> = ({
                 navigate(
                   `/browse/${metadata.librarySectionID}?${queryBuilder({
                     mid: metadata.ratingKey,
-                  })}`,
+                  })}`
                 );
               }
 
@@ -104,7 +95,7 @@ export const WatchErrorBackdrop: React.FC<WatchErrorBackdropProps> = ({
                 navigate(
                   `/browse/${metadata.librarySectionID}?${queryBuilder({
                     mid: metadata.grandparentRatingKey,
-                  })}`,
+                  })}`
                 );
               }
             }}

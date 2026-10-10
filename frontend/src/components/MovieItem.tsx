@@ -1,50 +1,48 @@
 import {
-  PlayArrowRounded,
   BookmarkBorderRounded,
-  CheckCircleOutlineRounded,
   BookmarkRounded,
-  RecommendRounded,
+  CheckCircleOutlineRounded,
   CheckCircleRounded,
+  PlayArrowRounded,
+  QueueMusicRounded,
+  RecommendRounded,
+  StarRounded,
   VolumeOffRounded,
   VolumeUpRounded,
-  StarRounded,
-  QueueMusicRounded,
 } from "@mui/icons-material";
 import {
   Box,
-  Typography,
-  Tooltip,
   Button,
   CircularProgress,
+  Divider,
+  IconButton,
   LinearProgress,
+  ListItemIcon,
   Menu,
   MenuItem,
-  Divider,
-  ListItemIcon,
-  IconButton,
+  Tooltip,
+  Typography,
 } from "@mui/material";
 import React, { JSX, memo, useEffect } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { create } from "zustand";
+
+import { getBackendURL } from "../backendURL";
+import ReactPlayer from "../common/ReactPlayer";
 import {
-  getTranscodeImageURL,
+  getItemByGUID,
   getLibraryMeta,
   getLibraryMetaChildren,
-  getItemByGUID,
+  getTranscodeImageURL,
   setMediaPlayedStatus,
 } from "../plex";
-import { durationToText } from "./MovieItemSlider";
-import {
-  useWatchListCache,
-  WatchListCacheEmitter,
-} from "../states/WatchListCache";
-import { useBigReader } from "./BigReader";
-import { create } from "zustand";
-import { usePreviewPlayer } from "../states/PreviewPlayerState";
-import ReactPlayer from "../common/ReactPlayer";
-import { useConfirmModal } from "./ConfirmModal";
-import { getBackendURL } from "../backendURL";
 import { queryBuilder } from "../plex/QuickFunctions";
 import { useAudioPlayerStore } from "../states/AudioPlayerState";
+import { useConfirmModal } from "../states/ConfirmModalState";
+import { usePreviewPlayer } from "../states/PreviewPlayerState";
+import { useWatchListCache, WatchListCacheEmitter } from "../states/WatchListCache";
+import { useBigReader } from "./BigReader";
+import { durationToText } from "./MovieItemSlider";
 
 interface MovieItemPreviewPlaybackState {
   url: string;
@@ -54,14 +52,13 @@ interface MovieItemPreviewPlaybackState {
   setState: (state: { url: string; playing: boolean }) => void;
 }
 
-export const useMovieItemPreviewPlayback =
-  create<MovieItemPreviewPlaybackState>((set) => ({
-    url: "",
-    playing: false,
-    setUrl: (url: string) => set({ url }),
-    setPlaying: (playing: boolean) => set({ playing }),
-    setState: (state: { url: string; playing: boolean }) => set(state),
-  }));
+export const useMovieItemPreviewPlayback = create<MovieItemPreviewPlaybackState>((set) => ({
+  url: "",
+  playing: false,
+  setUrl: (url: string) => set({ url }),
+  setPlaying: (playing: boolean) => set({ playing }),
+  setState: (state: { url: string; playing: boolean }) => set(state),
+}));
 
 function MovieItem({
   item,
@@ -92,9 +89,7 @@ function MovieItem({
     url: "",
     playing: false,
   });
-  const hoverTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(
-    null
-  );
+  const hoverTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (hovered) {
@@ -106,9 +101,7 @@ function MovieItem({
         const mediaURL = data.Extras?.Metadata?.[0]?.Media?.[0]?.Part[0]?.key;
         if (!mediaURL) return;
         setPreviewPlaybackState({
-          url: `${getBackendURL()}/dynproxy${
-            mediaURL.split("?")[0]
-          }?${queryBuilder({
+          url: `${getBackendURL()}/dynproxy${mediaURL.split("?")[0]}?${queryBuilder({
             "X-Plex-Token": localStorage.getItem("accessToken"),
             ...Object.fromEntries(
               new URL("http://localhost:3000" + mediaURL).searchParams.entries()
@@ -131,7 +124,7 @@ function MovieItem({
         hoverTimerRef.current = null;
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hovered]);
 
   useEffect(() => {
@@ -160,15 +153,13 @@ function MovieItem({
 
     if (PlexTvSource && !PlexTvSrcData) return;
 
-    let localItem = PlexTvSource ? (PlexTvSrcData as Plex.Metadata) : item;
+    const localItem = PlexTvSource ? (PlexTvSrcData as Plex.Metadata) : item;
 
     switch (item.type) {
       case "movie":
       case "episode":
         navigate(
-          `/watch/${localItem.ratingKey}${
-            localItem.viewOffset ? `?t=${localItem.viewOffset}` : ""
-          }`
+          `/watch/${localItem.ratingKey}${localItem.viewOffset ? `?t=${localItem.viewOffset}` : ""}`
         );
 
         setPlayButtonLoading(false);
@@ -185,9 +176,7 @@ function MovieItem({
           if (data.OnDeck?.Metadata) {
             navigate(
               `/watch/${data.OnDeck.Metadata.ratingKey}${
-                data.OnDeck.Metadata.viewOffset
-                  ? `?t=${data.OnDeck.Metadata.viewOffset}`
-                  : ""
+                data.OnDeck.Metadata.viewOffset ? `?t=${data.OnDeck.Metadata.viewOffset}` : ""
               }`
             );
 
@@ -197,9 +186,7 @@ function MovieItem({
             if (data.Children?.size === 0 || !data.Children?.Metadata[0])
               return setPlayButtonLoading(false);
             // play first episode
-            const episodes = await getLibraryMetaChildren(
-              data.Children?.Metadata[0].ratingKey
-            );
+            const episodes = await getLibraryMetaChildren(data.Children?.Metadata[0].ratingKey);
             if (episodes?.length === 0) return setPlayButtonLoading(false);
 
             navigate(`/watch/${episodes[0].ratingKey}`);
@@ -241,9 +228,7 @@ function MovieItem({
         onClose={handleClose}
         anchorReference="anchorPosition"
         anchorPosition={
-          contextMenu !== null
-            ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
-            : undefined
+          contextMenu !== null ? { top: contextMenu.mouseY, left: contextMenu.mouseX } : undefined
         }
       >
         <Typography
@@ -430,11 +415,11 @@ function MovieItem({
           backfaceVisibility: "hidden",
           transformOrigin:
             itemsPerPage && index !== undefined
-              ? (index % itemsPerPage) === 0
+              ? index % itemsPerPage === 0
                 ? "left center"
-                : (index % itemsPerPage) === itemsPerPage - 1
-                ? "right center"
-                : "center center"
+                : index % itemsPerPage === itemsPerPage - 1
+                  ? "right center"
+                  : "center center"
               : "center center",
           transition:
             "transform 0.4s cubic-bezier(0.25,0.10,0.25,1.00), box-shadow 0.4s cubic-bezier(0.25,0.10,0.25,1.00), border-color 0.4s cubic-bezier(0.25,0.10,0.25,1.00)",
@@ -468,9 +453,7 @@ function MovieItem({
             if (!data) {
               useBigReader
                 .getState()
-                .setBigReader(
-                  `"${item.title}" is not available on this Plex Server`
-                );
+                .setBigReader(`"${item.title}" is not available on this Plex Server`);
               return;
             }
 
@@ -498,9 +481,7 @@ function MovieItem({
         <Box
           sx={{
             width: "100%",
-            aspectRatio: ["artist", "album", "track"].includes(item.type)
-              ? "1/1"
-              : "16/9",
+            aspectRatio: ["artist", "album", "track"].includes(item.type) ? "1/1" : "16/9",
             position: "relative",
             overflow: "hidden",
             flexShrink: 0,
@@ -511,9 +492,7 @@ function MovieItem({
             sx={{
               position: "absolute",
               inset: 0,
-              backgroundImage: ["episode", "artist", "album", "track"].includes(
-                item.type
-              )
+              backgroundImage: ["episode", "artist", "album", "track"].includes(item.type)
                 ? `url(${getTranscodeImageURL(
                     item.thumb || item.parentThumb || item.art,
                     600,
@@ -569,8 +548,7 @@ function MovieItem({
             sx={{
               position: "absolute",
               inset: 0,
-              background:
-                "linear-gradient(0deg, rgba(0,0,0,0.6) 0%, transparent 40%)",
+              background: "linear-gradient(0deg, rgba(0,0,0,0.6) 0%, transparent 40%)",
               opacity: 0,
               transition: "opacity 0.3s ease",
               display: "flex",
@@ -611,9 +589,7 @@ function MovieItem({
               )}
             </IconButton>
 
-            {!["artist", "album", "track"].includes(item.type) && (
-              <WatchListButton item={item} />
-            )}
+            {!["artist", "album", "track"].includes(item.type) && <WatchListButton item={item} />}
           </Box>
 
           {/* Mute button for preview */}
@@ -655,9 +631,7 @@ function MovieItem({
 
           {/* Watched badge */}
           {((item.type === "show" && item.leafCount === item.viewedLeafCount) ||
-            (item.type === "movie" &&
-              item?.viewCount !== undefined &&
-              item.viewCount > 0)) && (
+            (item.type === "movie" && item?.viewCount !== undefined && item.viewCount > 0)) && (
             <Box
               sx={{
                 position: "absolute",
@@ -729,8 +703,7 @@ function MovieItem({
         </Box>
 
         {/* Progress bar */}
-        {(item.type === "episode" ||
-          (item.type === "movie" && item.viewOffset)) && (
+        {(item.type === "episode" || (item.type === "movie" && item.viewOffset)) && (
           <LinearProgress
             variant="determinate"
             value={((item?.viewOffset ?? 0) / item.duration) * 100}
@@ -783,9 +756,7 @@ function MovieItem({
                 lineHeight: 1,
               }}
             >
-              {item.type === "episode"
-                ? `S${item.parentIndex} · E${item.index}`
-                : item.type}
+              {item.type === "episode" ? `S${item.parentIndex} · E${item.index}` : item.type}
             </Typography>
 
             {item.audienceRating && (
@@ -871,8 +842,7 @@ function MovieItem({
               <Typography
                 onClick={(e) => {
                   e.stopPropagation();
-                  const targetKey =
-                    item.grandparentRatingKey || item.parentRatingKey;
+                  const targetKey = item.grandparentRatingKey || item.parentRatingKey;
                   if (!targetKey) return;
                   setSearchParams({ mid: targetKey.toString() });
                 }}
@@ -952,23 +922,21 @@ function MovieItem({
                 {durationToText(item.duration)}
               </Typography>
             )}
-            {item.type === "show" &&
-              item.leafCount &&
-              (item.seasonCount ?? item.childCount) && (
-                <Typography
-                  sx={{
-                    fontSize: "11px",
-                    fontWeight: "500",
-                    color: (theme) => theme.palette.text.secondary,
-                    opacity: 0.7,
-                    flexShrink: 0,
-                  }}
-                >
-                  {(item.seasonCount ?? item.childCount ?? 1) > 1
-                    ? `${item.childCount} Seasons`
-                    : `${item.leafCount} Ep${item.leafCount > 1 ? "s" : ""}`}
-                </Typography>
-              )}
+            {item.type === "show" && item.leafCount && (item.seasonCount ?? item.childCount) && (
+              <Typography
+                sx={{
+                  fontSize: "11px",
+                  fontWeight: "500",
+                  color: (theme) => theme.palette.text.secondary,
+                  opacity: 0.7,
+                  flexShrink: 0,
+                }}
+              >
+                {(item.seasonCount ?? item.childCount ?? 1) > 1
+                  ? `${item.childCount} Seasons`
+                  : `${item.leafCount} Ep${item.leafCount > 1 ? "s" : ""}`}
+              </Typography>
+            )}
 
             {item.Genre && item.Genre.length > 0 && (
               <>
@@ -1038,8 +1006,7 @@ export function WatchListButton({ item }: { item: Plex.Metadata }) {
           setIsLoading(false);
         });
 
-        if (WatchList.isOnWatchList(item.guid))
-          return WatchList.removeItem(item.guid);
+        if (WatchList.isOnWatchList(item.guid)) return WatchList.removeItem(item.guid);
 
         WatchList.addItem(item);
       }}
@@ -1075,7 +1042,7 @@ export function HeroWatchListButton({ item }: { item: Plex.Metadata }) {
         letterSpacing: "0.1em",
         textTransform: "uppercase",
         transition: "all 0.2s ease-in-out",
-        height: "38.5px"
+        height: "38.5px",
       }}
       onClick={(e) => {
         e.stopPropagation();

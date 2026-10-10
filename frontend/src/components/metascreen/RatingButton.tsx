@@ -1,10 +1,7 @@
-import React, { JSX, useEffect, useState } from "react";
+import { RateReviewRounded, StarOutlineRounded, StarRounded } from "@mui/icons-material";
 import { Button, Popover, Rating, Tooltip } from "@mui/material";
-import {
-  RateReviewRounded,
-  StarOutlineRounded,
-  StarRounded,
-} from "@mui/icons-material";
+import React, { JSX, useEffect, useState } from "react";
+
 import { setMediaRating } from "../../plex";
 import AddReviewModal from "../modals/AddReviewModal";
 
@@ -146,11 +143,7 @@ export function RatingButton({ item }: RatingButtonProps): JSX.Element {
             }
           }}
         >
-          {rating ? (
-            <StarRounded fontSize="small" />
-          ) : (
-            <StarOutlineRounded fontSize="small" />
-          )}
+          {rating ? <StarRounded fontSize="small" /> : <StarOutlineRounded fontSize="small" />}
         </Button>
       </Tooltip>
     </>

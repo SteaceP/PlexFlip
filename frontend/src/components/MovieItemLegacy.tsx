@@ -1,23 +1,9 @@
-import {
-  CheckCircle,
-  PlayArrow,
-  InfoOutlined,
-  BookmarkBorder,
-} from "@mui/icons-material";
-import {
-  Box,
-  Typography,
-  Tooltip,
-  Button,
-  CircularProgress,
-} from "@mui/material";
+import { BookmarkBorder, CheckCircle, InfoOutlined, PlayArrow } from "@mui/icons-material";
+import { Box, Button, CircularProgress, Tooltip, Typography } from "@mui/material";
 import React, { JSX } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import {
-  getTranscodeImageURL,
-  getLibraryMeta,
-  getLibraryMetaChildren,
-} from "../plex";
+import { useNavigate, useSearchParams } from "react-router-dom";
+
+import { getLibraryMeta, getLibraryMetaChildren, getTranscodeImageURL } from "../plex";
 import { durationToText } from "./MovieItemSlider";
 
 function MovieItemLegacy({
@@ -373,9 +359,7 @@ function MovieItemLegacy({
                 case "movie":
                 case "episode":
                   navigate(
-                    `/watch/${item.ratingKey}${
-                      item.viewOffset ? `?t=${item.viewOffset}` : ""
-                    }`
+                    `/watch/${item.ratingKey}${item.viewOffset ? `?t=${item.viewOffset}` : ""}`
                   );
 
                   setPlayButtonLoading(false);
@@ -401,17 +385,13 @@ function MovieItemLegacy({
                       setPlayButtonLoading(false);
                       return;
                     } else {
-                      if (
-                        data.Children?.size === 0 ||
-                        !data.Children?.Metadata[0]
-                      )
+                      if (data.Children?.size === 0 || !data.Children?.Metadata[0])
                         return setPlayButtonLoading(false);
                       // play first episode
                       const episodes = await getLibraryMetaChildren(
                         data.Children?.Metadata[0].ratingKey
                       );
-                      if (episodes?.length === 0)
-                        return setPlayButtonLoading(false);
+                      if (episodes?.length === 0) return setPlayButtonLoading(false);
 
                       navigate(`/watch/${episodes[0].ratingKey}`);
                     }

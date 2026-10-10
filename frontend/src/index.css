@@ -1,44 +1,46 @@
-html, body, #root {
-    font-family: 'Roboto', sans-serif;
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    overflow-x: clip;
+html,
+body,
+#root {
+  font-family: "Roboto", sans-serif;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  overflow-x: clip;
 }
 
-*{
-    scrollbar-width: thin;
-    scrollbar-color: grey transparent;
+* {
+  scrollbar-width: thin;
+  scrollbar-color: grey transparent;
 }
 
 .head-link::after {
-    content: '';
-    display: block;
-    width: 0;
-    height: 2px;
-    background: #fff;
-    transition: width .3s;
-    margin-left: auto;
-    margin-right: auto;
+  content: "";
+  display: block;
+  width: 0;
+  height: 2px;
+  background: #fff;
+  transition: width 0.3s;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .head-link:hover::after {
-    width: 100%;
-    transition: width .3s;
+  width: 100%;
+  transition: width 0.3s;
 }
 
 .head-link-active::after {
-    width: 100%;
-    transition: width .3s;
+  width: 100%;
+  transition: width 0.3s;
 }
 
 a {
-    text-decoration: none;
-    color: #fff;
+  text-decoration: none;
+  color: #fff;
 }
 
 .ui-video-seek-slider .hover-time .preview-screen {
-    width: 240px !important;
-    height: 135px !important;
-    background-color: transparent !important;
+  width: 240px !important;
+  height: 135px !important;
+  background-color: transparent !important;
 }

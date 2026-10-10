@@ -1,34 +1,24 @@
-import React, { useEffect, useRef, useCallback } from "react";
-import {
-  Box,
-  Typography,
-  IconButton,
-  Slider,
-  Avatar,
-  Tooltip,
-  Badge,
-} from "@mui/material";
-import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
+import OpenInFullRoundedIcon from "@mui/icons-material/OpenInFullRounded";
 import PauseRoundedIcon from "@mui/icons-material/PauseRounded";
-import SkipPreviousRoundedIcon from "@mui/icons-material/SkipPreviousRounded";
-import SkipNextRoundedIcon from "@mui/icons-material/SkipNextRounded";
-import ShuffleRoundedIcon from "@mui/icons-material/ShuffleRounded";
-import RepeatRoundedIcon from "@mui/icons-material/RepeatRounded";
+import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
+import QueueMusicRoundedIcon from "@mui/icons-material/QueueMusicRounded";
 import RepeatOneRoundedIcon from "@mui/icons-material/RepeatOneRounded";
-import VolumeUpRoundedIcon from "@mui/icons-material/VolumeUpRounded";
+import RepeatRoundedIcon from "@mui/icons-material/RepeatRounded";
+import ShuffleRoundedIcon from "@mui/icons-material/ShuffleRounded";
+import SkipNextRoundedIcon from "@mui/icons-material/SkipNextRounded";
+import SkipPreviousRoundedIcon from "@mui/icons-material/SkipPreviousRounded";
 import VolumeDownRoundedIcon from "@mui/icons-material/VolumeDownRounded";
 import VolumeOffRoundedIcon from "@mui/icons-material/VolumeOffRounded";
-import QueueMusicRoundedIcon from "@mui/icons-material/QueueMusicRounded";
-import OpenInFullRoundedIcon from "@mui/icons-material/OpenInFullRounded";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  useAudioPlayerStore,
-  getTrackStreamURL,
-} from "../states/AudioPlayerState";
-import { getTranscodeImageURL } from "../plex";
-import QueueDrawer from "./modals/QueueDrawer";
-import NowPlayingModal from "./modals/NowPlayingModal";
+import VolumeUpRoundedIcon from "@mui/icons-material/VolumeUpRounded";
+import { Avatar, Badge, Box, IconButton, Slider, Tooltip, Typography } from "@mui/material";
+import { AnimatePresence, motion } from "framer-motion";
+import React, { useCallback, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
+
+import { getTranscodeImageURL } from "../plex";
+import { getTrackStreamURL, useAudioPlayerStore } from "../states/AudioPlayerState";
+import NowPlayingModal from "./modals/NowPlayingModal";
+import QueueDrawer from "./modals/QueueDrawer";
 
 function formatDuration(sec: number): string {
   if (isNaN(sec) || sec <= 0) return "0:00";
@@ -102,17 +92,13 @@ export default function AudioPlayerBar() {
         "";
       const album = currentTrack.parentTitle || "";
       const artworkPath = currentTrack.thumb || currentTrack.parentThumb;
-      const artworkSrc = artworkPath
-        ? getTranscodeImageURL(artworkPath, 512, 512)
-        : "";
+      const artworkSrc = artworkPath ? getTranscodeImageURL(artworkPath, 512, 512) : "";
 
       navigator.mediaSession.metadata = new MediaMetadata({
         title: currentTrack.title,
         artist,
         album,
-        artwork: artworkSrc
-          ? [{ src: artworkSrc, sizes: "512x512", type: "image/jpeg" }]
-          : [],
+        artwork: artworkSrc ? [{ src: artworkSrc, sizes: "512x512", type: "image/jpeg" }] : [],
       });
 
       navigator.mediaSession.setActionHandler("play", () => {
@@ -211,11 +197,7 @@ export default function AudioPlayerBar() {
     );
   }
 
-  const thumbUrl = getTranscodeImageURL(
-    currentTrack.thumb || currentTrack.parentThumb,
-    100,
-    100
-  );
+  const thumbUrl = getTranscodeImageURL(currentTrack.thumb || currentTrack.parentThumb, 100, 100);
   const artistName =
     currentTrack.grandparentTitle ||
     currentTrack.originalTitle ||
@@ -427,7 +409,10 @@ export default function AudioPlayerBar() {
                 gap: 1.5,
               }}
             >
-              <Typography variant="caption" sx={{ color: "#64748b", minWidth: "32px", textAlign: "right", fontSize: "11px" }}>
+              <Typography
+                variant="caption"
+                sx={{ color: "#64748b", minWidth: "32px", textAlign: "right", fontSize: "11px" }}
+              >
                 {formatDuration(currentTime)}
               </Typography>
 
@@ -455,7 +440,10 @@ export default function AudioPlayerBar() {
                 }}
               />
 
-              <Typography variant="caption" sx={{ color: "#64748b", minWidth: "32px", fontSize: "11px" }}>
+              <Typography
+                variant="caption"
+                sx={{ color: "#64748b", minWidth: "32px", fontSize: "11px" }}
+              >
                 {formatDuration(duration)}
               </Typography>
             </Box>
@@ -512,7 +500,14 @@ export default function AudioPlayerBar() {
                 onClick={() => setQueueOpen(true)}
                 sx={{ color: "#94a3b8", "&:hover": { color: "#fff" } }}
               >
-                <Badge badgeContent={queue.length} color="primary" max={99} sx={{ "& .MuiBadge-badge": { fontSize: "10px", height: "16px", minWidth: "16px" } }}>
+                <Badge
+                  badgeContent={queue.length}
+                  color="primary"
+                  max={99}
+                  sx={{
+                    "& .MuiBadge-badge": { fontSize: "10px", height: "16px", minWidth: "16px" },
+                  }}
+                >
                   <QueueMusicRoundedIcon sx={{ fontSize: 20 }} />
                 </Badge>
               </IconButton>

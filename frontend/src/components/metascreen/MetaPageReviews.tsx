@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import { EditRounded, RateReviewRounded } from "@mui/icons-material";
 import {
   Avatar,
   Box,
@@ -15,11 +15,12 @@ import {
   Typography,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { EditRounded, RateReviewRounded } from "@mui/icons-material";
 import { motion } from "framer-motion";
 import moment from "moment";
-import { PlexCommunity } from "../../plex/plexCommunity";
+import React, { useCallback, useEffect, useState } from "react";
+
 import { getPlexFlipReviews } from "../../common/PlexFlipReviews";
+import { PlexCommunity } from "../../plex/plexCommunity";
 import { useUserSessionStore } from "../../states/UserSession";
 import AddReviewModal from "../modals/AddReviewModal";
 
@@ -77,9 +78,8 @@ export function MetaPageReviews({ data }: MetaPageReviewsProps) {
         baseRes.recentReviews.nodes =
           baseRes.recentReviews.nodes.filter(
             (review) =>
-              baseRes.topReviews?.nodes.find(
-                (topReview) => topReview.id === review.id
-              ) === undefined
+              baseRes.topReviews?.nodes.find((topReview) => topReview.id === review.id) ===
+              undefined
           ) ?? [];
       }
 
@@ -107,12 +107,7 @@ export function MetaPageReviews({ data }: MetaPageReviewsProps) {
     if (isEmpty) return null;
     return (
       <Box sx={{ width: "100%", mb: 5 }}>
-        <Typography
-          variant="h6"
-          fontWeight="bold"
-          color="text.primary"
-          sx={{ mb: 2 }}
-        >
+        <Typography variant="h6" fontWeight="bold" color="text.primary" sx={{ mb: 2 }}>
           {title}
         </Typography>
 
@@ -139,10 +134,8 @@ export function MetaPageReviews({ data }: MetaPageReviewsProps) {
                 isPlexFlip &&
                 Boolean(
                   currentUser?.uuid &&
-                    ((review as PlexFlip.Reviews.Review).userID ===
-                      currentUser.uuid ||
-                      (review as PlexFlip.Reviews.Review).user?.id ===
-                        currentUser.uuid)
+                  ((review as PlexFlip.Reviews.Review).userID === currentUser.uuid ||
+                    (review as PlexFlip.Reviews.Review).user?.id === currentUser.uuid)
                 );
 
               return (
@@ -151,24 +144,18 @@ export function MetaPageReviews({ data }: MetaPageReviewsProps) {
                     elevation={0}
                     sx={{
                       p: 2.5,
-                      bgcolor: (theme) =>
-                        alpha(theme.palette.background.paper, 0.4),
+                      bgcolor: (theme) => alpha(theme.palette.background.paper, 0.4),
                       borderRadius: 2,
                       height: "100%",
                       transition: "all 0.2s ease",
                       border: isCurrentUser
-                        ? (theme) =>
-                            `1px solid ${alpha(theme.palette.primary.main, 0.4)}`
+                        ? (theme) => `1px solid ${alpha(theme.palette.primary.main, 0.4)}`
                         : undefined,
                       "&:hover": {
-                        bgcolor: (theme) =>
-                          alpha(theme.palette.background.paper, 0.6),
+                        bgcolor: (theme) => alpha(theme.palette.background.paper, 0.6),
                         transform: "translateY(-4px)",
                         boxShadow: (theme) =>
-                          `0 8px 16px -2px ${alpha(
-                            theme.palette.common.black,
-                            0.15
-                          )}`,
+                          `0 8px 16px -2px ${alpha(theme.palette.common.black, 0.15)}`,
                       },
                     }}
                   >
@@ -181,10 +168,7 @@ export function MetaPageReviews({ data }: MetaPageReviewsProps) {
                         position: "relative",
                       }}
                     >
-                      <Avatar
-                        src={avatarSrc}
-                        sx={{ width: 42, height: 42, boxShadow: 1 }}
-                      >
+                      <Avatar src={avatarSrc} sx={{ width: 42, height: 42, boxShadow: 1 }}>
                         {username?.charAt(0) || "U"}
                       </Avatar>
                       <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -228,10 +212,7 @@ export function MetaPageReviews({ data }: MetaPageReviewsProps) {
                               color: (theme) => theme.palette.primary.main,
                             }}
                           />
-                          <Typography
-                            variant="caption"
-                            sx={{ ml: 1, color: "text.secondary" }}
-                          >
+                          <Typography variant="caption" sx={{ ml: 1, color: "text.secondary" }}>
                             {moment(new Date(reviewDate)).fromNow()}
                           </Typography>
                         </Box>
@@ -244,8 +225,7 @@ export function MetaPageReviews({ data }: MetaPageReviewsProps) {
                             sx={{
                               color: "primary.main",
                               "&:hover": {
-                                bgcolor: (theme) =>
-                                  alpha(theme.palette.primary.main, 0.1),
+                                bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1),
                               },
                             }}
                           >
@@ -379,15 +359,12 @@ export function MetaPageReviews({ data }: MetaPageReviewsProps) {
               <Box
                 sx={{
                   p: 2,
-                  bgcolor: (theme) =>
-                    alpha(theme.palette.background.paper, 0.4),
+                  bgcolor: (theme) => alpha(theme.palette.background.paper, 0.4),
                   borderRadius: 2,
                   height: "100%",
                 }}
               >
-                <Box
-                  sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}
-                >
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
                   <Skeleton variant="circular" width={40} height={40} />
                   <Box sx={{ flex: 1 }}>
                     <Skeleton variant="text" width="70%" height={24} />
@@ -416,9 +393,7 @@ export function MetaPageReviews({ data }: MetaPageReviewsProps) {
             gap: 2,
           }}
         >
-          <RateReviewRounded
-            sx={{ fontSize: 56, color: "text.disabled" }}
-          />
+          <RateReviewRounded sx={{ fontSize: 56, color: "text.disabled" }} />
           <Typography color="text.secondary" variant="body1">
             No one has reviewed this title yet. Be the first to share your review!
           </Typography>

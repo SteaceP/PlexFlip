@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from "react";
 import { Box, Button, CircularProgress, Collapse, Grid } from "@mui/material";
 import { motion } from "framer-motion";
-import { useConfirmModal } from "../ConfirmModal";
+import React, { useEffect, useState } from "react";
+
 import { setMediaPlayedStatus } from "../../plex";
+import { useConfirmModal } from "../../states/ConfirmModalState";
 import MovieItem from "../MovieItem";
-import EpisodeItem from "./EpisodeItem";
 import AlbumTrackList from "./AlbumTrackList";
 import ArtistAlbumsList from "./ArtistAlbumsList";
+import EpisodeItem from "./EpisodeItem";
 
 export interface MetaPageEpisodesProps {
   data: Plex.Metadata | undefined;
@@ -79,9 +80,7 @@ export function MetaPageEpisodes({
               }
             }}
           >
-            {selectedEpisodes.length === episodes?.length
-              ? "Unselect All"
-              : "Select All"}
+            {selectedEpisodes.length === episodes?.length ? "Unselect All" : "Select All"}
           </Button>
 
           <Button
@@ -213,15 +212,9 @@ export function MetaPageEpisodes({
                 (selected) => selected.ratingKey === episode.ratingKey
               )}
               setSelected={() => {
-                if (
-                  selectedEpisodes.some(
-                    (selected) => selected.ratingKey === episode.ratingKey
-                  )
-                ) {
+                if (selectedEpisodes.some((selected) => selected.ratingKey === episode.ratingKey)) {
                   setSelectedEpisodes(
-                    selectedEpisodes.filter(
-                      (selected) => selected.ratingKey !== episode.ratingKey
-                    )
+                    selectedEpisodes.filter((selected) => selected.ratingKey !== episode.ratingKey)
                   );
                 } else {
                   setSelectedEpisodes([...selectedEpisodes, episode]);
@@ -241,13 +234,9 @@ export function MetaPageEpisodes({
         </Box>
       )}
 
-      {data?.type === "album" && (
-        <AlbumTrackList album={data} tracks={musicChildren || null} />
-      )}
+      {data?.type === "album" && <AlbumTrackList album={data} tracks={musicChildren || null} />}
 
-      {data?.type === "artist" && (
-        <ArtistAlbumsList artist={data} albums={musicChildren || null} />
-      )}
+      {data?.type === "artist" && <ArtistAlbumsList artist={data} albums={musicChildren || null} />}
     </>
   );
 }

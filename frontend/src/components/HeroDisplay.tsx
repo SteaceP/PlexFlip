@@ -1,36 +1,40 @@
 import {
-  PlayArrowRounded,
   InfoOutlined,
+  PauseRounded,
+  PlayArrowRounded,
   VolumeOffRounded,
   VolumeUpRounded,
-  PauseRounded,
 } from "@mui/icons-material";
-import { Box, Typography, Button, IconButton } from "@mui/material";
+import { Box, Button, IconButton, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import { usePreviewPlayer } from "../states/PreviewPlayerState";
+import { useNavigate, useSearchParams } from "react-router-dom";
+
+import { getBackendURL } from "../backendURL";
 import ReactPlayer from "../common/ReactPlayer";
+import { getLibraryMeta, getLibraryMetaChildren, getTranscodeImageURL } from "../plex";
+import { queryBuilder } from "../plex/QuickFunctions";
+import { useAudioPlayerStore } from "../states/AudioPlayerState";
+import { usePreviewPlayer } from "../states/PreviewPlayerState";
 import { useBigReader } from "./BigReader";
 import { HeroWatchListButton } from "./MovieItem";
-import { getBackendURL } from "../backendURL";
-import { queryBuilder } from "../plex/QuickFunctions";
-import { getLibraryMeta, getLibraryMetaChildren, getTranscodeImageURL } from "../plex";
-import { useAudioPlayerStore } from "../states/AudioPlayerState";
 
 function HeroDisplay({ item }: { item: Plex.Metadata }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const { MetaScreenPlayerMuted, setMetaScreenPlayerMuted } =
-    usePreviewPlayer();
+  const { MetaScreenPlayerMuted, setMetaScreenPlayerMuted } = usePreviewPlayer();
 
   const previewVidURL = item?.Extras?.Metadata?.[0]?.Media?.[0]?.Part?.[0]?.key
-    ? `${getBackendURL()}/dynproxy${item?.Extras?.Metadata?.[0]?.Media?.[0]?.Part?.[0]?.key.split("?")[0]}?${
-        queryBuilder({
+    ? `${getBackendURL()}/dynproxy${item?.Extras?.Metadata?.[0]?.Media?.[0]?.Part?.[0]?.key.split("?")[0]}?${queryBuilder(
+        {
           "X-Plex-Token": localStorage.getItem("accessToken"),
-          ...Object.fromEntries(new URL("http://localhost:3000" + item?.Extras?.Metadata?.[0]?.Media?.[0]?.Part?.[0]?.key).searchParams.entries()),
-        })
-      }`
+          ...Object.fromEntries(
+            new URL(
+              "http://localhost:3000" + item?.Extras?.Metadata?.[0]?.Media?.[0]?.Part?.[0]?.key
+            ).searchParams.entries()
+          ),
+        }
+      )}`
     : null;
 
   const [previewVidPlaying, setPreviewVidPlaying] = useState<boolean>(false);
@@ -319,9 +323,7 @@ function HeroDisplay({ item }: { item: Plex.Metadata }) {
                   navigate(`/watch/${item.ratingKey}`);
                 } else {
                   navigate(
-                    `/watch/${item.ratingKey}${
-                      item.viewOffset ? `?t=${item.viewOffset}` : ""
-                    }`
+                    `/watch/${item.ratingKey}${item.viewOffset ? `?t=${item.viewOffset}` : ""}`
                   );
                 }
               }}
@@ -385,8 +387,7 @@ function HeroDisplay({ item }: { item: Plex.Metadata }) {
           bottom: 0,
           left: 0,
 
-          backgroundImage:
-            "linear-gradient(180deg, #00000000, #000000AA, #000000FF)",
+          backgroundImage: "linear-gradient(180deg, #00000000, #000000AA, #000000FF)",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",

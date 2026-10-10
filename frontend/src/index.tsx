@@ -1,20 +1,20 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
-import App from "./App";
 import "./index.css";
-import { ThemeProvider } from "@emotion/react";
-import { CssBaseline, createTheme } from "@mui/material";
-import { BrowserRouter } from "react-router-dom";
-import { makeid, uuidv4 } from "./plex/QuickFunctions";
-import { getDeviceName, getPlatform, platformCache } from "./common/DesktopApp";
-
 import "@fontsource-variable/quicksand";
 import "@fontsource-variable/rubik";
 import "@fontsource/ibm-plex-sans";
 import "@fontsource-variable/inter";
 
-if (!localStorage.getItem("clientID"))
-  localStorage.setItem("clientID", makeid(24));
+import { ThemeProvider } from "@emotion/react";
+import { createTheme, CssBaseline } from "@mui/material";
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
+
+import App from "./App";
+import { getDeviceName, getPlatform, platformCache } from "./common/DesktopApp";
+import { makeid, uuidv4 } from "./plex/QuickFunctions";
+
+if (!localStorage.getItem("clientID")) localStorage.setItem("clientID", makeid(24));
 
 sessionStorage.setItem("sessionID", uuidv4());
 
@@ -25,26 +25,21 @@ let config: PlexFlip.ConfigOptions = {
 
 (() => {
   if (!localStorage.getItem("config")) return;
-  config = JSON.parse(
-    localStorage.getItem("config") as string
-  ) as PlexFlip.ConfigOptions;
+  config = JSON.parse(localStorage.getItem("config") as string) as PlexFlip.ConfigOptions;
 })();
 
 if (!localStorage.getItem("quality")) localStorage.setItem("quality", "12000");
 
 export { config };
 
-const root = ReactDOM.createRoot(
-  document.getElementById("root") as HTMLElement
-);
+const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
 
 getPlatform().then(async (platformData) => {
   if (!platformData) return;
 
   // make platformData.platform lowercase but capitalize the first letter
   platformData.platform =
-    platformData.platform.charAt(0).toUpperCase() +
-    platformData.platform.slice(1).toLowerCase();
+    platformData.platform.charAt(0).toUpperCase() + platformData.platform.slice(1).toLowerCase();
 
   switch (platformData.platform) {
     case "Win32":

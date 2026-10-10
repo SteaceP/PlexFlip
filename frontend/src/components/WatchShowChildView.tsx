@@ -4,6 +4,7 @@ import {
   SubscriptionsRounded,
 } from "@mui/icons-material";
 import {
+  alpha,
   Backdrop,
   Box,
   Divider,
@@ -14,24 +15,21 @@ import {
   Popper,
   Portal,
   Typography,
-  alpha,
   useTheme,
 } from "@mui/material";
 import React, { useEffect } from "react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 import { getLibraryDir, getTranscodeImageURL } from "../plex";
 import { getMinutes } from "./metascreen/utils";
-import { useNavigate } from "react-router-dom";
 
 function WatchShowChildView({
   item,
   controlElementsVisibleState,
 }: {
   item: Plex.Metadata;
-  controlElementsVisibleState: [
-    boolean,
-    React.Dispatch<React.SetStateAction<boolean>>
-  ];
+  controlElementsVisibleState: [boolean, React.Dispatch<React.SetStateAction<boolean>>];
 }) {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [seasons, setSeasons] = useState<Plex.Metadata[] | null>(null);
@@ -48,18 +46,14 @@ function WatchShowChildView({
 
     (async () => {
       const getSeasons = new Promise<Plex.Metadata[]>((resolve) => {
-        getLibraryDir(
-          `/library/metadata/${item.grandparentRatingKey}/children`
-        ).then((data) => {
+        getLibraryDir(`/library/metadata/${item.grandparentRatingKey}/children`).then((data) => {
           if (!data?.Metadata) return;
           resolve(data?.Metadata);
         });
       });
 
       const getEpisodes = new Promise<Plex.Metadata[]>((resolve) => {
-        getLibraryDir(
-          `/library/metadata/${item.grandparentRatingKey}/allLeaves`
-        ).then((data) => {
+        getLibraryDir(`/library/metadata/${item.grandparentRatingKey}/allLeaves`).then((data) => {
           if (!data?.Metadata) return;
           resolve(data?.Metadata);
         });
@@ -158,11 +152,7 @@ function WatchShowChildView({
                         }}
                       >
                         <Box sx={{ p: 2, pb: 1 }}>
-                          <Typography
-                            variant="subtitle1"
-                            noWrap
-                            fontWeight="medium"
-                          >
+                          <Typography variant="subtitle1" noWrap fontWeight="medium">
                             {item.grandparentTitle}
                           </Typography>
                         </Box>
@@ -195,11 +185,7 @@ function WatchShowChildView({
                           >
                             <Typography
                               variant="body2"
-                              fontWeight={
-                                selectedSeason === season.index
-                                  ? "medium"
-                                  : "normal"
-                              }
+                              fontWeight={selectedSeason === season.index ? "medium" : "normal"}
                             >
                               {season.title}
                             </Typography>
@@ -237,9 +223,7 @@ function WatchShowChildView({
                         }}
                       >
                         {episodes
-                          ?.filter(
-                            (episode) => episode.parentIndex === selectedSeason
-                          )
+                          ?.filter((episode) => episode.parentIndex === selectedSeason)
                           .map((episode) => (
                             <Box
                               key={episode.ratingKey}
@@ -257,10 +241,7 @@ function WatchShowChildView({
                                 ...(episode.ratingKey !== item.ratingKey && {
                                   cursor: "pointer",
                                   "&:hover": {
-                                    bgcolor: alpha(
-                                      theme.palette.action.hover,
-                                      0.1
-                                    ),
+                                    bgcolor: alpha(theme.palette.action.hover, 0.1),
                                     "& .playIcon": {
                                       opacity: 1,
                                     },
@@ -313,14 +294,11 @@ function WatchShowChildView({
                                 />
 
                                 {(episode.viewOffset ||
-                                  (episode.viewCount &&
-                                    episode.viewCount >= 1)) && (
+                                  (episode.viewCount && episode.viewCount >= 1)) && (
                                   <LinearProgress
                                     value={
                                       episode.viewOffset
-                                        ? (episode.viewOffset /
-                                            episode.duration) *
-                                          100
+                                        ? (episode.viewOffset / episode.duration) * 100
                                         : 100
                                     }
                                     variant="determinate"
@@ -352,23 +330,13 @@ function WatchShowChildView({
                                       gap: 0.5,
                                     }}
                                   >
-                                    <Typography
-                                      color="text.secondary"
-                                      variant="body2"
-                                    >
+                                    <Typography color="text.secondary" variant="body2">
                                       {episode.index}
                                     </Typography>
-                                    <Typography
-                                      color="text.secondary"
-                                      variant="body2"
-                                    >
+                                    <Typography color="text.secondary" variant="body2">
                                       •
                                     </Typography>
-                                    <Typography
-                                      variant="subtitle2"
-                                      fontWeight="medium"
-                                      noWrap
-                                    >
+                                    <Typography variant="subtitle2" fontWeight="medium" noWrap>
                                       {episode.title}
                                     </Typography>
                                   </Box>

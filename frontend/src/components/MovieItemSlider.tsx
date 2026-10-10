@@ -1,8 +1,9 @@
+import { ArrowForwardIosRounded } from "@mui/icons-material";
 import { Box, Typography } from "@mui/material";
 import React from "react";
-import { getLibraryDir } from "../plex";
-import { ArrowForwardIosRounded } from "@mui/icons-material";
 import { useSearchParams } from "react-router-dom";
+
+import { getLibraryDir } from "../plex";
 import MovieItem from "./MovieItem";
 
 function MovieItemSlider({
@@ -25,9 +26,7 @@ function MovieItemSlider({
   plexTvSource?: boolean;
 }) {
   const [, setSearchParams] = useSearchParams();
-  const [items, setItems] = React.useState<Plex.Metadata[] | null>(
-    data ?? null
-  );
+  const [items, setItems] = React.useState<Plex.Metadata[] | null>(data ?? null);
 
   const [currPage, setCurrPage] = React.useState(0);
   const touchStartX = React.useRef<number | null>(null);
@@ -62,9 +61,7 @@ function MovieItemSlider({
     return 6;
   };
 
-  const [itemsPerPage, setItemsPerPage] = React.useState(
-    calculateItemsPerPage(window.innerWidth)
-  );
+  const [itemsPerPage, setItemsPerPage] = React.useState(calculateItemsPerPage(window.innerWidth));
 
   React.useEffect(() => {
     const handleResize = () => {
@@ -266,9 +263,7 @@ function MovieItemSlider({
             e.stopPropagation();
             e.preventDefault();
             setCurrPage((curr) =>
-              curr - 1 < 0
-                ? Math.ceil(itemCount / itemsPerPage) - 1
-                : curr - 1
+              curr - 1 < 0 ? Math.ceil(itemCount / itemsPerPage) - 1 : curr - 1
             );
           }}
         >
@@ -298,9 +293,7 @@ function MovieItemSlider({
               itemsPerPage={itemsPerPage}
               index={i}
               PlexTvSource={plexTvSource}
-              refetchData={
-                dir && dir.endsWith("onDeck") ? fetchData : undefined
-              }
+              refetchData={dir && dir.endsWith("onDeck") ? fetchData : undefined}
             />
           ))}
         </Box>
@@ -332,9 +325,7 @@ function MovieItemSlider({
             e.stopPropagation();
             e.preventDefault();
             setCurrPage((curr) =>
-              curr + 1 > Math.ceil(itemCount / itemsPerPage) - 1
-                ? 0
-                : curr + 1
+              curr + 1 > Math.ceil(itemCount / itemsPerPage) - 1 ? 0 : curr + 1
             );
           }}
         >
@@ -352,8 +343,7 @@ export function durationToText(duration: number): string {
   const minutes = (duration / 1000 / 60 / 60 - hours) * 60;
 
   return (
-    (hours > 0 ? `${hours}h` : "") +
-    (Math.floor(minutes) > 0 ? ` ${Math.floor(minutes)}m` : "")
+    (hours > 0 ? `${hours}h` : "") + (Math.floor(minutes) > 0 ? ` ${Math.floor(minutes)}m` : "")
   ).trim();
 }
 

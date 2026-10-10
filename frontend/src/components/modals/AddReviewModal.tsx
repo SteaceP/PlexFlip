@@ -1,26 +1,27 @@
-import React, { useEffect, useState } from "react";
-import {
-  Modal,
-  Box,
-  Typography,
-  TextField,
-  Button,
-  FormControlLabel,
-  Checkbox,
-  Rating,
-  Stack,
-  Divider,
-  CircularProgress,
-  Select,
-  MenuItem,
-} from "@mui/material";
 import { Star, StarBorder } from "@mui/icons-material";
-import { setMediaRating } from "../../plex";
+import {
+  Box,
+  Button,
+  Checkbox,
+  CircularProgress,
+  Divider,
+  FormControlLabel,
+  MenuItem,
+  Modal,
+  Rating,
+  Select,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
+import React, { useEffect, useState } from "react";
+
 import {
   deletePlexFlipReview,
   getPlexFlipReviews,
   updatePlexFlipReview,
 } from "../../common/PlexFlipReviews";
+import { setMediaRating } from "../../plex";
 import { useUserSessionStore } from "../../states/UserSession";
 
 interface AddReviewModalProps {
@@ -30,22 +31,12 @@ interface AddReviewModalProps {
   onSuccess?: () => void;
 }
 
-function AddReviewModal({
-  item,
-  onClose,
-  initialRating,
-  onSuccess,
-}: AddReviewModalProps) {
+function AddReviewModal({ item, onClose, initialRating, onSuccess }: AddReviewModalProps) {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [existingReview, setExistingReview] =
-    useState<PlexFlip.Reviews.Review | null>(null);
+  const [existingReview, setExistingReview] = useState<PlexFlip.Reviews.Review | null>(null);
   const [rating, setRating] = useState<number>(
-    initialRating !== undefined
-      ? initialRating
-      : item.userRating
-      ? item.userRating / 2
-      : 0
+    initialRating !== undefined ? initialRating : item.userRating ? item.userRating / 2 : 0
   );
   const [reviewText, setReviewText] = useState<string>("");
   const [isSpoiler, setIsSpoiler] = useState<boolean>(false);
@@ -97,10 +88,7 @@ function AddReviewModal({
     setIsLoading(true);
     setLoadError(null);
     try {
-      await deletePlexFlipReview(
-        existingReview.itemID,
-        existingReview.visibility
-      );
+      await deletePlexFlipReview(existingReview.itemID, existingReview.visibility);
       if (item.ratingKey && /^\d+$/.test(item.ratingKey)) {
         await setMediaRating(-1, item.ratingKey).catch(() => {});
       }
@@ -122,10 +110,7 @@ function AddReviewModal({
       try {
         const currentUser = useUserSessionStore.getState().user;
         const currentUserId = currentUser?.uuid;
-        const reviews = await getPlexFlipReviews(
-          item.guid,
-          currentUserId
-        );
+        const reviews = await getPlexFlipReviews(item.guid, currentUserId);
 
         // Find review specifically authored by the current user
         const userReview = reviews.find(
@@ -159,11 +144,7 @@ function AddReviewModal({
   }, [item, initialRating]);
 
   return (
-    <Modal
-      open={true}
-      onClose={onClose}
-      aria-labelledby="add-review-modal-title"
-    >
+    <Modal open={true} onClose={onClose} aria-labelledby="add-review-modal-title">
       <Box
         sx={{
           position: "absolute",
@@ -179,12 +160,7 @@ function AddReviewModal({
           overflowY: "auto",
         }}
       >
-        <Typography
-          id="add-review-modal-title"
-          variant="h6"
-          component="h2"
-          fontWeight="bold"
-        >
+        <Typography id="add-review-modal-title" variant="h6" component="h2" fontWeight="bold">
           {existingReview ? "Edit Review" : "Add Review"}
         </Typography>
 
@@ -227,7 +203,12 @@ function AddReviewModal({
         ) : (
           <Stack spacing={2.5}>
             <Box>
-              <Typography component="legend" variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+              <Typography
+                component="legend"
+                variant="body2"
+                color="text.secondary"
+                sx={{ mb: 0.5 }}
+              >
                 Rating
               </Typography>
               <Rating
@@ -260,10 +241,7 @@ function AddReviewModal({
 
             <FormControlLabel
               control={
-                <Checkbox
-                  checked={isSpoiler}
-                  onChange={(e) => setIsSpoiler(e.target.checked)}
-                />
+                <Checkbox checked={isSpoiler} onChange={(e) => setIsSpoiler(e.target.checked)} />
               }
               label="Contains spoilers"
             />

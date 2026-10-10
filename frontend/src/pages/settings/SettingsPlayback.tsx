@@ -1,10 +1,10 @@
-import React from "react";
+import FastForwardRoundedIcon from "@mui/icons-material/FastForwardRounded";
+import NightlightRoundedIcon from "@mui/icons-material/NightlightRounded";
+import PlayCircleOutlineRoundedIcon from "@mui/icons-material/PlayCircleOutlineRounded";
+import TranslateRoundedIcon from "@mui/icons-material/TranslateRounded";
 import { Box, Stack } from "@mui/material";
 import { motion } from "framer-motion";
-import NightlightRoundedIcon from "@mui/icons-material/NightlightRounded";
-import TranslateRoundedIcon from "@mui/icons-material/TranslateRounded";
-import FastForwardRoundedIcon from "@mui/icons-material/FastForwardRounded";
-import PlayCircleOutlineRoundedIcon from "@mui/icons-material/PlayCircleOutlineRounded";
+import React from "react";
 
 import CheckBoxOption from "../../components/settings/CheckBoxOption";
 import SettingsCard from "../../components/settings/SettingsCard";
@@ -85,10 +85,7 @@ function SettingsPlayback() {
               subtitle="Automatically transitions to and plays the subsequent episode in the season when the current episode ends."
               checked={settings.AUTO_NEXT_EP === "true"}
               onChange={() => {
-                setSetting(
-                  "AUTO_NEXT_EP",
-                  settings.AUTO_NEXT_EP === "true" ? "false" : "true"
-                );
+                setSetting("AUTO_NEXT_EP", settings.AUTO_NEXT_EP === "true" ? "false" : "true");
               }}
             />
           </Box>

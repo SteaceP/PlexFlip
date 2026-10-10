@@ -1,21 +1,12 @@
-import {
-  Alert,
-  Backdrop,
-  Box,
-  CircularProgress,
-  Grid,
-  Typography,
-} from "@mui/material";
+import { Alert, Backdrop, Box, CircularProgress, Grid, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { getLibraryDir } from "../plex";
-import MovieItem from "./MovieItem";
 import { useInView } from "react-intersection-observer";
-import LibrarySortDropDown, {
-  LibrarySort,
-  sortMetadata,
-} from "./LibrarySortDropDown";
+import { useSearchParams } from "react-router-dom";
+
+import { getLibraryDir } from "../plex";
 import { useWatchListCache } from "../states/WatchListCache";
+import LibrarySortDropDown, { LibrarySort, sortMetadata } from "./LibrarySortDropDown";
+import MovieItem from "./MovieItem";
 
 function LibraryScreen() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -44,7 +35,7 @@ function LibraryScreen() {
     window.addEventListener("keydown", handleKeyDown);
 
     return () => window.removeEventListener("keydown", handleKeyDown);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -196,29 +187,19 @@ function LibraryScreen() {
                 gap: 2,
               }}
             >
-              {!skipFilter && (
-                <LibrarySortDropDown sortHook={[sortBy, setSortBy]} />
-              )}
+              {!skipFilter && <LibrarySortDropDown sortHook={[sortBy, setSortBy]} />}
             </Box>
           </Box>
 
           <Grid container spacing={2} sx={{ width: "100%" }}>
             {library?.Metadata &&
-              (skipFilter
-                ? library?.Metadata
-                : sortMetadata(library?.Metadata, sortBy)
-              ).map((item, index) => (
-                <Grid
-                  size={{ xs: 12, sm: 6, md: 4, lg: 4, xl: 3 }}
-                  key={item.ratingKey}
-                >
-                  <Element
-                    item={item}
-                    key={`${index}`}
-                    plexTv={bkey.startsWith("/plextv")}
-                  />
-                </Grid>
-              ))}
+              (skipFilter ? library?.Metadata : sortMetadata(library?.Metadata, sortBy)).map(
+                (item, index) => (
+                  <Grid size={{ xs: 12, sm: 6, md: 4, lg: 4, xl: 3 }} key={item.ratingKey}>
+                    <Element item={item} key={`${index}`} plexTv={bkey.startsWith("/plextv")} />
+                  </Grid>
+                )
+              )}
           </Grid>
         </Box>
       </Backdrop>

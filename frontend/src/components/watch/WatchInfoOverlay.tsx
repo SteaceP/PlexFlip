@@ -1,5 +1,6 @@
-import React from "react";
 import { Box, Typography, useTheme } from "@mui/material";
+import React from "react";
+
 import { getTranscodeImageURL } from "../../plex";
 import { durationToText } from "../MovieItemSlider";
 
@@ -43,11 +44,7 @@ export const WatchInfoOverlay: React.FC<WatchInfoOverlayProps> = ({
       }}
     >
       <img
-        src={`${getTranscodeImageURL(
-          metadata.thumb as string,
-          1500,
-          1500,
-        )}`}
+        src={`${getTranscodeImageURL(metadata.thumb as string, 1500, 1500)}`}
         alt=""
         style={{
           height: "25vw",
@@ -115,8 +112,7 @@ export const WatchInfoOverlay: React.FC<WatchInfoOverlayProps> = ({
                 mb: 0.5,
               }}
             >
-              {metadata.title}{" "}
-              <span style={{ opacity: 0.6 }}>· EP.{metadata.index}</span>
+              {metadata.title} <span style={{ opacity: 0.6 }}>· EP.{metadata.index}</span>
             </Typography>
 
             <Box

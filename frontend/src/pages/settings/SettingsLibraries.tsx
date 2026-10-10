@@ -1,16 +1,16 @@
-import React, { useEffect, useState } from "react";
-import { Box, Stack, CircularProgress, Typography, Chip, Skeleton } from "@mui/material";
-import { motion } from "framer-motion";
-import VideoLibraryRoundedIcon from "@mui/icons-material/VideoLibraryRounded";
+import LayersRoundedIcon from "@mui/icons-material/LayersRounded";
+import LibraryMusicRoundedIcon from "@mui/icons-material/LibraryMusicRounded";
 import MovieRoundedIcon from "@mui/icons-material/MovieRounded";
 import TvRoundedIcon from "@mui/icons-material/TvRounded";
-import LibraryMusicRoundedIcon from "@mui/icons-material/LibraryMusicRounded";
-import LayersRoundedIcon from "@mui/icons-material/LayersRounded";
+import VideoLibraryRoundedIcon from "@mui/icons-material/VideoLibraryRounded";
+import { Box, Chip, CircularProgress, Skeleton, Stack, Typography } from "@mui/material";
+import { motion } from "framer-motion";
+import React, { useEffect, useState } from "react";
 
-import { getAllLibraries } from "../../plex";
 import CheckBoxOption from "../../components/settings/CheckBoxOption";
 import SettingsCard from "../../components/settings/SettingsCard";
 import SettingsHeader from "../../components/settings/SettingsHeader";
+import { getAllLibraries } from "../../plex";
 import { useUserSettings } from "../../states/UserSettingsState";
 
 function getLibraryIcon(type: string) {

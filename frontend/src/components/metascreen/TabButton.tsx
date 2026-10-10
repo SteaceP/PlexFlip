@@ -1,5 +1,5 @@
-import React from "react";
 import { Typography } from "@mui/material";
+import React from "react";
 
 export interface TabButtonProps {
   text: string;
@@ -37,8 +37,7 @@ export function TabButton({ text, onClick, selected }: TabButtonProps) {
         },
 
         "&:hover": {
-          color: (theme) =>
-            selected ? theme.palette.primary.main : theme.palette.text.primary,
+          color: (theme) => (selected ? theme.palette.primary.main : theme.palette.text.primary),
 
           "&:after": {
             width: "100%",

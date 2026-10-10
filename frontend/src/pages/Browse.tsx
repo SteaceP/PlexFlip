@@ -1,9 +1,10 @@
-import React from "react";
 import { Box, Button, ButtonGroup } from "@mui/material";
-import { create } from "zustand";
 import { AnimatePresence } from "framer-motion";
-import BrowseRecommendations from "./browse/BrowseRecommendations";
+import React from "react";
+import { create } from "zustand";
+
 import BrowseLibrary from "./browse/BrowseLibrary";
+import BrowseRecommendations from "./browse/BrowseRecommendations";
 
 type BrowsePages = "recommendations" | "browse";
 
@@ -13,8 +14,7 @@ interface BrowsePageOptionsState {
 }
 
 const useBrowsePageOptions = create<BrowsePageOptionsState>((set) => ({
-  page:
-    (localStorage.getItem("browsePage") as BrowsePages) || "recommendations",
+  page: (localStorage.getItem("browsePage") as BrowsePages) || "recommendations",
   setPage: (page: BrowsePages) => {
     localStorage.setItem("browsePage", page);
     set({ page });

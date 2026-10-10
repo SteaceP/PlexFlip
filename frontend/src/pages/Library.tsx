@@ -1,8 +1,9 @@
 import { Box, CircularProgress, Grid, Typography } from "@mui/material";
 import React from "react";
 import { useParams, useSearchParams } from "react-router-dom";
-import { getLibraryDir } from "../plex";
+
 import MovieItem from "../components/MovieItem";
+import { getLibraryDir } from "../plex";
 
 export default function Library() {
   const { dir } = useParams() as {
@@ -61,10 +62,7 @@ export default function Library() {
           <Grid container spacing={2} sx={{ mt: 2, width: "100%" }}>
             {results &&
               results.Metadata?.map((item) => (
-                <Grid
-                  key={item.ratingKey}
-                  size={{ xs: 12, sm: 12, md: 6, lg: 4, xl: 3 }}
-                >
+                <Grid key={item.ratingKey} size={{ xs: 12, sm: 12, md: 6, lg: 4, xl: 3 }}>
                   <MovieItem item={item} />
                 </Grid>
               ))}

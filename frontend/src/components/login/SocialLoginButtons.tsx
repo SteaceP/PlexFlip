@@ -1,7 +1,8 @@
-import React from "react";
-import { Box, Button, Divider, Typography } from "@mui/material";
-import EmailIcon from "@mui/icons-material/Email";
 import AppleIcon from "@mui/icons-material/Apple";
+import EmailIcon from "@mui/icons-material/Email";
+import { Box, Button, Divider, Typography } from "@mui/material";
+import React from "react";
+
 import GoogleSvgIcon from "./GoogleSvgIcon";
 
 interface SocialLoginButtonsProps {

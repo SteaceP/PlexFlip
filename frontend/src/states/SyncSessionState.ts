@@ -1,168 +1,174 @@
-import { create } from "zustand";
 import { EventEmitter } from "events";
+// eslint-disable-next-line no-unused-vars
+import type { NavigateFunction } from "react-router-dom";
 import { io, Socket } from "socket.io-client";
+import { create } from "zustand";
+
 import { getBackendURL, isDev } from "../backendURL";
-import { NavigateFunction } from "react-router-dom";
 import { useToast } from "../components/ToastManager";
 
 export interface SyncSessionState {
-    socket: Socket | null;
-    isHost: boolean;
-    room: string | null;
+  socket: Socket | null;
+  isHost: boolean;
+  room: string | null;
 
-    connect: (room?: string, navigate?: NavigateFunction) => Promise<true | PlexFlip.Sync.SocketError>;
-    disconnect: () => void;
+  connect: (
+    room?: string,
+    navigate?: NavigateFunction
+  ) => Promise<true | PlexFlip.Sync.SocketError>;
+  disconnect: () => void;
 }
 
 export const SessionStateEmitter = new EventEmitter();
 
 export const useSyncSessionState = create<SyncSessionState>((set, get) => ({
-    socket: null,
-    isHost: false,
-    room: null,
+  socket: null,
+  isHost: false,
+  room: null,
 
-    connect: async (room, navigate) => {
-        return new Promise<true | PlexFlip.Sync.SocketError>((resolve) => {
-            const socket = isDev ? io(getBackendURL(), {
-                auth: {
-                    token: localStorage.getItem("accAccessToken")
-                },
-                query: {
-                    room: room || "new"
-                },
-                autoConnect: false
-            }) : io({
-                auth: {
-                    token: localStorage.getItem("accAccessToken")
-                },
-                query: {
-                    room: room || "new"
-                },
-                autoConnect: false
-            });
+  connect: async (room, navigate) => {
+    return new Promise<true | PlexFlip.Sync.SocketError>((resolve) => {
+      const socket = isDev
+        ? io(getBackendURL(), {
+            auth: {
+              token: localStorage.getItem("accAccessToken"),
+            },
+            query: {
+              room: room || "new",
+            },
+            autoConnect: false,
+          })
+        : io({
+            auth: {
+              token: localStorage.getItem("accAccessToken"),
+            },
+            query: {
+              room: room || "new",
+            },
+            autoConnect: false,
+          });
 
-            console.log("Connecting to server");
+      console.log("Connecting to server");
 
-            socket.on("connect", async () => {
-                console.log("Connected to server");
-            });
+      socket.on("connect", async () => {
+        console.log("Connected to server");
+      });
 
-            (new Promise<true | PlexFlip.Sync.SocketError>((resolve) => {
-                let resolved = false;
+      new Promise<true | PlexFlip.Sync.SocketError>((resolve) => {
+        let resolved = false;
 
-                socket.once("ready", (data) => {
-                    console.log("Ready", data);
-                    set({ isHost: data.host, room: data.room });
-                    resolved = true;
-                    resolve(true);
-                });
-
-                socket.once("conn-error", (data) => {
-                    console.log("Error", data);
-                    resolved = true;
-                    resolve(data);
-                });
-
-                setTimeout(() => {
-                    if (!resolved) resolve({
-                        type: "timeout",
-                        message: "Connection timed out"
-                    });
-                }, 5000);
-            }))
-                .then((result) => {
-                    if (result !== true) {
-                        socket.disconnect();
-                        return resolve(result);
-                    } else {
-                        set({ socket });
-                        resolve(true);
-                        SocketManager(navigate);
-                    }
-
-                })
-
-            socket.connect();
-
-            socket.on("disconnect", () => {
-                console.log("Disconnected from server");
-                set({ socket: null, isHost: false, room: null });
-                SessionStateEmitter.emit("disconnect");
-            })
+        socket.once("ready", (data) => {
+          console.log("Ready", data);
+          set({ isHost: data.host, room: data.room });
+          resolved = true;
+          resolve(true);
         });
-    },
-    disconnect: () => {
-        get().socket?.disconnect();
+
+        socket.once("conn-error", (data) => {
+          console.log("Error", data);
+          resolved = true;
+          resolve(data);
+        });
+
+        setTimeout(() => {
+          if (!resolved)
+            resolve({
+              type: "timeout",
+              message: "Connection timed out",
+            });
+        }, 5000);
+      }).then((result) => {
+        if (result !== true) {
+          socket.disconnect();
+          return resolve(result);
+        } else {
+          set({ socket });
+          resolve(true);
+          SocketManager(navigate);
+        }
+      });
+
+      socket.connect();
+
+      socket.on("disconnect", () => {
+        console.log("Disconnected from server");
         set({ socket: null, isHost: false, room: null });
-    }
+        SessionStateEmitter.emit("disconnect");
+      });
+    });
+  },
+  disconnect: () => {
+    get().socket?.disconnect();
+    set({ socket: null, isHost: false, room: null });
+  },
 }));
 
 function SocketManager(navigate: NavigateFunction | undefined) {
-    const { socket, isHost } = useSyncSessionState.getState();
-    if (socket === null) return;
+  const { socket, isHost } = useSyncSessionState.getState();
+  if (socket === null) return;
 
-
-    if (isHost) 
-    {
-        socket.on("HOST_SYNC_GET_PLAYBACK", () => {
-            const { playBackState } = useSessionPlayBackCache.getState();
-            console.log("Sending playback state", playBackState);
-            socket.emit("RES_SYNC_GET_PLAYBACK", playBackState);
-        });
-    }
-    else 
-    {
-        socket.on("RES_SYNC_SET_PLAYBACK", (user: PlexFlip.Sync.Member, data: PlexFlip.Sync.PlayBackState) => {
-            console.log("Playback state received", data);
-            navigate?.(`/watch/${data.key}?t=${Math.floor((data.time ?? 0) * 1000)}`);
-            useToast.getState().addToast(user, "PlaySet", "Started Playback", 5000);
-        });
-
-        socket.on("RES_SYNC_RESYNC_PLAYBACK", (user: PlexFlip.Sync.Member, data: PlexFlip.Sync.PlayBackState) => {
-            console.log("Playback resync received", data);
-            SessionStateEmitter.emit("PLAYBACK_RESYNC", data);
-        })
-
-        socket.on("RES_SYNC_PLAYBACK_END", (user: PlexFlip.Sync.Member) => {
-            SessionStateEmitter.emit("PLAYBACK_END");
-        })
-    }
-
-    socket.on("EVNT_SYNC_PAUSE", (user: PlexFlip.Sync.Member) => {
-        useToast.getState().addToast(user, "Pause", "Paused Playback", 5000);
-        SessionStateEmitter.emit("PLAYBACK_PAUSE");
-    })
-
-    socket.on("EVNT_SYNC_RESUME", (user: PlexFlip.Sync.Member) => {
-        useToast.getState().addToast(user, "Play", "Resumed Playback", 5000);
-        SessionStateEmitter.emit("PLAYBACK_RESUME");
-    })
-
-    socket.on("EVNT_SYNC_SEEK", (user: PlexFlip.Sync.Member, time: number) => {
-        SessionStateEmitter.emit("PLAYBACK_SEEK", time);
-    })
-
-    socket.on("EVNT_USER_JOIN", (user: PlexFlip.Sync.Member) => {
-        useToast.getState().addToast(user, "UserAdd", "Joined the session", 5000);
+  if (isHost) {
+    socket.on("HOST_SYNC_GET_PLAYBACK", () => {
+      const { playBackState } = useSessionPlayBackCache.getState();
+      console.log("Sending playback state", playBackState);
+      socket.emit("RES_SYNC_GET_PLAYBACK", playBackState);
     });
+  } else {
+    socket.on(
+      "RES_SYNC_SET_PLAYBACK",
+      (user: PlexFlip.Sync.Member, data: PlexFlip.Sync.PlayBackState) => {
+        console.log("Playback state received", data);
+        navigate?.(`/watch/${data.key}?t=${Math.floor((data.time ?? 0) * 1000)}`);
+        useToast.getState().addToast(user, "PlaySet", "Started Playback", 5000);
+      }
+    );
 
-    socket.on("EVNT_USER_LEAVE", (user: PlexFlip.Sync.Member) => {
-        useToast.getState().addToast(user, "UserRemove", "Left the session", 5000);
+    socket.on(
+      "RES_SYNC_RESYNC_PLAYBACK",
+      (user: PlexFlip.Sync.Member, data: PlexFlip.Sync.PlayBackState) => {
+        console.log("Playback resync received", data);
+        SessionStateEmitter.emit("PLAYBACK_RESYNC", data);
+      }
+    );
+
+    socket.on("RES_SYNC_PLAYBACK_END", (_user: PlexFlip.Sync.Member) => {
+      SessionStateEmitter.emit("PLAYBACK_END");
     });
+  }
 
+  socket.on("EVNT_SYNC_PAUSE", (user: PlexFlip.Sync.Member) => {
+    useToast.getState().addToast(user, "Pause", "Paused Playback", 5000);
+    SessionStateEmitter.emit("PLAYBACK_PAUSE");
+  });
 
+  socket.on("EVNT_SYNC_RESUME", (user: PlexFlip.Sync.Member) => {
+    useToast.getState().addToast(user, "Play", "Resumed Playback", 5000);
+    SessionStateEmitter.emit("PLAYBACK_RESUME");
+  });
+
+  socket.on("EVNT_SYNC_SEEK", (user: PlexFlip.Sync.Member, time: number) => {
+    SessionStateEmitter.emit("PLAYBACK_SEEK", time);
+  });
+
+  socket.on("EVNT_USER_JOIN", (user: PlexFlip.Sync.Member) => {
+    useToast.getState().addToast(user, "UserAdd", "Joined the session", 5000);
+  });
+
+  socket.on("EVNT_USER_LEAVE", (user: PlexFlip.Sync.Member) => {
+    useToast.getState().addToast(user, "UserRemove", "Left the session", 5000);
+  });
 }
 
 export interface SessionPlayBackCache {
-    playBackState: PlexFlip.Sync.PlayBackState | null;
+  playBackState: PlexFlip.Sync.PlayBackState | null;
 
-    update: (data: PlexFlip.Sync.PlayBackState) => void;
+  update: (data: PlexFlip.Sync.PlayBackState) => void;
 }
 
-export const useSessionPlayBackCache = create<SessionPlayBackCache>((set, get) => ({
-    playBackState: null,
+export const useSessionPlayBackCache = create<SessionPlayBackCache>((set) => ({
+  playBackState: null,
 
-    update: (data) => {
-        set({ playBackState: data });
-    }
+  update: (data) => {
+    set({ playBackState: data });
+  },
 }));

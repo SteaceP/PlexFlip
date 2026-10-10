@@ -1,6 +1,7 @@
 import { create } from "zustand";
-import { authedGet, getXPlexProps, queryBuilder } from "../plex/QuickFunctions";
+
 import { getBackendURL } from "../backendURL";
+import { authedGet, getXPlexProps, queryBuilder } from "../plex/QuickFunctions";
 
 export type RepeatMode = "off" | "all" | "one";
 
@@ -83,7 +84,7 @@ export const useAudioPlayerStore = create<AudioPlayerState>((set, get) => {
         originalQueue: [...q],
         isPlaying: true,
         currentTime: 0,
-        duration: (track.duration ? track.duration / 1000 : 0),
+        duration: track.duration ? track.duration / 1000 : 0,
       });
     },
 
@@ -110,7 +111,7 @@ export const useAudioPlayerStore = create<AudioPlayerState>((set, get) => {
         originalQueue: [...enrichedTracks],
         isPlaying: true,
         currentTime: 0,
-        duration: (trackToPlay.duration ? trackToPlay.duration / 1000 : 0),
+        duration: trackToPlay.duration ? trackToPlay.duration / 1000 : 0,
       });
     },
 
@@ -167,7 +168,7 @@ export const useAudioPlayerStore = create<AudioPlayerState>((set, get) => {
           queueIndex: nextIdx,
           isPlaying: true,
           currentTime: 0,
-          duration: (nextTrack.duration ? nextTrack.duration / 1000 : 0),
+          duration: nextTrack.duration ? nextTrack.duration / 1000 : 0,
         });
       } else if (repeatMode === "all") {
         const nextTrack = queue[0];
@@ -176,7 +177,7 @@ export const useAudioPlayerStore = create<AudioPlayerState>((set, get) => {
           queueIndex: 0,
           isPlaying: true,
           currentTime: 0,
-          duration: (nextTrack.duration ? nextTrack.duration / 1000 : 0),
+          duration: nextTrack.duration ? nextTrack.duration / 1000 : 0,
         });
       } else {
         set({ isPlaying: false, currentTime: 0 });
@@ -203,7 +204,7 @@ export const useAudioPlayerStore = create<AudioPlayerState>((set, get) => {
           queueIndex: prevIdx,
           isPlaying: true,
           currentTime: 0,
-          duration: (prevTrack.duration ? prevTrack.duration / 1000 : 0),
+          duration: prevTrack.duration ? prevTrack.duration / 1000 : 0,
         });
       } else {
         set({ currentTime: 0 });
@@ -329,11 +330,13 @@ export const useAudioPlayerStore = create<AudioPlayerState>((set, get) => {
     scrobbleCurrentTrack: () => {
       const { currentTrack } = get();
       if (!currentTrack?.ratingKey) return;
-      authedGet(`/:/scrobble?${queryBuilder({
-        key: currentTrack.ratingKey,
-        identifier: "com.plexapp.plugins.library",
-        ...getXPlexProps(),
-      })}`).catch((err) => console.log("Audio scrobble error:", err));
+      authedGet(
+        `/:/scrobble?${queryBuilder({
+          key: currentTrack.ratingKey,
+          identifier: "com.plexapp.plugins.library",
+          ...getXPlexProps(),
+        })}`
+      ).catch((err) => console.log("Audio scrobble error:", err));
     },
   };
 });

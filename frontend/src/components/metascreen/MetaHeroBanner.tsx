@@ -1,10 +1,7 @@
-import React from "react";
+import { CloseRounded, VolumeOffRounded, VolumeUpRounded } from "@mui/icons-material";
 import { Box, IconButton } from "@mui/material";
-import {
-  CloseRounded,
-  VolumeOffRounded,
-  VolumeUpRounded,
-} from "@mui/icons-material";
+import React from "react";
+
 import ReactPlayer from "../../common/ReactPlayer";
 import { getTranscodeImageURL } from "../../plex";
 import { usePreviewPlayer } from "../../states/PreviewPlayerState";
@@ -24,8 +21,7 @@ export function MetaHeroBanner({
   setPreviewVidPlaying,
   onClose,
 }: MetaHeroBannerProps) {
-  const { MetaScreenPlayerMuted, setMetaScreenPlayerMuted } =
-    usePreviewPlayer();
+  const { MetaScreenPlayerMuted, setMetaScreenPlayerMuted } = usePreviewPlayer();
 
   return (
     <>
@@ -42,10 +38,7 @@ export function MetaHeroBanner({
           zIndex: 50,
         }}
       >
-        <IconButton
-          sx={{ backgroundColor: "#000000BB" }}
-          onClick={onClose}
-        >
+        <IconButton sx={{ backgroundColor: "#000000BB" }} onClick={onClose}>
           <CloseRounded fontSize="medium" />
         </IconButton>
         <IconButton
@@ -67,11 +60,7 @@ export function MetaHeroBanner({
           maxWidth: "100%",
           height: { xs: "50vh", sm: "auto" },
           aspectRatio: { xs: "auto", sm: "16/9" },
-          backgroundImage: `url(${getTranscodeImageURL(
-            art as string,
-            1920,
-            1080
-          )})`,
+          backgroundImage: `url(${getTranscodeImageURL(art as string, 1920, 1080)})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
@@ -150,8 +139,7 @@ export function MetaHeroBanner({
           mt: { xs: "-25vh", sm: "-15vh" },
           height: { xs: "25vh", sm: "30vh" },
           width: "100%",
-          background:
-            "linear-gradient(180deg, #12121600, #121216FF, #121216FF)",
+          background: "linear-gradient(180deg, #12121600, #121216FF, #121216FF)",
           zIndex: 1,
           pointerEvents: "none",
           position: "relative",

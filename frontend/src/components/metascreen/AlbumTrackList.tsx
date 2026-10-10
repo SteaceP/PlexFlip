@@ -1,17 +1,7 @@
+import { GraphicEqRounded, PlayArrowRounded, QueueMusicRounded } from "@mui/icons-material";
+import { Box, CircularProgress, IconButton, Paper, Tooltip, Typography } from "@mui/material";
 import React from "react";
-import {
-  Box,
-  CircularProgress,
-  IconButton,
-  Paper,
-  Tooltip,
-  Typography,
-} from "@mui/material";
-import {
-  GraphicEqRounded,
-  PlayArrowRounded,
-  QueueMusicRounded,
-} from "@mui/icons-material";
+
 import { useAudioPlayerStore } from "../../states/AudioPlayerState";
 
 export interface AlbumTrackListProps {
@@ -19,12 +9,8 @@ export interface AlbumTrackListProps {
   tracks: Plex.Metadata[] | null;
 }
 
-export function AlbumTrackList({
-  album,
-  tracks,
-}: AlbumTrackListProps) {
-  const { currentTrack, isPlaying, playAlbum, addToQueue } =
-    useAudioPlayerStore();
+export function AlbumTrackList({ album, tracks }: AlbumTrackListProps) {
+  const { currentTrack, isPlaying, playAlbum, addToQueue } = useAudioPlayerStore();
 
   if (!tracks) {
     return (
@@ -75,18 +61,14 @@ export function AlbumTrackList({
               alignItems: "center",
               p: 1.5,
               borderRadius: 2,
-              bgcolor: isCurrent
-                ? "rgba(229, 160, 13, 0.12)"
-                : "rgba(255, 255, 255, 0.03)",
+              bgcolor: isCurrent ? "rgba(229, 160, 13, 0.12)" : "rgba(255, 255, 255, 0.03)",
               border: isCurrent
                 ? "1px solid rgba(229, 160, 13, 0.4)"
                 : "1px solid rgba(255, 255, 255, 0.05)",
               transition: "all 0.2s ease",
               cursor: "pointer",
               "&:hover": {
-                bgcolor: isCurrent
-                  ? "rgba(229, 160, 13, 0.18)"
-                  : "rgba(255, 255, 255, 0.07)",
+                bgcolor: isCurrent ? "rgba(229, 160, 13, 0.18)" : "rgba(255, 255, 255, 0.07)",
                 transform: "translateX(4px)",
               },
             }}
@@ -126,10 +108,7 @@ export function AlbumTrackList({
                 {track.title}
               </Typography>
               {(track.originalTitle || track.grandparentTitle) && (
-                <Typography
-                  variant="caption"
-                  sx={{ color: "#64748b", display: "block" }}
-                >
+                <Typography variant="caption" sx={{ color: "#64748b", display: "block" }}>
                   {track.originalTitle || track.grandparentTitle}
                 </Typography>
               )}

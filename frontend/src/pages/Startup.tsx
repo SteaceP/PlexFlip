@@ -2,6 +2,7 @@ import { Box } from "@mui/material";
 import axios from "axios";
 import React, { useEffect, useRef } from "react";
 import { create } from "zustand";
+
 import { getBackendURL } from "../backendURL";
 import Utility from "./Utility";
 
@@ -118,7 +119,6 @@ function Startup() {
         // localStorage.setItem("server", config.PLEX_SERVER);
         localStorage.setItem("deploymentId", config.DEPLOYMENTID);
 
-
         if (reload) return window.location.reload();
         else {
           setShowDiagnostic(false);
@@ -126,13 +126,7 @@ function Startup() {
         }
       })();
     }
-  }, [
-    lastStatus,
-    setFrontEndStatus,
-    setLastStatus,
-    setLoading,
-    setShowDiagnostic,
-  ]);
+  }, [lastStatus, setFrontEndStatus, setLastStatus, setLoading, setShowDiagnostic]);
 
   if (showDiagnostic || frontEndStatus) return <Utility />;
 
@@ -147,11 +141,7 @@ function Startup() {
         backgroundColor: "black",
       }}
     >
-      <img
-        src="/logo.svg"
-        alt="PlexFlip Logo"
-        style={{ width: "35vw", height: "auto" }}
-      />
+      <img src="/logo.svg" alt="PlexFlip Logo" style={{ width: "35vw", height: "auto" }} />
     </Box>
   );
 }

@@ -1,5 +1,5 @@
+import { Box, Paper, SxProps, Theme, Typography } from "@mui/material";
 import React from "react";
-import { Box, Paper, Typography, SxProps, Theme } from "@mui/material";
 
 interface SettingsCardProps {
   title?: string;
@@ -46,8 +46,7 @@ export const SettingsCard: React.FC<SettingsCardProps> = ({
             gap: 1.5,
             mb: subtitle || children ? 2.5 : 0,
             pb: subtitle || children ? 2 : 0,
-            borderBottom:
-              subtitle || children ? "1px solid rgba(255, 255, 255, 0.06)" : "none",
+            borderBottom: subtitle || children ? "1px solid rgba(255, 255, 255, 0.06)" : "none",
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>

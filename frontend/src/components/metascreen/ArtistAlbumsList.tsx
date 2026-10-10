@@ -1,5 +1,6 @@
-import React from "react";
 import { Box, CircularProgress, Grid, Typography } from "@mui/material";
+import React from "react";
+
 import MovieItem from "../MovieItem";
 
 export interface ArtistAlbumsListProps {
@@ -7,10 +8,7 @@ export interface ArtistAlbumsListProps {
   albums: Plex.Metadata[] | null;
 }
 
-export function ArtistAlbumsList({
-  artist: _artist,
-  albums,
-}: ArtistAlbumsListProps) {
+export function ArtistAlbumsList({ artist: _artist, albums }: ArtistAlbumsListProps) {
   if (!albums) {
     return (
       <Box

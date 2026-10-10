@@ -1,23 +1,15 @@
+import { SkipNextRounded } from "@mui/icons-material";
+import { Box, Fade, IconButton, Paper, Popper, Typography } from "@mui/material";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Box,
-  Fade,
-  IconButton,
-  Paper,
-  Popper,
-  Typography,
-} from "@mui/material";
-import { SkipNextRounded } from "@mui/icons-material";
+
 import { getTranscodeImageURL } from "../../plex";
 
 interface WatchNextEpisodePopperProps {
   queue?: Plex.Metadata[];
 }
 
-export const WatchNextEpisodePopper: React.FC<WatchNextEpisodePopperProps> = ({
-  queue,
-}) => {
+export const WatchNextEpisodePopper: React.FC<WatchNextEpisodePopperProps> = ({ queue }) => {
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
@@ -94,8 +86,7 @@ export const WatchNextEpisodePopper: React.FC<WatchNextEpisodePopperProps> = ({
                     textTransform: "uppercase",
                   }}
                 >
-                  {nextItem.type}{" "}
-                  {nextItem.type === "episode" && nextItem.index}
+                  {nextItem.type} {nextItem.type === "episode" && nextItem.index}
                 </Typography>
                 <Typography
                   sx={{

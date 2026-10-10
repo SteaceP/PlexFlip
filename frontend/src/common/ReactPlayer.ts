@@ -16,7 +16,6 @@ type ReactPlayerConstructor = typeof _ReactPlayer & (new (...args: any[]) => _Re
 
 const ReactPlayer = ReactPlayerComponent as ReactPlayerConstructor;
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface ReactPlayer extends _ReactPlayer {}
 
 export default ReactPlayer;

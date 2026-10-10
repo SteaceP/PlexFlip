@@ -1,5 +1,15 @@
-/* eslint-disable no-lone-blocks */
 import { Theme } from "@emotion/react";
+import {
+  BookmarkRounded,
+  FavoriteRounded,
+  FullscreenRounded,
+  LogoutRounded,
+  MenuRounded,
+  PeopleRounded,
+  SearchRounded,
+  SettingsRounded,
+  ShortcutRounded,
+} from "@mui/icons-material";
 import {
   AppBar,
   Avatar,
@@ -8,6 +18,7 @@ import {
   CircularProgress,
   Divider,
   Drawer,
+  Grid,
   IconButton,
   InputAdornment,
   List,
@@ -21,35 +32,19 @@ import {
   SxProps,
   TextField,
   Typography,
-  Grid,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
 import React, { JSX, useEffect, useState } from "react";
-import {
-  Link,
-  useLocation,
-  useNavigate,
-  useSearchParams,
-} from "react-router-dom";
-import { getAllLibraries, getSearch, getTranscodeImageURL } from "../plex";
-import { useUserSessionStore } from "../states/UserSession";
-import {
-  BookmarkRounded,
-  FavoriteRounded,
-  FullscreenRounded,
-  LogoutRounded,
-  MenuRounded,
-  PeopleRounded,
-  SearchRounded,
-  SettingsRounded,
-  ShortcutRounded,
-} from "@mui/icons-material";
-import { useSyncInterfaceState } from "./PlexFlipSync";
-import { useSyncSessionState } from "../states/SyncSessionState";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+
 import { config } from "..";
-import { useBigReader } from "./BigReader";
+import { getAllLibraries, getSearch, getTranscodeImageURL } from "../plex";
+import { useSyncSessionState } from "../states/SyncSessionState";
+import { useUserSessionStore } from "../states/UserSession";
 import { useUserSettings } from "../states/UserSettingsState";
+import { useBigReader } from "./BigReader";
+import { useSyncInterfaceState } from "./PlexFlipSync";
 
 const BarSide: SxProps<Theme> = {
   display: "flex",
@@ -104,9 +99,7 @@ function Appbar() {
         return rawValue === undefined || rawValue === "true";
       });
 
-      setLibraries(
-        filtered.filter((lib) => ["movie", "show", "artist"].includes(lib.type))
-      );
+      setLibraries(filtered.filter((lib) => ["movie", "show", "artist"].includes(lib.type)));
     });
   }, [settings]);
 
@@ -123,8 +116,7 @@ function Appbar() {
         height: 64,
         transition: "all 0.5s ease-in-out",
 
-        bgcolor: (theme) =>
-          scrollAtTop ? "#00000000" : theme.palette.background.default + "88",
+        bgcolor: (theme) => (scrollAtTop ? "#00000000" : theme.palette.background.default + "88"),
         backdropFilter: scrollAtTop ? "blur(0px)" : "blur(20px)",
         WebkitBackdropFilter: scrollAtTop ? "blur(0px)" : "blur(20px)",
         boxShadow: scrollAtTop ? "none" : "0px 0px 10px 0px #000000AA",
@@ -261,10 +253,7 @@ S - Skip onscreen markers (intro, credits, etc)
 
       {/* Mobile: hamburger button */}
       {isMobile && (
-        <IconButton
-          onClick={() => setDrawerOpen(true)}
-          sx={{ color: "inherit" }}
-        >
+        <IconButton onClick={() => setDrawerOpen(true)} sx={{ color: "inherit" }}>
           <MenuRounded />
         </IconButton>
       )}
@@ -311,9 +300,7 @@ S - Skip onscreen markers (intro, credits, etc)
                 {library.title}
               </HeadLink>
             ))}
-            {libraries && libraries.length > 4 && (
-              <LibrariesDropdown libraries={libraries} />
-            )}
+            {libraries && libraries.length > 4 && <LibrariesDropdown libraries={libraries} />}
           </Box>
         )}
       </Box>
@@ -365,8 +352,7 @@ S - Skip onscreen markers (intro, credits, etc)
             cursor: "pointer",
 
             "&:hover": {
-              boxShadow: (theme) =>
-                `0px 0px 20px 0px ${theme.palette.primary.main}`,
+              boxShadow: (theme) => `0px 0px 20px 0px ${theme.palette.primary.main}`,
             },
             transition: "all 0.2s ease-in-out",
           }}
@@ -399,7 +385,10 @@ S - Skip onscreen markers (intro, credits, etc)
             <ListItem disablePadding>
               <ListItemButton
                 selected={location.pathname === "/"}
-                onClick={() => { navigate("/"); setDrawerOpen(false); }}
+                onClick={() => {
+                  navigate("/");
+                  setDrawerOpen(false);
+                }}
               >
                 <ListItemText primary="Home" />
               </ListItemButton>
@@ -415,7 +404,10 @@ S - Skip onscreen markers (intro, credits, etc)
               <ListItem disablePadding key={library.key}>
                 <ListItemButton
                   selected={location.pathname.includes(`/browse/${library.key}`)}
-                  onClick={() => { navigate(`/browse/${library.key}`); setDrawerOpen(false); }}
+                  onClick={() => {
+                    navigate(`/browse/${library.key}`);
+                    setDrawerOpen(false);
+                  }}
                 >
                   <ListItemText primary={library.title} />
                 </ListItemButton>
@@ -431,7 +423,9 @@ S - Skip onscreen markers (intro, credits, etc)
                   setDrawerOpen(false);
                 }}
               >
-                <ListItemIcon><BookmarkRounded /></ListItemIcon>
+                <ListItemIcon>
+                  <BookmarkRounded />
+                </ListItemIcon>
                 <ListItemText primary="Watchlist" />
               </ListItemButton>
             </ListItem>
@@ -444,7 +438,9 @@ S - Skip onscreen markers (intro, credits, etc)
                     setDrawerOpen(false);
                   }}
                 >
-                  <ListItemIcon><PeopleRounded /></ListItemIcon>
+                  <ListItemIcon>
+                    <PeopleRounded />
+                  </ListItemIcon>
                   <ListItemText primary="Watch2Gether" />
                 </ListItemButton>
               </ListItem>
@@ -458,15 +454,15 @@ S - Skip onscreen markers (intro, credits, etc)
 
 export default Appbar;
 
-function SearchBar({ onResultSelected, inDrawer }: { onResultSelected?: () => void; inDrawer?: boolean } = {}) {
-  const [searchAnchorEl, setSearchAnchorEl] =
-    React.useState<null | HTMLElement>(null);
+function SearchBar({
+  onResultSelected,
+  inDrawer,
+}: { onResultSelected?: () => void; inDrawer?: boolean } = {}) {
+  const [searchAnchorEl, setSearchAnchorEl] = React.useState<null | HTMLElement>(null);
   const searchOpen = Boolean(searchAnchorEl);
   const searchAnchorElRef = React.useRef<HTMLElement | null>(null);
   const [searchValue, setSearchValue] = React.useState("");
-  const [searchResults, setSearchResults] = React.useState<Plex.SearchResult[]>(
-    []
-  );
+  const [searchResults, setSearchResults] = React.useState<Plex.SearchResult[]>([]);
   const [searchLoading, setSearchLoading] = React.useState(false);
 
   const [, setSearchParams] = useSearchParams();
@@ -523,9 +519,7 @@ function SearchBar({ onResultSelected, inDrawer }: { onResultSelected?: () => vo
             .filter(
               (item) =>
                 (item.Metadata &&
-                  ["movie", "show", "artist", "album", "track"].includes(
-                    item.Metadata.type
-                  )) ||
+                  ["movie", "show", "artist", "album", "track"].includes(item.Metadata.type)) ||
                 item.Directory
             )
             .sort((a, b) => {
@@ -585,16 +579,13 @@ function SearchBar({ onResultSelected, inDrawer }: { onResultSelected?: () => vo
               if (searchResults.length === 0) return;
               if (selectedIndex === 0) return setSelectedIndex(null);
 
-              setSelectedIndex((prev) =>
-                prev === null ? 0 : Math.max(prev - 1, 0)
-              );
+              setSelectedIndex((prev) => (prev === null ? 0 : Math.max(prev - 1, 0)));
               break;
             case "Tab":
               e.preventDefault();
               if (searchResults.length === 0) return;
               // if it gets to the last item, then set to null
-              if (selectedIndex === searchResults.length - 1)
-                return setSelectedIndex(null);
+              if (selectedIndex === searchResults.length - 1) return setSelectedIndex(null);
               setSelectedIndex((prev) =>
                 prev === null ? 0 : Math.min(prev + 1, searchResults.length - 1)
               );
@@ -606,8 +597,7 @@ function SearchBar({ onResultSelected, inDrawer }: { onResultSelected?: () => vo
                 if (searchResults[selectedIndex].Metadata?.ratingKey) {
                   setSearchParams(
                     new URLSearchParams({
-                      mid:
-                        searchResults[selectedIndex].Metadata?.ratingKey || "",
+                      mid: searchResults[selectedIndex].Metadata?.ratingKey || "",
                     })
                   );
                 } else if (searchResults[selectedIndex].Directory) {
@@ -644,8 +634,8 @@ function SearchBar({ onResultSelected, inDrawer }: { onResultSelected?: () => vo
           ...(inDrawer
             ? { width: "100%" }
             : searchOpen
-            ? { width: "20vw", zIndex: 10000 }
-            : { width: "300px" }),
+              ? { width: "20vw", zIndex: 10000 }
+              : { width: "300px" }),
         }}
       />
       <Popper
@@ -668,8 +658,8 @@ function SearchBar({ onResultSelected, inDrawer }: { onResultSelected?: () => vo
           ...(inDrawer
             ? { width: "260px", zIndex: 11000 }
             : searchOpen
-            ? { width: "20vw", zIndex: 11000 }
-            : { width: "300px" }),
+              ? { width: "20vw", zIndex: 11000 }
+              : { width: "300px" }),
         }}
         onClick={(e) => {
           e.stopPropagation();
@@ -677,16 +667,12 @@ function SearchBar({ onResultSelected, inDrawer }: { onResultSelected?: () => vo
         }}
       >
         {searchLoading && (
-          <Box
-            sx={{ display: "flex", justifyContent: "center", width: "100%" }}
-          >
+          <Box sx={{ display: "flex", justifyContent: "center", width: "100%" }}>
             <CircularProgress />
           </Box>
         )}
 
-        {!searchLoading && searchResults.length === 0 && (
-          <Typography>No Results</Typography>
-        )}
+        {!searchLoading && searchResults.length === 0 && <Typography>No Results</Typography>}
 
         {!searchLoading &&
           searchResults.length > 0 &&
@@ -731,11 +717,7 @@ function SearchBar({ onResultSelected, inDrawer }: { onResultSelected?: () => vo
                   }}
                 >
                   <img
-                    src={`${getTranscodeImageURL(
-                      item.Metadata.thumb,
-                      100,
-                      100
-                    )}`}
+                    src={`${getTranscodeImageURL(item.Metadata.thumb, 100, 100)}`}
                     alt=""
                     style={{
                       aspectRatio: 1,

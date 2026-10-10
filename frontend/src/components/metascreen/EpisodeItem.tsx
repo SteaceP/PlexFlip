@@ -1,4 +1,10 @@
-import React, { JSX, useState } from "react";
+import {
+  CheckBoxOutlineBlankRounded,
+  CheckBoxRounded,
+  CheckCircleOutlineRounded,
+  CheckCircleRounded,
+  PlayArrowRounded,
+} from "@mui/icons-material";
 import {
   Box,
   Checkbox,
@@ -10,16 +16,11 @@ import {
   Typography,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import {
-  CheckBoxOutlineBlankRounded,
-  CheckBoxRounded,
-  CheckCircleOutlineRounded,
-  CheckCircleRounded,
-  PlayArrowRounded,
-} from "@mui/icons-material";
+import React, { JSX, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useConfirmModal } from "../ConfirmModal";
+
 import { getTranscodeImageURL, setMediaPlayedStatus } from "../../plex";
+import { useConfirmModal } from "../../states/ConfirmModalState";
 import { getMinutes } from "./utils";
 
 export interface EpisodeItemProps {
@@ -72,9 +73,7 @@ export function EpisodeItem({
         onClose={handleClose}
         anchorReference="anchorPosition"
         anchorPosition={
-          contextMenu !== null
-            ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
-            : undefined
+          contextMenu !== null ? { top: contextMenu.mouseY, left: contextMenu.mouseX } : undefined
         }
       >
         <Typography
@@ -221,8 +220,7 @@ export function EpisodeItem({
           mb: 1,
           transition: "all 0.5s ease",
           "&:hover": {
-            backgroundColor: (theme) =>
-              alpha(theme.palette.background.paper, 0.5),
+            backgroundColor: (theme) => alpha(theme.palette.background.paper, 0.5),
             transition: "all 0.2s ease",
           },
 
@@ -282,11 +280,7 @@ export function EpisodeItem({
             flexShrink: 0,
             borderRadius: "8px",
             aspectRatio: "16/9",
-            backgroundImage: `url(${getTranscodeImageURL(
-              item.thumb,
-              380,
-              214
-            )})`,
+            backgroundImage: `url(${getTranscodeImageURL(item.thumb, 380, 214)})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
             backgroundBlendMode: "darken",
@@ -298,8 +292,7 @@ export function EpisodeItem({
             alignItems: "flex-start",
             justifyContent: "flex-start",
             position: "relative",
-            boxShadow: (theme) =>
-              `0 4px 6px -1px ${alpha(theme.palette.common.black, 0.2)}`,
+            boxShadow: (theme) => `0 4px 6px -1px ${alpha(theme.palette.common.black, 0.2)}`,
           }}
         >
           <PlayArrowRounded
@@ -316,15 +309,12 @@ export function EpisodeItem({
 
           {(item.viewOffset || (item.viewCount && item.viewCount >= 1)) && (
             <LinearProgress
-              value={
-                item.viewOffset ? (item.viewOffset / item.duration) * 100 : 100
-              }
+              value={item.viewOffset ? (item.viewOffset / item.duration) * 100 : 100}
               variant="determinate"
               sx={{
                 width: "100%",
                 height: "4px",
-                backgroundColor: (theme) =>
-                  alpha(theme.palette.common.black, 0.5),
+                backgroundColor: (theme) => alpha(theme.palette.common.black, 0.5),
 
                 position: "absolute",
                 bottom: 0,

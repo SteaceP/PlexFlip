@@ -1,28 +1,20 @@
-import React from "react";
-import {
-  Dialog,
-  Box,
-  Typography,
-  IconButton,
-  Slider,
-  Stack,
-  Avatar,
-  Tooltip,
-} from "@mui/material";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
-import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
 import PauseRoundedIcon from "@mui/icons-material/PauseRounded";
-import SkipPreviousRoundedIcon from "@mui/icons-material/SkipPreviousRounded";
-import SkipNextRoundedIcon from "@mui/icons-material/SkipNextRounded";
-import ShuffleRoundedIcon from "@mui/icons-material/ShuffleRounded";
-import RepeatRoundedIcon from "@mui/icons-material/RepeatRounded";
-import RepeatOneRoundedIcon from "@mui/icons-material/RepeatOneRounded";
-import VolumeUpRoundedIcon from "@mui/icons-material/VolumeUpRounded";
-import VolumeOffRoundedIcon from "@mui/icons-material/VolumeOffRounded";
+import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
 import QueueMusicRoundedIcon from "@mui/icons-material/QueueMusicRounded";
-import { useAudioPlayerStore } from "../../states/AudioPlayerState";
-import { getTranscodeImageURL } from "../../plex";
+import RepeatOneRoundedIcon from "@mui/icons-material/RepeatOneRounded";
+import RepeatRoundedIcon from "@mui/icons-material/RepeatRounded";
+import ShuffleRoundedIcon from "@mui/icons-material/ShuffleRounded";
+import SkipNextRoundedIcon from "@mui/icons-material/SkipNextRounded";
+import SkipPreviousRoundedIcon from "@mui/icons-material/SkipPreviousRounded";
+import VolumeOffRoundedIcon from "@mui/icons-material/VolumeOffRounded";
+import VolumeUpRoundedIcon from "@mui/icons-material/VolumeUpRounded";
+import { Avatar, Box, Dialog, IconButton, Slider, Stack, Tooltip, Typography } from "@mui/material";
+import React from "react";
 import { useSearchParams } from "react-router-dom";
+
+import { getTranscodeImageURL } from "../../plex";
+import { useAudioPlayerStore } from "../../states/AudioPlayerState";
 
 function formatDuration(sec: number): string {
   if (isNaN(sec) || sec <= 0) return "0:00";
@@ -62,11 +54,7 @@ export default function NowPlayingModal() {
     1920,
     1080
   );
-  const coverImage = getTranscodeImageURL(
-    currentTrack.thumb || currentTrack.parentThumb,
-    600,
-    600
-  );
+  const coverImage = getTranscodeImageURL(currentTrack.thumb || currentTrack.parentThumb, 600, 600);
 
   const artistName =
     currentTrack.grandparentTitle ||
@@ -109,8 +97,7 @@ export default function NowPlayingModal() {
         sx={{
           position: "absolute",
           inset: 0,
-          background:
-            "linear-gradient(180deg, rgba(7,9,14,0.7) 0%, rgba(7,9,14,0.92) 100%)",
+          background: "linear-gradient(180deg, rgba(7,9,14,0.7) 0%, rgba(7,9,14,0.92) 100%)",
           zIndex: 1,
         }}
       />
@@ -216,7 +203,15 @@ export default function NowPlayingModal() {
             {currentTrack.title}
           </Typography>
 
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap", justifyContent: "center" }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              flexWrap: "wrap",
+              justifyContent: "center",
+            }}
+          >
             <Typography
               variant="h6"
               sx={{
@@ -390,7 +385,17 @@ export default function NowPlayingModal() {
           </Box>
 
           {/* Volume Slider Row */}
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", mt: 3, gap: 1.5, maxWidth: "320px", mx: "auto" }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              mt: 3,
+              gap: 1.5,
+              maxWidth: "320px",
+              mx: "auto",
+            }}
+          >
             <IconButton size="small" onClick={toggleMute} sx={{ color: "#94a3b8" }}>
               {isMuted || volume === 0 ? <VolumeOffRoundedIcon /> : <VolumeUpRoundedIcon />}
             </IconButton>

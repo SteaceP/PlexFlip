@@ -1,8 +1,9 @@
 import { Box, CircularProgress, Grid, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
-import { getSearch } from "../plex";
+
 import MovieItem from "../components/MovieItem";
+import { getSearch } from "../plex";
 
 export default function Search() {
   const { query } = useParams();
@@ -25,24 +26,17 @@ export default function Search() {
             .filter(
               (item) =>
                 item.Metadata &&
-                ["movie", "show", "artist", "album", "track"].includes(
-                  item.Metadata.type
-                )
+                ["movie", "show", "artist", "album", "track"].includes(item.Metadata.type)
             )
             .map((item) => item.Metadata)
-            .filter(
-              (metadata): metadata is Plex.Metadata => metadata !== undefined
-            )
+            .filter((metadata): metadata is Plex.Metadata => metadata !== undefined)
         );
 
         setDirectories(
           res
             .filter((item) => item.Directory)
             .map((item) => item.Directory)
-            .filter(
-              (directory): directory is Plex.Directory =>
-                directory !== undefined
-            )
+            .filter((directory): directory is Plex.Directory => directory !== undefined)
         );
       });
     }, 500); // Adjust the delay as needed
@@ -107,10 +101,7 @@ export default function Search() {
 
         {results &&
           results.map((item) => (
-            <Grid
-              key={item.ratingKey}
-              size={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 2 }}
-            >
+            <Grid key={item.ratingKey} size={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 2 }}>
               <MovieItem item={item} />
             </Grid>
           ))}
@@ -119,13 +110,7 @@ export default function Search() {
   );
 }
 
-export function DirectoryItem({
-  item,
-  onClick,
-}: {
-  item: Plex.Directory;
-  onClick: () => void;
-}) {
+export function DirectoryItem({ item, onClick }: { item: Plex.Directory; onClick: () => void }) {
   return (
     <Box
       sx={{

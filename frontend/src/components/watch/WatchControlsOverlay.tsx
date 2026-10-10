@@ -1,4 +1,14 @@
-import React, { useState, useEffect } from "react";
+import "react-video-seek-slider/styles.css";
+
+import {
+  ArrowBackIosNewRounded,
+  FullscreenRounded,
+  PauseRounded,
+  PeopleRounded,
+  PlayArrowRounded,
+  TuneRounded,
+  VolumeUpRounded,
+} from "@mui/icons-material";
 import {
   alpha,
   Box,
@@ -11,17 +21,9 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import {
-  ArrowBackIosNewRounded,
-  FullscreenRounded,
-  PauseRounded,
-  PeopleRounded,
-  PlayArrowRounded,
-  TuneRounded,
-  VolumeUpRounded,
-} from "@mui/icons-material";
+import React, { useEffect, useState } from "react";
 import { VideoSeekSlider } from "react-video-seek-slider";
-import "react-video-seek-slider/styles.css";
+
 import { getTranscodeImageURL } from "../../plex";
 import { useUserSettings } from "../../states/UserSettingsState";
 import WatchShowChildView from "../WatchShowChildView";
@@ -47,10 +49,7 @@ interface WatchControlsOverlayProps {
   onOpenSync: () => void;
   room: unknown;
   isHost: boolean;
-  controlElementsVisibleState: [
-    boolean,
-    React.Dispatch<React.SetStateAction<boolean>>,
-  ];
+  controlElementsVisibleState: [boolean, React.Dispatch<React.SetStateAction<boolean>>];
   onVolumePopoverChange?: (open: boolean) => void;
   onBack: () => void;
 }
@@ -81,8 +80,7 @@ export const WatchControlsOverlay: React.FC<WatchControlsOverlayProps> = ({
   const theme = useTheme();
   const { settings } = useUserSettings();
 
-  const [volumePopoverAnchor, setVolumePopoverAnchor] =
-    useState<HTMLButtonElement | null>(null);
+  const [volumePopoverAnchor, setVolumePopoverAnchor] = useState<HTMLButtonElement | null>(null);
   const volumePopoverOpen = Boolean(volumePopoverAnchor);
 
   useEffect(() => {
@@ -173,8 +171,7 @@ export const WatchControlsOverlay: React.FC<WatchControlsOverlayProps> = ({
               left: 0,
               right: 0,
               height: playbackBarRef.current?.clientHeight || 200,
-              background:
-                "linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.9) 100%)",
+              background: "linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.9) 100%)",
               backdropFilter: "blur(20px)",
               WebkitBackdropFilter: "blur(20px)",
               zIndex: -1,
@@ -182,9 +179,7 @@ export const WatchControlsOverlay: React.FC<WatchControlsOverlayProps> = ({
               transition: "bottom 0.5s ease",
             }}
             style={{
-              bottom: isBarVisible
-                ? 0
-                : -(playbackBarRef.current?.clientHeight || 200),
+              bottom: isBarVisible ? 0 : -(playbackBarRef.current?.clientHeight || 200),
             }}
           />
 
@@ -246,16 +241,13 @@ export const WatchControlsOverlay: React.FC<WatchControlsOverlayProps> = ({
                   bufferTime={buffered * 1000}
                   onChange={(value) => onSeek(value / 1000)}
                   getPreviewScreenUrl={(value) => {
-                    if (
-                      !metadata.Media ||
-                      !metadata.Media[0].Part[0].indexes
-                    ) {
+                    if (!metadata.Media || !metadata.Media[0].Part[0].indexes) {
                       return "";
                     }
                     return getTranscodeImageURL(
                       `/library/parts/${metadata.Media[0].Part[0].id}/indexes/sd/${value}`,
                       240,
-                      135,
+                      135
                     );
                   }}
                 />
@@ -316,9 +308,7 @@ export const WatchControlsOverlay: React.FC<WatchControlsOverlayProps> = ({
                   )}
                 </IconButton>
 
-                {playQueue && !(room && !isHost) && (
-                  <WatchNextEpisodePopper queue={playQueue} />
-                )}
+                {playQueue && !(room && !isHost) && <WatchNextEpisodePopper queue={playQueue} />}
               </Box>
 
               {/* Center Title */}

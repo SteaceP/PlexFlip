@@ -1,0 +1,14 @@
+node_modules/
+build/
+bin/
+data/
+backend/www/
+coverage/
+*.tsbuildinfo
+frontend/bindings/
+frontend/src/bindings/
+frontend/build/
+frontend/public/
+frontend/pnpm-lock.yaml
+pnpm-lock.yaml
+go.work.sum

@@ -1,27 +1,27 @@
+import { Box } from "@mui/material";
 import React, { useEffect } from "react";
-import AppBar from "./components/AppBar";
 import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
 
+import AppBar from "./components/AppBar";
+import AudioPlayerBar from "./components/AudioPlayerBar";
+import BigReader from "./components/BigReader";
+import ConfirmModal from "./components/ConfirmModal";
+import LibraryScreen from "./components/LibraryScreen";
+import MetaScreen from "./components/MetaScreen";
+import PlexFlipSync from "./components/PlexFlipSync";
+import ToastManager from "./components/ToastManager";
 import Browse from "./pages/Browse";
-import { Box } from "@mui/material";
-import Watch from "./pages/Watch";
-import Login from "./pages/Login";
-import Search from "./pages/Search";
 import Home from "./pages/Home";
 import Library from "./pages/Library";
-import BigReader from "./components/BigReader";
-import { useWatchListCache } from "./states/WatchListCache";
-import Startup, { useStartupState } from "./pages/Startup";
-import PlexFlipSync from "./components/PlexFlipSync";
-import WaitingRoom from "./pages/WaitingRoom";
-import ToastManager from "./components/ToastManager";
-import LibraryScreen from "./components/LibraryScreen";
-import { useSessionStore } from "./states/SessionState";
+import Login from "./pages/Login";
+import Search from "./pages/Search";
 import Settings from "./pages/Settings";
+import Startup, { useStartupState } from "./pages/Startup";
+import WaitingRoom from "./pages/WaitingRoom";
+import Watch from "./pages/Watch";
+import { useSessionStore } from "./states/SessionState";
 import { useUserSettings } from "./states/UserSettingsState";
-import MetaScreen from "./components/MetaScreen";
-import ConfirmModal from "./components/ConfirmModal";
-import AudioPlayerBar from "./components/AudioPlayerBar";
+import { useWatchListCache } from "./states/WatchListCache";
 
 function AppManager() {
   const { loading } = useStartupState();
@@ -56,8 +56,7 @@ function AppTitleManager() {
     if (!PlexServer?.friendlyName) return;
 
     const capitalizedFriendlyName =
-      PlexServer.friendlyName.charAt(0).toUpperCase() +
-      PlexServer.friendlyName.slice(1);
+      PlexServer.friendlyName.charAt(0).toUpperCase() + PlexServer.friendlyName.slice(1);
     document.title = `${capitalizedFriendlyName} - PlexFlip`;
   }, [PlexServer]);
 
@@ -73,10 +72,7 @@ function App() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (
-      !localStorage.getItem("accessToken") &&
-      !location.pathname.startsWith("/login")
-    )
+    if (!localStorage.getItem("accessToken") && !location.pathname.startsWith("/login"))
       navigate("/login");
   }, [location.pathname, navigate]);
 
@@ -120,10 +116,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/search/:query?" element={<Search />} />
           <Route path="/sync/waitingroom" element={<WaitingRoom />} />
-          <Route
-            path="/library/:libraryKey/dir/:dir/:subdir?"
-            element={<Library />}
-          />
+          <Route path="/library/:libraryKey/dir/:dir/:subdir?" element={<Library />} />
           <Route path="/settings/*" element={<Settings />} />
         </Routes>
       </Box>

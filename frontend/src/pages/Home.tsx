@@ -1,5 +1,10 @@
 import { Avatar, Box, CircularProgress, Grid, Typography } from "@mui/material";
 import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+
+import { shuffleArray } from "../common/ArrayExtra";
+import HeroDisplay from "../components/HeroDisplay";
+import MovieItemSlider from "../components/MovieItemSlider";
 import {
   getAllLibraries,
   getLibraryDir,
@@ -7,21 +12,13 @@ import {
   getLibrarySecondary,
   getTranscodeImageURL,
 } from "../plex";
-import { useNavigate } from "react-router-dom";
-import { shuffleArray } from "../common/ArrayExtra";
-import MovieItemSlider from "../components/MovieItemSlider";
-import HeroDisplay from "../components/HeroDisplay";
-import { useWatchListCache } from "../states/WatchListCache";
 import { useUserSettings } from "../states/UserSettingsState";
+import { useWatchListCache } from "../states/WatchListCache";
 
 export default function Home() {
   const [libraries, setLibraries] = React.useState<Plex.LibarySection[]>([]);
-  const [featured, setFeatured] = React.useState<
-    PlexFlip.RecommendationShelf[]
-  >([]);
-  const [randomItem, setRandomItem] = React.useState<Plex.Metadata | null>(
-    null
-  );
+  const [featured, setFeatured] = React.useState<PlexFlip.RecommendationShelf[]>([]);
+  const [randomItem, setRandomItem] = React.useState<Plex.Metadata | null>(null);
   const { watchListCache } = useWatchListCache();
   const { settings, loaded: settingsLoaded } = useUserSettings();
 
@@ -78,7 +75,7 @@ export default function Home() {
     }
 
     fetchData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings]);
   const navigate = useNavigate();
 
@@ -122,10 +119,7 @@ export default function Home() {
           alignItems: "flex-start",
           justifyContent: "flex-start",
           pb: 8,
-          mt:
-            settings["DISABLE_HERO_DISPLAY"] !== "true" && randomItem
-              ? "-20vh"
-              : "80px",
+          mt: settings["DISABLE_HERO_DISPLAY"] !== "true" && randomItem ? "-20vh" : "80px",
           zIndex: 1,
         }}
       >
@@ -133,19 +127,13 @@ export default function Home() {
           {libraries
             ?.filter((e) => ["movie", "show", "artist"].includes(e.type || ""))
             .map((library) => (
-              <Grid
-                size={{ xs: 6, sm: 4, md: 3, lg: 2, xl: 2 }}
-                key={library.key}
-              >
+              <Grid size={{ xs: 6, sm: 4, md: 3, lg: 2, xl: 2 }} key={library.key}>
                 <Box
                   sx={{
                     width: "100%",
                     height: "auto",
                     aspectRatio: "16/9",
-                    display:
-                      settings["DISABLE_HOME_SCREEN_LIBRARIES"] === "true"
-                        ? "none"
-                        : "flex",
+                    display: settings["DISABLE_HOME_SCREEN_LIBRARIES"] === "true" ? "none" : "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     borderRadius: "7px",
@@ -170,11 +158,7 @@ export default function Home() {
                       left: 0,
                       right: 0,
                       bottom: 0,
-                      backgroundImage: `url(${getTranscodeImageURL(
-                        library.art,
-                        1920,
-                        1080
-                      )})`,
+                      backgroundImage: `url(${getTranscodeImageURL(library.art, 1920, 1080)})`,
                       backgroundSize: "cover",
                       backgroundPosition: "center",
                       zIndex: -2,

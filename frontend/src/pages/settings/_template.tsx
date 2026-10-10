@@ -1,14 +1,14 @@
-import React from "react";
+import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
 import { Box, Stack } from "@mui/material";
 import { motion } from "framer-motion";
-import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
+import React from "react";
 
 import CheckBoxOption from "../../components/settings/CheckBoxOption";
 import SettingsCard from "../../components/settings/SettingsCard";
 import SettingsHeader from "../../components/settings/SettingsHeader";
 import { useUserSettings } from "../../states/UserSettingsState";
 
-function _template() {
+function Template() {
   const { settings, setSetting } = useUserSettings();
   const isEnabled = settings["TEMPLATE_OPTION"] === "true";
 
@@ -48,4 +48,4 @@ function _template() {
   );
 }
 
-export default _template;
+export default Template;

@@ -1,24 +1,25 @@
-import React from "react";
+import ClearAllRoundedIcon from "@mui/icons-material/ClearAllRounded";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
+import GraphicEqRoundedIcon from "@mui/icons-material/GraphicEqRounded";
+import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
 import {
+  Avatar,
   Box,
   Drawer,
-  Typography,
   IconButton,
   List,
   ListItem,
   ListItemAvatar,
   ListItemText,
-  Avatar,
-  Tooltip,
   Paper,
+  Tooltip,
+  Typography,
 } from "@mui/material";
-import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
-import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
-import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
-import GraphicEqRoundedIcon from "@mui/icons-material/GraphicEqRounded";
-import ClearAllRoundedIcon from "@mui/icons-material/ClearAllRounded";
-import { useAudioPlayerStore } from "../../states/AudioPlayerState";
+import React from "react";
+
 import { getTranscodeImageURL } from "../../plex";
+import { useAudioPlayerStore } from "../../states/AudioPlayerState";
 
 function formatDuration(sec: number): string {
   if (isNaN(sec) || sec <= 0) return "0:00";
@@ -64,7 +65,10 @@ export default function QueueDrawer() {
       {/* Header */}
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: '"Inter Variable", sans-serif' }}>
+          <Typography
+            variant="h6"
+            sx={{ fontWeight: 700, fontFamily: '"Inter Variable", sans-serif' }}
+          >
             Play Queue
           </Typography>
           <Typography variant="body2" sx={{ color: "#94a3b8" }}>
@@ -74,7 +78,11 @@ export default function QueueDrawer() {
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
           {queue.length > 0 && (
             <Tooltip title="Clear Queue">
-              <IconButton size="small" onClick={clearQueue} sx={{ color: "#94a3b8", "&:hover": { color: "#ef4444" } }}>
+              <IconButton
+                size="small"
+                onClick={clearQueue}
+                sx={{ color: "#94a3b8", "&:hover": { color: "#ef4444" } }}
+              >
                 <ClearAllRoundedIcon fontSize="small" />
               </IconButton>
             </Tooltip>
@@ -86,7 +94,17 @@ export default function QueueDrawer() {
       </Box>
 
       {queue.length === 0 ? (
-        <Box sx={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 1, color: "#64748b" }}>
+        <Box
+          sx={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexDirection: "column",
+            gap: 1,
+            color: "#64748b",
+          }}
+        >
           <Typography variant="body1">Queue is empty</Typography>
           <Typography variant="caption">Play tracks or albums to populate the queue</Typography>
         </Box>
@@ -95,7 +113,15 @@ export default function QueueDrawer() {
           {/* Now Playing section */}
           {currentTrack && (
             <Box sx={{ mb: 3 }}>
-              <Typography variant="caption" sx={{ textTransform: "uppercase", letterSpacing: "0.1em", color: "#e5a00d", fontWeight: 700 }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  textTransform: "uppercase",
+                  letterSpacing: "0.1em",
+                  color: "#e5a00d",
+                  fontWeight: 700,
+                }}
+              >
                 Now Playing
               </Typography>
               <Paper
@@ -117,11 +143,32 @@ export default function QueueDrawer() {
                   sx={{ width: 48, height: 48, borderRadius: 1.5 }}
                 />
                 <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontWeight: 600,
+                      color: "#fff",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
                     {currentTrack.title}
                   </Typography>
-                  <Typography variant="caption" sx={{ color: "#94a3b8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block" }}>
-                    {currentTrack.grandparentTitle || currentTrack.originalTitle || currentTrack.parentTitle || "Unknown Artist"}
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: "#94a3b8",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      display: "block",
+                    }}
+                  >
+                    {currentTrack.grandparentTitle ||
+                      currentTrack.originalTitle ||
+                      currentTrack.parentTitle ||
+                      "Unknown Artist"}
                   </Typography>
                 </Box>
                 {isPlaying ? (
@@ -136,7 +183,17 @@ export default function QueueDrawer() {
           {/* Up Next Section */}
           {upNext.length > 0 && (
             <Box>
-              <Typography variant="caption" sx={{ textTransform: "uppercase", letterSpacing: "0.1em", color: "#94a3b8", fontWeight: 700, mb: 1, display: "block" }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  textTransform: "uppercase",
+                  letterSpacing: "0.1em",
+                  color: "#94a3b8",
+                  fontWeight: 700,
+                  mb: 1,
+                  display: "block",
+                }}
+              >
                 Up Next ({upNext.length})
               </Typography>
               <List disablePadding>
@@ -167,7 +224,9 @@ export default function QueueDrawer() {
                       </ListItemAvatar>
                       <ListItemText
                         primary={item.title}
-                        secondary={item.grandparentTitle || item.originalTitle || item.parentTitle || ""}
+                        secondary={
+                          item.grandparentTitle || item.originalTitle || item.parentTitle || ""
+                        }
                         primaryTypographyProps={{
                           variant: "body2",
                           fontWeight: 500,

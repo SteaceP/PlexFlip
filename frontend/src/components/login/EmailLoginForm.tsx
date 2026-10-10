@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import {
   Alert,
   Box,
@@ -10,7 +10,8 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import React, { useState } from "react";
+
 import { signInWithEmailPassword } from "../../plex";
 
 interface EmailLoginFormProps {
@@ -18,10 +19,7 @@ interface EmailLoginFormProps {
   onCancel: () => void;
 }
 
-export default function EmailLoginForm({
-  onSuccess,
-  onCancel,
-}: EmailLoginFormProps) {
+export default function EmailLoginForm({ onSuccess, onCancel }: EmailLoginFormProps) {
   const [emailInput, setEmailInput] = useState<string>("");
   const [passwordInput, setPasswordInput] = useState<string>("");
   const [twoFactorCode, setTwoFactorCode] = useState<string>("");

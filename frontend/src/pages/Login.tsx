@@ -1,13 +1,7 @@
-import React, { useState } from "react";
-import {
-  Alert,
-  Box,
-  Card,
-  Collapse,
-  IconButton,
-  Stack,
-} from "@mui/material";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import { Alert, Box, Card, Collapse, IconButton, Stack } from "@mui/material";
+import React, { useState } from "react";
+
 import {
   AuthSuccessCard,
   EmailLoginForm,
@@ -94,7 +88,12 @@ export default function Login() {
                 <RefreshIcon fontSize="small" />
               </IconButton>
             }
-            sx={{ mb: 2.5, borderRadius: "12px", background: "rgba(239, 68, 68, 0.12)", color: "#FCA5A5" }}
+            sx={{
+              mb: 2.5,
+              borderRadius: "12px",
+              background: "rgba(239, 68, 68, 0.12)",
+              color: "#FCA5A5",
+            }}
           >
             {error}
           </Alert>
@@ -103,10 +102,7 @@ export default function Login() {
         {isCompleting ? (
           <LoginConnecting />
         ) : showEmailForm ? (
-          <EmailLoginForm
-            onSuccess={completeLogin}
-            onCancel={() => setShowEmailForm(false)}
-          />
+          <EmailLoginForm onSuccess={completeLogin} onCancel={() => setShowEmailForm(false)} />
         ) : (
           <Stack spacing={2}>
             <PinCodeCard

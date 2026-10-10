@@ -1,8 +1,9 @@
-import React, { JSX } from "react";
 import { Avatar, Box, Grid, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
+import React, { JSX } from "react";
 import { useInView } from "react-intersection-observer";
 import { useSearchParams } from "react-router-dom";
+
 import { getTranscodeImageURL } from "../../plex";
 
 export interface ActorItemProps {
@@ -25,8 +26,7 @@ export function ActorItem({ role, data }: ActorItemProps): JSX.Element {
             alignItems: "center",
             justifyContent: "flex-start",
             gap: { xs: "10px", sm: "20px" },
-            backgroundColor: (theme) =>
-              alpha(theme.palette.background.paper, 0.4),
+            backgroundColor: (theme) => alpha(theme.palette.background.paper, 0.4),
             padding: { xs: "5px 10px", sm: "10px 20px" },
             borderRadius: "10px",
             userSelect: "none",
@@ -34,8 +34,7 @@ export function ActorItem({ role, data }: ActorItemProps): JSX.Element {
             transition: "transform 0.2s ease",
 
             "&:hover": {
-              backgroundColor: (theme) =>
-                alpha(theme.palette.background.paper, 0.7),
+              backgroundColor: (theme) => alpha(theme.palette.background.paper, 0.7),
               transform: "translateY(-2px)",
             },
           }}
@@ -98,8 +97,7 @@ export function ActorItem({ role, data }: ActorItemProps): JSX.Element {
           sx={{
             width: "100%",
             height: "100px",
-            backgroundColor: (theme) =>
-              alpha(theme.palette.background.paper, 0.2),
+            backgroundColor: (theme) => alpha(theme.palette.background.paper, 0.2),
             borderRadius: "10px",
           }}
         />

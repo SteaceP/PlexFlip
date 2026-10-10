@@ -1,6 +1,6 @@
-import React from "react";
-import { Box, Button, Card, Stack, Typography } from "@mui/material";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import { Box, Button, Card, Stack, Typography } from "@mui/material";
+
 import { getBackendURL } from "../../backendURL";
 
 export default function AuthSuccessCard() {
@@ -10,10 +10,10 @@ export default function AuthSuccessCard() {
       await fetch(backendURL ? `${backendURL}/api/auth-focus` : "/api/auth-focus", {
         method: "POST",
       });
-    } catch (e) {}
+    } catch {}
     try {
       window.close();
-    } catch (e) {}
+    } catch {}
   };
 
   return (
@@ -59,7 +59,8 @@ export default function AuthSuccessCard() {
           Sign-in Successful!
         </Typography>
         <Typography variant="body1" sx={{ color: "#94A3B8", mb: 3.5, lineHeight: 1.6 }}>
-          Your Plex account has been linked. You can safely close this browser window and return to PlexFlip.
+          Your Plex account has been linked. You can safely close this browser window and return to
+          PlexFlip.
         </Typography>
 
         <Stack spacing={1.5}>

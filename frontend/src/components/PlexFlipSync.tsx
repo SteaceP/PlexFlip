@@ -1,3 +1,4 @@
+import { ContentCopyRounded } from "@mui/icons-material";
 import {
   Backdrop,
   Box,
@@ -9,10 +10,10 @@ import {
   Typography,
 } from "@mui/material";
 import React, { useEffect } from "react";
-import { create } from "zustand";
-import { useSyncSessionState } from "../states/SyncSessionState";
-import { ContentCopyRounded } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
+import { create } from "zustand";
+
+import { useSyncSessionState } from "../states/SyncSessionState";
 
 interface SyncInterfaceState {
   open: boolean;
@@ -237,9 +238,7 @@ function PlexFlipSync() {
                 color="primary"
                 onClick={async () => {
                   setPage("load");
-                  const res = await useSyncSessionState
-                    .getState()
-                    .connect(inputRoom, navigate);
+                  const res = await useSyncSessionState.getState().connect(inputRoom, navigate);
 
                   console.log(res);
 
@@ -291,9 +290,7 @@ function PlexFlipSync() {
                 color="primary"
                 onClick={async () => {
                   setPage("load");
-                  const res = await useSyncSessionState
-                    .getState()
-                    .connect(undefined, navigate);
+                  const res = await useSyncSessionState.getState().connect(undefined, navigate);
                   if (res !== true) {
                     setError(res.message);
                     setPage("home");

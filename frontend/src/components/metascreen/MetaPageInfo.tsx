@@ -1,6 +1,7 @@
-import React from "react";
 import { Box, Grid, Paper, Typography } from "@mui/material";
 import { motion } from "framer-motion";
+import React from "react";
+
 import { durationToText } from "../MovieItemSlider";
 import ActorItem from "./ActorItem";
 
@@ -41,16 +42,10 @@ export function MetaPageInfo({ data }: MetaPageInfoProps) {
                   border: "1px solid rgba(255,255,255,0.08)",
                 }}
               >
-                <Typography
-                  variant="caption"
-                  sx={{ color: "#94a3b8", textTransform: "uppercase" }}
-                >
+                <Typography variant="caption" sx={{ color: "#94a3b8", textTransform: "uppercase" }}>
                   Record Label / Studio
                 </Typography>
-                <Typography
-                  variant="body1"
-                  sx={{ fontWeight: 600, color: "#fff" }}
-                >
+                <Typography variant="body1" sx={{ fontWeight: 600, color: "#fff" }}>
                   {data.studio}
                 </Typography>
               </Paper>
@@ -67,16 +62,10 @@ export function MetaPageInfo({ data }: MetaPageInfoProps) {
                   border: "1px solid rgba(255,255,255,0.08)",
                 }}
               >
-                <Typography
-                  variant="caption"
-                  sx={{ color: "#94a3b8", textTransform: "uppercase" }}
-                >
+                <Typography variant="caption" sx={{ color: "#94a3b8", textTransform: "uppercase" }}>
                   Release Year
                 </Typography>
-                <Typography
-                  variant="body1"
-                  sx={{ fontWeight: 600, color: "#fff" }}
-                >
+                <Typography variant="body1" sx={{ fontWeight: 600, color: "#fff" }}>
                   {data.year}
                 </Typography>
               </Paper>
@@ -93,16 +82,10 @@ export function MetaPageInfo({ data }: MetaPageInfoProps) {
                   border: "1px solid rgba(255,255,255,0.08)",
                 }}
               >
-                <Typography
-                  variant="caption"
-                  sx={{ color: "#94a3b8", textTransform: "uppercase" }}
-                >
+                <Typography variant="caption" sx={{ color: "#94a3b8", textTransform: "uppercase" }}>
                   Track Count
                 </Typography>
-                <Typography
-                  variant="body1"
-                  sx={{ fontWeight: 600, color: "#fff" }}
-                >
+                <Typography variant="body1" sx={{ fontWeight: 600, color: "#fff" }}>
                   {data.leafCount} tracks
                 </Typography>
               </Paper>
@@ -119,16 +102,10 @@ export function MetaPageInfo({ data }: MetaPageInfoProps) {
                   border: "1px solid rgba(255,255,255,0.08)",
                 }}
               >
-                <Typography
-                  variant="caption"
-                  sx={{ color: "#94a3b8", textTransform: "uppercase" }}
-                >
+                <Typography variant="caption" sx={{ color: "#94a3b8", textTransform: "uppercase" }}>
                   Total Duration
                 </Typography>
-                <Typography
-                  variant="body1"
-                  sx={{ fontWeight: 600, color: "#fff" }}
-                >
+                <Typography variant="body1" sx={{ fontWeight: 600, color: "#fff" }}>
                   {durationToText(data.duration)}
                 </Typography>
               </Paper>
@@ -145,17 +122,15 @@ export function MetaPageInfo({ data }: MetaPageInfoProps) {
                   border: "1px solid rgba(255,255,255,0.08)",
                 }}
               >
-                <Typography
-                  variant="caption"
-                  sx={{ color: "#94a3b8", textTransform: "uppercase" }}
-                >
+                <Typography variant="caption" sx={{ color: "#94a3b8", textTransform: "uppercase" }}>
                   Audio Format
                 </Typography>
                 <Typography
                   variant="body1"
                   sx={{ fontWeight: 600, color: "#e5a00d", textTransform: "uppercase" }}
                 >
-                  {data.Media[0].audioCodec} {data.Media[0].bitrate ? `(${data.Media[0].bitrate} kbps)` : ""}
+                  {data.Media[0].audioCodec}{" "}
+                  {data.Media[0].bitrate ? `(${data.Media[0].bitrate} kbps)` : ""}
                 </Typography>
               </Paper>
             </Grid>

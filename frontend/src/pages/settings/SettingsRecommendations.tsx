@@ -1,14 +1,14 @@
-import React from "react";
-import { Box, Stack } from "@mui/material";
-import { motion } from "framer-motion";
-import ViewCarouselRoundedIcon from "@mui/icons-material/ViewCarouselRounded";
-import HistoryToggleOffRoundedIcon from "@mui/icons-material/HistoryToggleOffRounded";
+import AutoAwesomeRoundedIcon from "@mui/icons-material/AutoAwesomeRounded";
 import BookmarkBorderRoundedIcon from "@mui/icons-material/BookmarkBorderRounded";
-import CloudUploadRoundedIcon from "@mui/icons-material/CloudUploadRounded";
 import CategoryRoundedIcon from "@mui/icons-material/CategoryRounded";
+import CloudUploadRoundedIcon from "@mui/icons-material/CloudUploadRounded";
+import HistoryToggleOffRoundedIcon from "@mui/icons-material/HistoryToggleOffRounded";
 import NewReleasesRoundedIcon from "@mui/icons-material/NewReleasesRounded";
 import PsychologyRoundedIcon from "@mui/icons-material/PsychologyRounded";
-import AutoAwesomeRoundedIcon from "@mui/icons-material/AutoAwesomeRounded";
+import ViewCarouselRoundedIcon from "@mui/icons-material/ViewCarouselRounded";
+import { Box, Stack } from "@mui/material";
+import { motion } from "framer-motion";
+import React from "react";
 
 import CheckBoxOption from "../../components/settings/CheckBoxOption";
 import SettingsCard from "../../components/settings/SettingsCard";

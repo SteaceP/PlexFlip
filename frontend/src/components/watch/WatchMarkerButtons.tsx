@@ -1,8 +1,9 @@
-import React from "react";
-import { alpha, Box, Button, Fade, Typography, useTheme } from "@mui/material";
 import { SkipNext } from "@mui/icons-material";
-import PlaybackNextEPButton from "../PlaybackNextEPButton";
+import { alpha, Box, Button, Fade, Typography, useTheme } from "@mui/material";
+import React from "react";
+
 import ReactPlayer from "../../common/ReactPlayer";
+import PlaybackNextEPButton from "../PlaybackNextEPButton";
 
 interface WatchMarkerButtonsProps {
   metadata: Plex.Metadata | null;
@@ -39,7 +40,7 @@ export const WatchMarkerButtons: React.FC<WatchMarkerButtonsProps> = ({
       (marker) =>
         marker.startTimeOffset / 1000 <= progress &&
         marker.endTimeOffset / 1000 >= progress &&
-        marker.type === "intro",
+        marker.type === "intro"
     ) ?? [];
 
   const nonFinalCreditMarkers =
@@ -48,7 +49,7 @@ export const WatchMarkerButtons: React.FC<WatchMarkerButtonsProps> = ({
         marker.startTimeOffset / 1000 <= progress &&
         marker.endTimeOffset / 1000 >= progress &&
         marker.type === "credits" &&
-        !marker.final,
+        !marker.final
     ) ?? [];
 
   const finalCreditMarkers =
@@ -57,16 +58,12 @@ export const WatchMarkerButtons: React.FC<WatchMarkerButtonsProps> = ({
         marker.startTimeOffset / 1000 <= progress &&
         marker.endTimeOffset / 1000 >= progress &&
         marker.type === "credits" &&
-        marker.final,
+        marker.final
     ) ?? [];
 
   return (
     <>
-      <Fade
-        mountOnEnter
-        unmountOnExit
-        in={canShowMarker && introMarkers.length > 0}
-      >
+      <Fade mountOnEnter unmountOnExit in={canShowMarker && introMarkers.length > 0}>
         <Box
           sx={{
             position: "absolute",
@@ -121,11 +118,7 @@ export const WatchMarkerButtons: React.FC<WatchMarkerButtonsProps> = ({
         </Box>
       </Fade>
 
-      <Fade
-        mountOnEnter
-        unmountOnExit
-        in={canShowMarker && nonFinalCreditMarkers.length > 0}
-      >
+      <Fade mountOnEnter unmountOnExit in={canShowMarker && nonFinalCreditMarkers.length > 0}>
         <Box
           sx={{
             position: "absolute",
@@ -180,11 +173,7 @@ export const WatchMarkerButtons: React.FC<WatchMarkerButtonsProps> = ({
         </Box>
       </Fade>
 
-      <Fade
-        mountOnEnter
-        unmountOnExit
-        in={canShowMarker && finalCreditMarkers.length > 0}
-      >
+      <Fade mountOnEnter unmountOnExit in={canShowMarker && finalCreditMarkers.length > 0}>
         <Box
           sx={{
             position: "absolute",
@@ -195,9 +184,6 @@ export const WatchMarkerButtons: React.FC<WatchMarkerButtonsProps> = ({
         >
           <PlaybackNextEPButton
             player={playerRef as unknown as React.MutableRefObject<unknown>}
-            playbackBarRef={
-              playbackBarRef as unknown as React.MutableRefObject<HTMLDivElement | null>
-            }
             metadata={metadata}
             playQueue={playQueue}
             navigate={navigate}

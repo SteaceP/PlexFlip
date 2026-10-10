@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { XMLParser } from "fast-xml-parser";
-import { getAccessToken, getPin } from "../../plex";
-import { ProxiedRequest, getBackendURL } from "../../backendURL";
-import { queryBuilder } from "../../plex/QuickFunctions";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+
+import { getBackendURL, ProxiedRequest } from "../../backendURL";
 import { isDesktopApp, openExternalURL } from "../../common/DesktopApp";
+import { getAccessToken, getPin } from "../../plex";
+import { queryBuilder } from "../../plex/QuickFunctions";
 
 export function usePlexAuth() {
   const [query] = useSearchParams();
@@ -27,110 +28,112 @@ export function usePlexAuth() {
     }
   }, []);
 
-  const completeLogin = useCallback(async (authToken: string): Promise<boolean> => {
-    if (isCompletingRef.current) return false;
-    isCompletingRef.current = true;
-    setIsCompleting(true);
-    stopPolling();
+  const completeLogin = useCallback(
+    async (authToken: string): Promise<boolean> => {
+      if (isCompletingRef.current) return false;
+      isCompletingRef.current = true;
+      setIsCompleting(true);
+      stopPolling();
 
-    try {
-      const serverIdentity = await ProxiedRequest("/identity", "GET", {
-        "X-Plex-Token": authToken,
-      });
+      try {
+        const serverIdentity = await ProxiedRequest("/identity", "GET", {
+          "X-Plex-Token": authToken,
+        });
 
-      if (!serverIdentity || !serverIdentity.data?.MediaContainer) {
-        setError(
-          `Failed to log in: ${
-            serverIdentity?.data?.errors?.[0]?.message || "Could not retrieve Plex server identity."
-          }`
+        if (!serverIdentity || !serverIdentity.data?.MediaContainer) {
+          setError(
+            `Failed to log in: ${
+              serverIdentity?.data?.errors?.[0]?.message ||
+              "Could not retrieve Plex server identity."
+            }`
+          );
+          isCompletingRef.current = false;
+          setIsCompleting(false);
+          return false;
+        }
+
+        const serverID = serverIdentity.data.MediaContainer.machineIdentifier;
+
+        const parser = new XMLParser({
+          attributeNamePrefix: "",
+          textNodeName: "value",
+          ignoreAttributes: false,
+          parseAttributeValue: true,
+        });
+
+        // try getting shared servers
+        const sharedServersXML = await axios.get(
+          `https://plex.tv/api/resources?${queryBuilder({
+            "X-Plex-Token": authToken,
+          })}`
         );
+
+        const sharedServers = parser.parse(sharedServersXML.data);
+
+        let targetServer: any = null;
+        const devices = sharedServers?.MediaContainer?.Device;
+        const deviceList: any[] = Array.isArray(devices) ? devices : devices ? [devices] : [];
+
+        if (serverID) {
+          targetServer = deviceList.find((server: any) => server.clientIdentifier === serverID);
+        }
+        if (!targetServer) {
+          targetServer = deviceList.find(
+            (server: any) =>
+              typeof server.provides === "string" &&
+              server.provides.includes("server") &&
+              Boolean(server.accessToken)
+          );
+        }
+        if (!targetServer && deviceList.length > 0) {
+          targetServer = deviceList.find((server: any) => Boolean(server.accessToken));
+        }
+
+        const effectiveAccessToken = targetServer?.accessToken || authToken;
+
+        localStorage.setItem("accessToken", effectiveAccessToken);
+        localStorage.setItem("accAccessToken", authToken);
+
+        // Notify backend that auth is complete to focus desktop window
+        try {
+          const backendURL = getBackendURL();
+          await fetch(backendURL ? `${backendURL}/api/auth-complete` : "/api/auth-complete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              authToken,
+              accessToken: effectiveAccessToken,
+              serverID: serverID || "",
+            }),
+          });
+        } catch (postErr) {
+          console.warn("Failed to notify backend of auth completion:", postErr);
+        }
+
+        if (isDesktopApp()) {
+          window.location.href = "/";
+        } else {
+          // If this page was opened as a redirect callback in an external browser
+          setBrowserCallbackComplete(true);
+          setIsCompleting(false);
+          // Attempt to close the browser tab after short delay
+          setTimeout(() => {
+            try {
+              window.close();
+            } catch {}
+          }, 2000);
+        }
+        return true;
+      } catch (e: any) {
+        console.error("completeLogin error:", e);
+        setError(e?.message || "Failed to log in. Please try again.");
         isCompletingRef.current = false;
         setIsCompleting(false);
         return false;
       }
-
-      const serverID = serverIdentity.data.MediaContainer.machineIdentifier;
-
-      const parser = new XMLParser({
-        attributeNamePrefix: "",
-        textNodeName: "value",
-        ignoreAttributes: false,
-        parseAttributeValue: true,
-      });
-
-      // try getting shared servers
-      const sharedServersXML = await axios.get(
-        `https://plex.tv/api/resources?${queryBuilder({
-          "X-Plex-Token": authToken,
-        })}`
-      );
-
-      const sharedServers = parser.parse(sharedServersXML.data);
-
-      let targetServer: any = null;
-      const devices = sharedServers?.MediaContainer?.Device;
-      const deviceList: any[] = Array.isArray(devices) ? devices : devices ? [devices] : [];
-
-      if (serverID) {
-        targetServer = deviceList.find(
-          (server: any) => server.clientIdentifier === serverID
-        );
-      }
-      if (!targetServer) {
-        targetServer = deviceList.find(
-          (server: any) =>
-            typeof server.provides === "string" &&
-            server.provides.includes("server") &&
-            Boolean(server.accessToken)
-        );
-      }
-      if (!targetServer && deviceList.length > 0) {
-        targetServer = deviceList.find((server: any) => Boolean(server.accessToken));
-      }
-
-      const effectiveAccessToken = targetServer?.accessToken || authToken;
-
-      localStorage.setItem("accessToken", effectiveAccessToken);
-      localStorage.setItem("accAccessToken", authToken);
-
-      // Notify backend that auth is complete to focus desktop window
-      try {
-        const backendURL = getBackendURL();
-        await fetch(backendURL ? `${backendURL}/api/auth-complete` : "/api/auth-complete", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            authToken,
-            accessToken: effectiveAccessToken,
-            serverID: serverID || "",
-          }),
-        });
-      } catch (postErr) {
-        console.warn("Failed to notify backend of auth completion:", postErr);
-      }
-
-      if (isDesktopApp()) {
-        window.location.href = "/";
-      } else {
-        // If this page was opened as a redirect callback in an external browser
-        setBrowserCallbackComplete(true);
-        setIsCompleting(false);
-        // Attempt to close the browser tab after short delay
-        setTimeout(() => {
-          try {
-            window.close();
-          } catch (e) {}
-        }, 2000);
-      }
-      return true;
-    } catch (e: any) {
-      console.error("completeLogin error:", e);
-      setError(e?.message || "Failed to log in. Please try again.");
-      isCompletingRef.current = false;
-      setIsCompleting(false);
-      return false;
-    }
-  }, [stopPolling]);
+    },
+    [stopPolling]
+  );
 
   const createPinAndStartPolling = useCallback(async () => {
     stopPolling();
@@ -172,7 +175,7 @@ export function usePlexAuth() {
             stopPolling();
             await completeLogin(checkRes.authToken);
           }
-        } catch (pollErr) {
+        } catch {
           // ignore transient poll errors while waiting for user sign-in
         }
       }, 1500);
@@ -223,7 +226,7 @@ export function usePlexAuth() {
               await fetch(backendURL ? `${backendURL}/api/auth-focus` : "/api/auth-focus", {
                 method: "POST",
               });
-            } catch (focusErr) {}
+            } catch {}
           }
         } catch (e: any) {
           console.error("Callback getAccessToken error:", e);
@@ -262,7 +265,7 @@ export function usePlexAuth() {
         await navigator.clipboard.writeText(pinData.code);
         setCopied(true);
         setTimeout(() => setCopied(false), 2500);
-      } catch (e) {}
+      } catch {}
     }
     setBrowserOpened(true);
     setInfoMessage("Code copied! Enter it at plex.tv/link in your browser.");
@@ -275,7 +278,7 @@ export function usePlexAuth() {
         await navigator.clipboard.writeText(pinData.code);
         setCopied(true);
         setTimeout(() => setCopied(false), 2500);
-      } catch (e) {}
+      } catch {}
     }
     setBrowserOpened(true);
     setInfoMessage(
@@ -290,7 +293,7 @@ export function usePlexAuth() {
         await navigator.clipboard.writeText(pinData.code);
         setCopied(true);
         setTimeout(() => setCopied(false), 2500);
-      } catch (e) {}
+      } catch {}
     }
     setBrowserOpened(true);
     setInfoMessage(

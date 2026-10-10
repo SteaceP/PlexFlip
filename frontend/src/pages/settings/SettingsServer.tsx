@@ -1,33 +1,33 @@
-import React, { useState, useEffect, useCallback } from "react";
-import {
-  Box,
-  Typography,
-  TextField,
-  Button,
-  CircularProgress,
-  Alert,
-  InputAdornment,
-  Chip,
-  Fade,
-  Stack,
-} from "@mui/material";
-import { motion } from "framer-motion";
-import DnsRoundedIcon from "@mui/icons-material/DnsRounded";
-import SensorsRoundedIcon from "@mui/icons-material/SensorsRounded";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
-import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
-import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
-import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import CloudQueueRoundedIcon from "@mui/icons-material/CloudQueueRounded";
+import DnsRoundedIcon from "@mui/icons-material/DnsRounded";
+import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
+import HubRoundedIcon from "@mui/icons-material/HubRounded";
+import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
+import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
+import SensorsRoundedIcon from "@mui/icons-material/SensorsRounded";
 import SwapHorizRoundedIcon from "@mui/icons-material/SwapHorizRounded";
 import WifiRoundedIcon from "@mui/icons-material/WifiRounded";
-import HubRoundedIcon from "@mui/icons-material/HubRounded";
+import {
+  Alert,
+  Box,
+  Button,
+  Chip,
+  CircularProgress,
+  Fade,
+  InputAdornment,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
 import axios from "axios";
 import { XMLParser } from "fast-xml-parser";
+import { motion } from "framer-motion";
+import React, { useCallback, useEffect, useState } from "react";
 
+import { getBackendURL } from "../../backendURL";
 import SettingsCard from "../../components/settings/SettingsCard";
 import SettingsHeader from "../../components/settings/SettingsHeader";
-import { getBackendURL } from "../../backendURL";
 import { queryBuilder } from "../../plex/QuickFunctions";
 
 interface PlexResourceServer {
@@ -95,9 +95,7 @@ function SettingsServer() {
   }, [checkServerHealth]);
 
   const fetchAvailableServers = useCallback(async () => {
-    const token =
-      localStorage.getItem("accAccessToken") ||
-      localStorage.getItem("accessToken");
+    const token = localStorage.getItem("accAccessToken") || localStorage.getItem("accessToken");
     if (!token) return;
 
     setLoadingServers(true);
@@ -119,10 +117,7 @@ function SettingsServer() {
       const devices = parsed?.MediaContainer?.Device;
       const list = Array.isArray(devices) ? devices : devices ? [devices] : [];
       const servers: PlexResourceServer[] = list
-        .filter(
-          (d: any) =>
-            typeof d.provides === "string" && d.provides.includes("server")
-        )
+        .filter((d: any) => typeof d.provides === "string" && d.provides.includes("server"))
         .map((s: any) => {
           const conns = s.Connection;
           const connList = Array.isArray(conns) ? conns : conns ? [conns] : [];
@@ -283,7 +278,15 @@ function SettingsServer() {
 
   if (loadingConfig) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", py: 12, width: "100%" }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          py: 12,
+          width: "100%",
+        }}
+      >
         <CircularProgress />
       </Box>
     );
@@ -370,8 +373,8 @@ function SettingsServer() {
                 onlineStatus === "online"
                   ? "Connected & Responsive"
                   : onlineStatus === "checking"
-                  ? "Verifying Ping..."
-                  : "Unreachable / Error"
+                    ? "Verifying Ping..."
+                    : "Unreachable / Error"
               }
               size="small"
               sx={{
@@ -379,21 +382,21 @@ function SettingsServer() {
                   onlineStatus === "online"
                     ? "rgba(16, 185, 129, 0.15)"
                     : onlineStatus === "checking"
-                    ? "rgba(255, 255, 255, 0.08)"
-                    : "rgba(239, 68, 68, 0.15)",
+                      ? "rgba(255, 255, 255, 0.08)"
+                      : "rgba(239, 68, 68, 0.15)",
                 color:
                   onlineStatus === "online"
                     ? "#34D399"
                     : onlineStatus === "checking"
-                    ? "#CBD5E1"
-                    : "#F87171",
+                      ? "#CBD5E1"
+                      : "#F87171",
                 border: "1px solid",
                 borderColor:
                   onlineStatus === "online"
                     ? "rgba(16, 185, 129, 0.3)"
                     : onlineStatus === "checking"
-                    ? "rgba(255, 255, 255, 0.12)"
-                    : "rgba(239, 68, 68, 0.3)",
+                      ? "rgba(255, 255, 255, 0.12)"
+                      : "rgba(239, 68, 68, 0.3)",
                 fontWeight: 650,
               }}
             />
@@ -465,8 +468,7 @@ function SettingsServer() {
               {availableServers.map((srv) => {
                 const active = isServerActive(srv);
                 const isSwitching = switchingServerId === srv.clientIdentifier;
-                const primaryConn =
-                  srv.connections.find((c) => c.local) || srv.connections[0];
+                const primaryConn = srv.connections.find((c) => c.local) || srv.connections[0];
 
                 return (
                   <Box
@@ -474,9 +476,7 @@ function SettingsServer() {
                     sx={{
                       p: 2.25,
                       borderRadius: "12px",
-                      bgcolor: active
-                        ? "rgba(99, 102, 241, 0.08)"
-                        : "rgba(0, 0, 0, 0.25)",
+                      bgcolor: active ? "rgba(99, 102, 241, 0.08)" : "rgba(0, 0, 0, 0.25)",
                       border: "1px solid",
                       borderColor: active
                         ? "rgba(99, 102, 241, 0.45)"
@@ -601,16 +601,14 @@ function SettingsServer() {
                           active
                             ? { color: "#64748B", textTransform: "none", fontWeight: 600 }
                             : {
-                                background:
-                                  "linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)",
+                                background: "linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)",
                                 color: "#fff",
                                 fontWeight: 650,
                                 textTransform: "none",
                                 borderRadius: "8px",
                                 px: 2,
                                 "&:hover": {
-                                  background:
-                                    "linear-gradient(135deg, #818CF8 0%, #6366F1 100%)",
+                                  background: "linear-gradient(135deg, #818CF8 0%, #6366F1 100%)",
                                 },
                               }
                         }
@@ -716,13 +714,17 @@ function SettingsServer() {
             }}
           />
 
-          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1.5, mt: 3, flexWrap: "wrap" }}>
+          <Box
+            sx={{ display: "flex", justifyContent: "flex-end", gap: 1.5, mt: 3, flexWrap: "wrap" }}
+          >
             <Button
               id="settings-test-server-btn"
               variant="outlined"
               onClick={handleTestConnection}
               disabled={testing || saving || !serverUrl.trim()}
-              startIcon={testing ? <CircularProgress size={16} color="inherit" /> : <SensorsRoundedIcon />}
+              startIcon={
+                testing ? <CircularProgress size={16} color="inherit" /> : <SensorsRoundedIcon />
+              }
               sx={{
                 borderColor: "rgba(99, 102, 241, 0.4)",
                 color: "#C7D2FE",
@@ -743,7 +745,9 @@ function SettingsServer() {
               variant="contained"
               onClick={handleSave}
               disabled={saving || !serverUrl.trim() || serverUrl === currentServer}
-              startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveRoundedIcon />}
+              startIcon={
+                saving ? <CircularProgress size={16} color="inherit" /> : <SaveRoundedIcon />
+              }
               sx={{
                 background: "linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)",
                 color: "#fff",

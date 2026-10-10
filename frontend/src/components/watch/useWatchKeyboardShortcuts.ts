@@ -1,7 +1,8 @@
 import { useEffect } from "react";
-import { queryBuilder } from "../../plex/QuickFunctions";
-import ReactPlayer from "../../common/ReactPlayer";
 import { Socket } from "socket.io-client";
+
+import ReactPlayer from "../../common/ReactPlayer";
+import { queryBuilder } from "../../plex/QuickFunctions";
 
 interface UseWatchKeyboardShortcutsOptions {
   togglePlay: () => void;
@@ -27,9 +28,7 @@ export function useWatchKeyboardShortcuts({
       const target = e.target as HTMLElement | null;
       if (
         target &&
-        (target.tagName === "INPUT" ||
-          target.tagName === "TEXTAREA" ||
-          target.isContentEditable)
+        (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)
       ) {
         return;
       }
@@ -51,12 +50,7 @@ export function useWatchKeyboardShortcuts({
           if (!metadata || !playerRef.current) return;
           const time = playerRef.current.getCurrentTime();
           for (const marker of metadata.Marker ?? []) {
-            if (
-              !(
-                marker.startTimeOffset / 1000 <= time &&
-                marker.endTimeOffset / 1000 >= time
-              )
-            )
+            if (!(marker.startTimeOffset / 1000 <= time && marker.endTimeOffset / 1000 >= time))
               continue;
 
             switch (marker.type) {
@@ -71,7 +65,7 @@ export function useWatchKeyboardShortcuts({
                     return navigate(
                       `/browse/${metadata.librarySectionID}?${queryBuilder({
                         mid: metadata.ratingKey,
-                      })}`,
+                      })}`
                     );
                   }
 
@@ -83,7 +77,7 @@ export function useWatchKeyboardShortcuts({
                         mid: metadata.grandparentRatingKey,
                         pid: metadata.parentRatingKey,
                         iid: metadata.ratingKey,
-                      })}`,
+                      })}`
                     );
                   }
 

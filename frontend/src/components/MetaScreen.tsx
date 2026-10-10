@@ -1,17 +1,11 @@
-import React, { useEffect, useState } from "react";
-import {
-  Backdrop,
-  Box,
-  CircularProgress,
-  Divider,
-  MenuItem,
-  Select,
-} from "@mui/material";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Backdrop, Box, CircularProgress, Divider, MenuItem, Select } from "@mui/material";
 import { AnimatePresence } from "framer-motion";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+
 import { getBackendURL } from "../backendURL";
-import { queryBuilder } from "../plex/QuickFunctions";
 import { getLibraryMeta, getLibraryMetaChildren } from "../plex";
+import { queryBuilder } from "../plex/QuickFunctions";
 import {
   MetaHeroBanner,
   MetaHeroDetails,
@@ -39,9 +33,7 @@ function MetaScreen() {
   const [languages, setLanguages] = useState<string[] | null>(null);
   const [subTitles, setSubTitles] = useState<string[] | null>(null);
 
-  const [musicChildren, setMusicChildren] = useState<Plex.Metadata[] | null>(
-    null
-  );
+  const [musicChildren, setMusicChildren] = useState<Plex.Metadata[] | null>(null);
 
   const [previewVidURL, setPreviewVidURL] = useState<string | null>(null);
   const [previewVidPlaying, setPreviewVidPlaying] = useState<boolean>(false);
@@ -104,10 +96,7 @@ function MetaScreen() {
   useEffect(() => {
     if (!data) return;
 
-    if (
-      !data?.Extras?.Metadata?.[0] ||
-      !data?.Extras?.Metadata?.[0]?.Media?.[0]?.Part?.[0]?.key
-    )
+    if (!data?.Extras?.Metadata?.[0] || !data?.Extras?.Metadata?.[0]?.Media?.[0]?.Part?.[0]?.key)
       return;
 
     setPreviewVidURL(
@@ -117,8 +106,7 @@ function MetaScreen() {
         "X-Plex-Token": localStorage.getItem("accessToken"),
         ...Object.fromEntries(
           new URL(
-            "http://localhost:3000" +
-              data?.Extras?.Metadata?.[0]?.Media?.[0]?.Part?.[0]?.key
+            "http://localhost:3000" + data?.Extras?.Metadata?.[0]?.Media?.[0]?.Part?.[0]?.key
           ).searchParams.entries()
         ),
       })}`
@@ -149,16 +137,16 @@ function MetaScreen() {
 
             const uniqueLanguages = Array.from(
               new Set(
-                res.Media?.[0]?.Part?.[0]?.Stream?.filter(
-                  (stream) => stream.streamType === 2
-                ).map((stream) => stream.language ?? stream.displayTitle)
+                res.Media?.[0]?.Part?.[0]?.Stream?.filter((stream) => stream.streamType === 2).map(
+                  (stream) => stream.language ?? stream.displayTitle
+                )
               )
             );
             const uniqueSubTitles = Array.from(
               new Set(
-                res.Media?.[0]?.Part?.[0]?.Stream?.filter(
-                  (stream) => stream.streamType === 3
-                ).map((stream) => stream.language)
+                res.Media?.[0]?.Part?.[0]?.Stream?.filter((stream) => stream.streamType === 3).map(
+                  (stream) => stream.language
+                )
               )
             );
 
@@ -173,16 +161,16 @@ function MetaScreen() {
 
           const uniqueLanguages = Array.from(
             new Set(
-              data.Media?.[0]?.Part?.[0]?.Stream?.filter(
-                (stream) => stream.streamType === 2
-              ).map((stream) => stream.language ?? stream.displayTitle)
+              data.Media?.[0]?.Part?.[0]?.Stream?.filter((stream) => stream.streamType === 2).map(
+                (stream) => stream.language ?? stream.displayTitle
+              )
             )
           );
           const uniqueSubTitles = Array.from(
             new Set(
-              data.Media?.[0]?.Part?.[0]?.Stream?.filter(
-                (stream) => stream.streamType === 3
-              ).map((stream) => stream.language)
+              data.Media?.[0]?.Part?.[0]?.Stream?.filter((stream) => stream.streamType === 3).map(
+                (stream) => stream.language
+              )
             )
           );
 
@@ -198,9 +186,7 @@ function MetaScreen() {
     setEpisodes(null);
     if (!data) return;
 
-    const season = data?.Children?.Metadata?.find(
-      (child) => child.index === selectedSeason
-    );
+    const season = data?.Children?.Metadata?.find((child) => child.index === selectedSeason);
 
     console.log("Loading data for season", season);
 
@@ -209,15 +195,12 @@ function MetaScreen() {
         setEpisodes(res);
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSeason, data]);
 
   const refetchEpisodes = () => {
     if (!data) return;
 
-    const season = data?.Children?.Metadata?.find(
-      (child) => child.index === selectedSeason
-    );
+    const season = data?.Children?.Metadata?.find((child) => child.index === selectedSeason);
 
     if (data?.type === "show" && season?.ratingKey) {
       getLibraryMetaChildren(season?.ratingKey as string).then((res) => {
@@ -328,10 +311,10 @@ function MetaScreen() {
                 data?.type === "movie"
                   ? "Similar Movies"
                   : data?.type === "album"
-                  ? "Tracks"
-                  : data?.type === "artist"
-                  ? "Albums"
-                  : "Episodes"
+                    ? "Tracks"
+                    : data?.type === "artist"
+                      ? "Albums"
+                      : "Episodes"
               }
             />
 
@@ -361,30 +344,28 @@ function MetaScreen() {
               text="Reviews"
             />
 
-            {data?.type === "show" &&
-              data?.Children &&
-              data?.Children.size > 1 && (
-                <Select
-                  sx={{
-                    ml: "auto",
-                    opacity: page === 0 ? 1 : 0,
-                    transition: "all 0.5s ease",
-                  }}
-                  size="small"
-                  value={selectedSeason}
-                  onChange={(e) => {
-                    if (e.target.value === selectedSeason) return;
-                    setSelectedSeason(e.target.value as number);
-                  }}
-                >
-                  {data?.type === "show" &&
-                    data?.Children?.Metadata?.map((season, index) => (
-                      <MenuItem key={index} value={season.index}>
-                        {season.title}
-                      </MenuItem>
-                    ))}
-                </Select>
-              )}
+            {data?.type === "show" && data?.Children && data?.Children.size > 1 && (
+              <Select
+                sx={{
+                  ml: "auto",
+                  opacity: page === 0 ? 1 : 0,
+                  transition: "all 0.5s ease",
+                }}
+                size="small"
+                value={selectedSeason}
+                onChange={(e) => {
+                  if (e.target.value === selectedSeason) return;
+                  setSelectedSeason(e.target.value as number);
+                }}
+              >
+                {data?.type === "show" &&
+                  data?.Children?.Metadata?.map((season, index) => (
+                    <MenuItem key={index} value={season.index}>
+                      {season.title}
+                    </MenuItem>
+                  ))}
+              </Select>
+            )}
           </Box>
 
           <Divider sx={{ mb: 2, width: "100%" }} />

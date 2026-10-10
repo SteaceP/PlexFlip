@@ -1,29 +1,11 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import {
-  getLibraryDir,
-  getLibraryMeta,
-  getLibraryMetaChildren,
-  getPlayQueue,
-  getServerPreferences,
-  getTimelineUpdate,
-  getUniversalDecision,
-  sendUniversalPing,
-} from "../plex";
-import CenteredSpinner from "../components/CenteredSpinner";
 import { Box } from "@mui/material";
-import ReactPlayer from "../common/ReactPlayer";
-import {
-  getIncludeProps,
-  queryBuilder,
-} from "../plex/QuickFunctions";
-import { useSessionStore } from "../states/SessionState";
-import {
-  SessionStateEmitter,
-  useSyncSessionState,
-} from "../states/SyncSessionState";
-import { useSyncInterfaceState } from "../components/PlexFlipSync";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+
 import { absoluteDifference } from "../common/NumberExtra";
+import ReactPlayer from "../common/ReactPlayer";
+import CenteredSpinner from "../components/CenteredSpinner";
+import { useSyncInterfaceState } from "../components/PlexFlipSync";
 import {
   autoMatchMediaTracks,
   getCurrentVideoLevels,
@@ -37,9 +19,22 @@ import {
   WatchMarkerButtons,
   WatchTunePopover,
 } from "../components/watch";
+import {
+  getLibraryDir,
+  getLibraryMeta,
+  getLibraryMetaChildren,
+  getPlayQueue,
+  getServerPreferences,
+  getTimelineUpdate,
+  getUniversalDecision,
+  sendUniversalPing,
+} from "../plex";
+import { getIncludeProps, queryBuilder } from "../plex/QuickFunctions";
+import { useSessionStore } from "../states/SessionState";
+import { SessionStateEmitter, useSyncSessionState } from "../states/SyncSessionState";
 
 let SessionID = "";
-export { SessionID, getFormatedTime, getCurrentVideoLevels };
+export { getCurrentVideoLevels, getFormatedTime, SessionID };
 
 function Watch() {
   const { itemID } = useParams<{ itemID: string }>();
@@ -59,9 +54,7 @@ function Watch() {
     }),
   });
 
-  const [volume, setVolume] = useState<number>(
-    parseInt(localStorage.getItem("volume") ?? "100"),
-  );
+  const [volume, setVolume] = useState<number>(parseInt(localStorage.getItem("volume") ?? "100"));
 
   const lastAppliedTime = useRef<number>(0);
   const [playing, setPlaying] = useState(true);
@@ -93,12 +86,9 @@ function Watch() {
     async (targetItemID: string) => {
       let loadedMeta: Plex.Metadata | null = null;
       try {
-        const mediacontainer = await getLibraryDir(
-          `/library/metadata/${targetItemID}`,
-          {
-            ...getIncludeProps(),
-          },
-        );
+        const mediacontainer = await getLibraryDir(`/library/metadata/${targetItemID}`, {
+          ...getIncludeProps(),
+        });
         loadedMeta = mediacontainer.Metadata?.[0] ?? null;
         if (!loadedMeta) return;
 
@@ -107,11 +97,9 @@ function Watch() {
           if (show?.OnDeck?.Metadata?.ratingKey) {
             navigate(
               `/watch/${show.OnDeck.Metadata.ratingKey}${
-                show.OnDeck.Metadata.viewOffset
-                  ? `?t=${show.OnDeck.Metadata.viewOffset}`
-                  : ""
+                show.OnDeck.Metadata.viewOffset ? `?t=${show.OnDeck.Metadata.viewOffset}` : ""
               }`,
-              { replace: true },
+              { replace: true }
             );
             return;
           }
@@ -138,11 +126,9 @@ function Watch() {
         if (["movie", "episode"].includes(loadedMeta.type as string)) {
           setMetadata(loadedMeta);
           if (loadedMeta.type === "episode") {
-            getLibraryMeta(loadedMeta.grandparentRatingKey as string).then(
-              (show) => {
-                setShowMetadata(show);
-              },
-            );
+            getLibraryMeta(loadedMeta.grandparentRatingKey as string).then((show) => {
+              setShowMetadata(show);
+            });
           }
         } else {
           console.error("Invalid metadata type");
@@ -165,12 +151,12 @@ function Watch() {
       const serverPreferences = await getServerPreferences();
 
       getPlayQueue(
-        `server://${serverPreferences.machineIdentifier}/com.plexapp.plugins.library/library/metadata/${loadedMeta.ratingKey}`,
+        `server://${serverPreferences.machineIdentifier}/com.plexapp.plugins.library/library/metadata/${loadedMeta.ratingKey}`
       ).then((queue) => {
         setPlayQueue(queue);
       });
     },
-    [navigate, quality.auto, quality.bitrate],
+    [navigate, quality.auto, quality.bitrate]
   );
 
   const [url, setURL] = useState<string>("");
@@ -268,10 +254,7 @@ function Watch() {
       }
 
       if (data.time) {
-        const dif = absoluteDifference(
-          player.current?.getCurrentTime() ?? 0,
-          data.time,
-        );
+        const dif = absoluteDifference(player.current?.getCurrentTime() ?? 0, data.time);
 
         if (dif > 2) player.current?.seekTo(data.time, "seconds");
       }
@@ -322,13 +305,12 @@ function Watch() {
         parseInt(itemID),
         Math.floor(player.current.getDuration()) * 1000,
         buffering ? "buffering" : playing ? "playing" : "paused",
-        Math.floor(player.current.getCurrentTime()) * 1000,
+        Math.floor(player.current.getCurrentTime()) * 1000
       );
 
       if (!timelineUpdateData) return;
 
-      const { terminationCode, terminationText } =
-        timelineUpdateData.MediaContainer;
+      const { terminationCode, terminationText } = timelineUpdateData.MediaContainer;
       if (terminationCode) {
         setShowError(`${terminationCode} - ${terminationText}`);
         setPlaying(false);
@@ -395,7 +377,7 @@ function Watch() {
         parseInt(itemID),
         Math.floor(player.current?.getDuration() * 1000),
         "stopped",
-        Math.floor(player.current?.getCurrentTime() * 1000),
+        Math.floor(player.current?.getCurrentTime() * 1000)
       );
     }
 
@@ -405,23 +387,20 @@ function Watch() {
       navigate(
         `/browse/${metadata.librarySectionID}?${queryBuilder({
           mid: metadata.ratingKey,
-        })}`,
+        })}`
       );
     } else if (metadata.type === "episode") {
       navigate(
         `/browse/${metadata.librarySectionID}?${queryBuilder({
           mid: metadata.grandparentRatingKey,
-        })}`,
+        })}`
       );
     } else {
       navigate("/");
     }
   };
 
-  const handleStreamReload = (
-    meta: Plex.Metadata,
-    targetQuality: QualityState,
-  ) => {
+  const handleStreamReload = (meta: Plex.Metadata, targetQuality: QualityState) => {
     setURL("");
     setTimeout(() => {
       setURL(getWatchUrl(meta, targetQuality));
@@ -463,11 +442,7 @@ function Watch() {
           <CenteredSpinner />
         </Box>
 
-        <WatchInfoOverlay
-          showInfo={showInfo}
-          metadata={metadata}
-          showmetadata={showmetadata}
-        />
+        <WatchInfoOverlay showInfo={showInfo} metadata={metadata} showmetadata={showmetadata} />
 
         <WatchTunePopover
           open={showTune}
@@ -524,10 +499,7 @@ function Watch() {
               onOpenSync={() => setSyncInterfaceOpen(true)}
               room={room}
               isHost={isHost}
-              controlElementsVisibleState={[
-                controlElementsVisible,
-                setControlElementsVisible,
-              ]}
+              controlElementsVisibleState={[controlElementsVisible, setControlElementsVisible]}
               onVolumePopoverChange={setIsVolumeOpen}
               onBack={handleBack}
             />
@@ -602,10 +574,7 @@ function Watch() {
                 if (showError) return;
 
                 if (!err.error) return;
-                const message = err.error.message.replace(
-                  /https?:\/\/[^\s]+/g,
-                  "Media",
-                );
+                const message = err.error.message.replace(/https?:\/\/[^\s]+/g, "Media");
 
                 setShowError(message);
               }}
@@ -638,7 +607,7 @@ function Watch() {
                   return navigate(
                     `/browse/${metadata.librarySectionID}?${queryBuilder({
                       mid: metadata.ratingKey,
-                    })}`,
+                    })}`
                   );
                 }
 
@@ -650,7 +619,7 @@ function Watch() {
                       mid: metadata.grandparentRatingKey,
                       pid: metadata.parentRatingKey,
                       iid: metadata.ratingKey,
-                    })}`,
+                    })}`
                   );
                 }
 

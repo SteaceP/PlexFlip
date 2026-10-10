@@ -1,5 +1,5 @@
-import React from "react";
 import { CircularProgress, Stack, Typography } from "@mui/material";
+import React from "react";
 
 interface LoginWaitingStatusProps {
   browserOpened: boolean;

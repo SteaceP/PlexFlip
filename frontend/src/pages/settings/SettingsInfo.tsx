@@ -1,21 +1,14 @@
-import React from "react";
-import {
-  Box,
-  Button,
-  Typography,
-  Chip,
-  Stack,
-  Divider,
-} from "@mui/material";
-import { motion } from "framer-motion";
+import BugReportRoundedIcon from "@mui/icons-material/BugReportRounded";
 import FavoriteRoundedIcon from "@mui/icons-material/FavoriteRounded";
 import GitHubIcon from "@mui/icons-material/GitHub";
-import BugReportRoundedIcon from "@mui/icons-material/BugReportRounded";
 import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
+import { Box, Button, Chip, Divider, Stack, Typography } from "@mui/material";
+import { motion } from "framer-motion";
+import React from "react";
 
+import { openExternalURL } from "../../common/DesktopApp";
 import SettingsCard from "../../components/settings/SettingsCard";
 import SettingsHeader from "../../components/settings/SettingsHeader";
-import { openExternalURL } from "../../common/DesktopApp";
 
 function SettingsInfo() {
   const handleOpenLink = (url: string) => {
@@ -118,8 +111,8 @@ function SettingsInfo() {
               </Box>
 
               <Typography variant="body2" sx={{ color: "#94A3B8", lineHeight: 1.6 }}>
-                Welcome to PlexFlip! Designed to elevate your media library experience
-                with an intuitive interface, thoughtful playback controls, and seamless browsing.
+                Welcome to PlexFlip! Designed to elevate your media library experience with an
+                intuitive interface, thoughtful playback controls, and seamless browsing.
               </Typography>
             </Box>
           </Box>

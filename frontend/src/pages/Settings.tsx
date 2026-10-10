@@ -1,31 +1,31 @@
+import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
+import ArrowForwardIosRoundedIcon from "@mui/icons-material/ArrowForwardIosRounded";
+import CloudSyncRoundedIcon from "@mui/icons-material/CloudSyncRounded";
+import InfoRoundedIcon from "@mui/icons-material/InfoRounded";
+import PlayCircleOutlineRoundedIcon from "@mui/icons-material/PlayCircleOutlineRounded";
+import StorageRoundedIcon from "@mui/icons-material/StorageRounded";
+import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
+import VideoLibraryRoundedIcon from "@mui/icons-material/VideoLibraryRounded";
 import {
   Box,
-  CircularProgress,
-  Typography,
-  IconButton,
   Chip,
+  CircularProgress,
+  IconButton,
+  Typography,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
 import React from "react";
 import { Link, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
-import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
-import StorageRoundedIcon from "@mui/icons-material/StorageRounded";
-import InfoRoundedIcon from "@mui/icons-material/InfoRounded";
-import PlayCircleOutlineRoundedIcon from "@mui/icons-material/PlayCircleOutlineRounded";
-import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
-import VideoLibraryRoundedIcon from "@mui/icons-material/VideoLibraryRounded";
-import CloudSyncRoundedIcon from "@mui/icons-material/CloudSyncRounded";
-import ArrowForwardIosRoundedIcon from "@mui/icons-material/ArrowForwardIosRounded";
 
+import { useSessionStore } from "../states/SessionState";
+import { useUserSettings } from "../states/UserSettingsState";
+import SettingsCloud from "./settings/SettingsCloud";
 import SettingsInfo from "./settings/SettingsInfo";
-import SettingsServer from "./settings/SettingsServer";
+import SettingsLibraries from "./settings/SettingsLibraries";
 import SettingsPlayback from "./settings/SettingsPlayback";
 import SettingsRecommendations from "./settings/SettingsRecommendations";
-import SettingsLibraries from "./settings/SettingsLibraries";
-import SettingsCloud from "./settings/SettingsCloud";
-import { useUserSettings } from "../states/UserSettingsState";
-import { useSessionStore } from "../states/SessionState";
+import SettingsServer from "./settings/SettingsServer";
 
 interface NavItem {
   id: string;
@@ -232,44 +232,44 @@ function Settings() {
               "::-webkit-scrollbar": { display: "none" },
             }}
           >
-            {navSections.flatMap((sec) => sec.items).map((item) => {
-              const active = pathname === item.link;
-              return (
-                <Link
-                  key={item.id}
-                  to={item.link}
-                  style={{ textDecoration: "none", flexShrink: 0 }}
-                >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1,
-                      px: 2,
-                      py: 1,
-                      borderRadius: "10px",
-                      bgcolor: active
-                        ? "rgba(99, 102, 241, 0.2)"
-                        : "rgba(18, 25, 39, 0.6)",
-                      border: "1px solid",
-                      borderColor: active
-                        ? "rgba(99, 102, 241, 0.5)"
-                        : "rgba(255, 255, 255, 0.08)",
-                      color: active ? "#F8FAFC" : "#94A3B8",
-                      fontWeight: active ? 650 : 500,
-                      fontSize: "0.85rem",
-                    }}
+            {navSections
+              .flatMap((sec) => sec.items)
+              .map((item) => {
+                const active = pathname === item.link;
+                return (
+                  <Link
+                    key={item.id}
+                    to={item.link}
+                    style={{ textDecoration: "none", flexShrink: 0 }}
                   >
-                    <Box sx={{ color: active ? "#818CF8" : "inherit", display: "flex" }}>
-                      {item.icon}
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        px: 2,
+                        py: 1,
+                        borderRadius: "10px",
+                        bgcolor: active ? "rgba(99, 102, 241, 0.2)" : "rgba(18, 25, 39, 0.6)",
+                        border: "1px solid",
+                        borderColor: active
+                          ? "rgba(99, 102, 241, 0.5)"
+                          : "rgba(255, 255, 255, 0.08)",
+                        color: active ? "#F8FAFC" : "#94A3B8",
+                        fontWeight: active ? 650 : 500,
+                        fontSize: "0.85rem",
+                      }}
+                    >
+                      <Box sx={{ color: active ? "#818CF8" : "inherit", display: "flex" }}>
+                        {item.icon}
+                      </Box>
+                      <Typography variant="body2" sx={{ fontWeight: "inherit", color: "inherit" }}>
+                        {item.title}
+                      </Typography>
                     </Box>
-                    <Typography variant="body2" sx={{ fontWeight: "inherit", color: "inherit" }}>
-                      {item.title}
-                    </Typography>
-                  </Box>
-                </Link>
-              );
-            })}
+                  </Link>
+                );
+              })}
           </Box>
         )}
 
@@ -303,7 +303,10 @@ function Settings() {
               }}
             >
               {navSections.map((section) => (
-                <Box key={section.category} sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
+                <Box
+                  key={section.category}
+                  sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}
+                >
                   <Typography
                     variant="caption"
                     sx={{
@@ -322,11 +325,7 @@ function Settings() {
                   {section.items.map((item) => {
                     const active = pathname === item.link;
                     return (
-                      <Link
-                        key={item.id}
-                        to={item.link}
-                        style={{ textDecoration: "none" }}
-                      >
+                      <Link key={item.id} to={item.link} style={{ textDecoration: "none" }}>
                         <Box
                           sx={{
                             display: "flex",
@@ -335,13 +334,9 @@ function Settings() {
                             gap: 1.5,
                             p: 1.25,
                             borderRadius: "12px",
-                            bgcolor: active
-                              ? "rgba(99, 102, 241, 0.16)"
-                              : "transparent",
+                            bgcolor: active ? "rgba(99, 102, 241, 0.16)" : "transparent",
                             border: "1px solid",
-                            borderColor: active
-                              ? "rgba(99, 102, 241, 0.4)"
-                              : "transparent",
+                            borderColor: active ? "rgba(99, 102, 241, 0.4)" : "transparent",
                             transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                             "&:hover": {
                               bgcolor: active

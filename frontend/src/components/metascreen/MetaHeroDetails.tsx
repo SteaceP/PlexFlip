@@ -1,22 +1,19 @@
-import React from "react";
-import { Box, Button, Collapse, Tooltip, Typography } from "@mui/material";
 import {
   CheckCircleOutlineRounded,
   CheckCircleRounded,
   PlayArrowRounded,
   QueueMusicRounded,
 } from "@mui/icons-material";
+import { Box, Button, Collapse, Tooltip, Typography } from "@mui/material";
+import React from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import {
-  getLibraryMetaChildren,
-  getTranscodeImageURL,
-  setMediaPlayedStatus,
-} from "../../plex";
-import { durationToText } from "../MovieItemSlider";
-import { HeroWatchListButton } from "../MovieItem";
-import { useBigReader } from "../BigReader";
-import { useConfirmModal } from "../ConfirmModal";
+
+import { getLibraryMetaChildren, getTranscodeImageURL, setMediaPlayedStatus } from "../../plex";
 import { useAudioPlayerStore } from "../../states/AudioPlayerState";
+import { useConfirmModal } from "../../states/ConfirmModalState";
+import { useBigReader } from "../BigReader";
+import { HeroWatchListButton } from "../MovieItem";
+import { durationToText } from "../MovieItemSlider";
 import RatingButton from "./RatingButton";
 
 export interface MetaHeroDetailsProps {
@@ -59,14 +56,12 @@ export function MetaHeroDetails({
           mb: { xs: 4, sm: 0 },
           borderRadius: "10px",
           overflow: "hidden",
-          boxShadow: (theme) =>
-            `0 20px 25px -5px ${theme.palette.common.black}`,
+          boxShadow: (theme) => `0 20px 25px -5px ${theme.palette.common.black}`,
           position: "relative",
           transition: "all 0.3s ease",
           "&:hover": {
             transform: "scale(1.02)",
-            boxShadow: (theme) =>
-              `0 25px 30px -5px ${theme.palette.common.black}`,
+            boxShadow: (theme) => `0 25px 30px -5px ${theme.palette.common.black}`,
           },
         }}
       >
@@ -75,11 +70,7 @@ export function MetaHeroDetails({
           alt={data?.title || ""}
           style={{
             width: "100%",
-            aspectRatio: ["artist", "album", "track"].includes(
-              data?.type || ""
-            )
-              ? "1/1"
-              : "2/3",
+            aspectRatio: ["artist", "album", "track"].includes(data?.type || "") ? "1/1" : "2/3",
             backgroundColor: "#00000088",
             objectFit: "cover",
             display: "block",
@@ -156,9 +147,7 @@ export function MetaHeroDetails({
                   color: "#e5a00d",
                   fontWeight: 600,
                   cursor:
-                    data?.grandparentRatingKey || data?.parentRatingKey
-                      ? "pointer"
-                      : "default",
+                    data?.grandparentRatingKey || data?.parentRatingKey ? "pointer" : "default",
                   "&:hover":
                     data?.grandparentRatingKey || data?.parentRatingKey
                       ? { textDecoration: "underline" }
@@ -168,8 +157,7 @@ export function MetaHeroDetails({
                   textAlign: { xs: "center", sm: "left" },
                 }}
                 onClick={() => {
-                  const targetKey =
-                    data?.grandparentRatingKey || data?.parentRatingKey;
+                  const targetKey = data?.grandparentRatingKey || data?.parentRatingKey;
                   if (targetKey) {
                     setSearchParams({ mid: targetKey.toString() });
                   }
@@ -193,15 +181,14 @@ export function MetaHeroDetails({
               gap: 1,
             }}
           >
-            {data?.type === "show" &&
-              data?.leafCount === data?.viewedLeafCount && (
-                <CheckCircleRounded
-                  sx={{
-                    color: (theme) => theme.palette.primary.light,
-                    fontSize: "large",
-                  }}
-                />
-              )}
+            {data?.type === "show" && data?.leafCount === data?.viewedLeafCount && (
+              <CheckCircleRounded
+                sx={{
+                  color: (theme) => theme.palette.primary.light,
+                  fontSize: "large",
+                }}
+              />
+            )}
             {data?.type === "movie" && (data?.viewCount ?? 0) > 0 && (
               <CheckCircleRounded
                 sx={{
@@ -247,37 +234,30 @@ export function MetaHeroDetails({
                 {data?.rating}
               </Typography>
             )}
-            {data?.duration &&
-              ["episode", "movie", "album", "track"].includes(
-                data?.type
-              ) && (
-                <Typography
-                  sx={{
-                    fontSize: "medium",
-                    fontWeight: "light",
-                    color: (theme) => theme.palette.text.secondary,
-                  }}
-                >
-                  {durationToText(data?.duration)}
-                </Typography>
-              )}
-            {data?.type === "show" &&
-              data?.leafCount &&
-              data?.childCount && (
-                <Typography
-                  sx={{
-                    fontSize: "medium",
-                    fontWeight: "light",
-                    color: (theme) => theme.palette.text.secondary,
-                  }}
-                >
-                  {data?.childCount > 1
-                    ? `${data?.childCount} Seasons`
-                    : `${data?.leafCount} Episode${
-                        data?.leafCount > 1 ? "s" : ""
-                      }`}
-                </Typography>
-              )}
+            {data?.duration && ["episode", "movie", "album", "track"].includes(data?.type) && (
+              <Typography
+                sx={{
+                  fontSize: "medium",
+                  fontWeight: "light",
+                  color: (theme) => theme.palette.text.secondary,
+                }}
+              >
+                {durationToText(data?.duration)}
+              </Typography>
+            )}
+            {data?.type === "show" && data?.leafCount && data?.childCount && (
+              <Typography
+                sx={{
+                  fontSize: "medium",
+                  fontWeight: "light",
+                  color: (theme) => theme.palette.text.secondary,
+                }}
+              >
+                {data?.childCount > 1
+                  ? `${data?.childCount} Seasons`
+                  : `${data?.leafCount} Episode${data?.leafCount > 1 ? "s" : ""}`}
+              </Typography>
+            )}
           </Box>
 
           {/* Action Buttons Row */}
@@ -306,9 +286,7 @@ export function MetaHeroDetails({
               onClick={async () => {
                 if (data?.type === "movie")
                   navigate(
-                    `/watch/${data?.ratingKey}${
-                      data?.viewOffset ? `?t=${data?.viewOffset}` : ""
-                    }`
+                    `/watch/${data?.ratingKey}${data?.viewOffset ? `?t=${data?.viewOffset}` : ""}`
                   );
 
                 if (data?.type === "show") {
@@ -325,8 +303,7 @@ export function MetaHeroDetails({
                       data?.Children?.Metadata[0]?.ratingKey as string
                     );
 
-                    if (firstSeason)
-                      navigate(`/watch/${firstSeason[0].ratingKey}`);
+                    if (firstSeason) navigate(`/watch/${firstSeason[0].ratingKey}`);
                   }
                 }
 
@@ -336,22 +313,16 @@ export function MetaHeroDetails({
 
                 if (data?.type === "album") {
                   if (musicChildren && musicChildren.length > 0) {
-                    useAudioPlayerStore
-                      .getState()
-                      .playAlbum(data, musicChildren);
+                    useAudioPlayerStore.getState().playAlbum(data, musicChildren);
                   }
                 }
 
                 if (data?.type === "artist") {
                   if (musicChildren && musicChildren.length > 0) {
                     const firstAlbum = musicChildren[0];
-                    const tracks = await getLibraryMetaChildren(
-                      firstAlbum.ratingKey
-                    );
+                    const tracks = await getLibraryMetaChildren(firstAlbum.ratingKey);
                     if (tracks && tracks.length > 0) {
-                      useAudioPlayerStore
-                        .getState()
-                        .playAlbum(firstAlbum, tracks);
+                      useAudioPlayerStore.getState().playAlbum(firstAlbum, tracks);
                     }
                   }
                 }
@@ -368,33 +339,29 @@ export function MetaHeroDetails({
                 }E${data?.OnDeck.Metadata.index}`}
             </Button>
 
-            {data?.type === "album" &&
-              musicChildren &&
-              musicChildren.length > 0 && (
-                <Button
-                  variant="outlined"
-                  startIcon={<QueueMusicRounded />}
-                  sx={{
-                    height: "38px",
-                    fontWeight: "bold",
-                    letterSpacing: "0.1em",
-                    textTransform: "uppercase",
-                    borderColor: "rgba(229,160,13,0.5)",
-                    color: "#e5a00d",
-                    "&:hover": {
-                      borderColor: "#e5a00d",
-                      bgcolor: "rgba(229,160,13,0.1)",
-                    },
-                  }}
-                  onClick={() => {
-                    useAudioPlayerStore
-                      .getState()
-                      .addToQueue(musicChildren);
-                  }}
-                >
-                  Queue Album
-                </Button>
-              )}
+            {data?.type === "album" && musicChildren && musicChildren.length > 0 && (
+              <Button
+                variant="outlined"
+                startIcon={<QueueMusicRounded />}
+                sx={{
+                  height: "38px",
+                  fontWeight: "bold",
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  borderColor: "rgba(229,160,13,0.5)",
+                  color: "#e5a00d",
+                  "&:hover": {
+                    borderColor: "#e5a00d",
+                    bgcolor: "rgba(229,160,13,0.1)",
+                  },
+                }}
+                onClick={() => {
+                  useAudioPlayerStore.getState().addToQueue(musicChildren);
+                }}
+              >
+                Queue Album
+              </Button>
+            )}
 
             {!["artist", "album", "track"].includes(data?.type || "") && (
               <Tooltip placement="top" arrow title="Watchlist">
@@ -411,12 +378,12 @@ export function MetaHeroDetails({
                 title={
                   `Mark as ` +
                   (data?.type === "movie"
-                    ? !Boolean(data?.viewCount)
+                    ? !data?.viewCount
                       ? "watched"
                       : "unwatched"
                     : data?.viewedLeafCount === data?.leafCount
-                    ? "unwatched"
-                    : "watched")
+                      ? "unwatched"
+                      : "watched")
                 }
               >
                 <Button
@@ -434,38 +401,25 @@ export function MetaHeroDetails({
                     if (!data) return;
                     let state = "unwatched";
 
-                    if (data?.type === "movie" && (data?.viewCount ?? 0) > 0)
-                      state = "watched";
-                    if (
-                      data?.type === "show" &&
-                      data?.viewedLeafCount === data?.leafCount
-                    )
+                    if (data?.type === "movie" && (data?.viewCount ?? 0) > 0) state = "watched";
+                    if (data?.type === "show" && data?.viewedLeafCount === data?.leafCount)
                       state = "watched";
 
                     useConfirmModal.getState().setModal({
-                      title: `Mark as ${
-                        state === "unwatched" ? "watched" : "unwatched"
-                      }`,
-                      message: `Are you sure you want to mark ${
-                        data?.title
-                      } as ${
+                      title: `Mark as ${state === "unwatched" ? "watched" : "unwatched"}`,
+                      message: `Are you sure you want to mark ${data?.title} as ${
                         state === "unwatched" ? "watched" : "unwatched"
                       }?`,
                       onConfirm: async () => {
                         switch (data.type) {
                           case "movie":
-                            data.viewCount = !Boolean(data.viewCount) ? 1 : 0;
+                            data.viewCount = !data.viewCount ? 1 : 0;
                             setData({ ...data });
-                            await setMediaPlayedStatus(
-                              Boolean(data.viewCount),
-                              data.ratingKey
-                            );
+                            await setMediaPlayedStatus(Boolean(data.viewCount), data.ratingKey);
                             break;
                           case "show": {
                             const newViewedLeafCount =
-                              data.viewedLeafCount === data.leafCount
-                                ? 0
-                                : data.leafCount;
+                              data.viewedLeafCount === data.leafCount ? 0 : data.leafCount;
                             data.viewedLeafCount = newViewedLeafCount;
                             setData({ ...data });
                             await setMediaPlayedStatus(
@@ -567,9 +521,7 @@ export function MetaHeroDetails({
                         }}
                       >
                         {lang}
-                        {index + 1 === languages.slice(0, 10).length
-                          ? ""
-                          : ","}
+                        {index + 1 === languages.slice(0, 10).length ? "" : ","}
                       </Typography>
                     ))}
                   </>
@@ -589,9 +541,7 @@ export function MetaHeroDetails({
               >
                 {subTitles && subTitles.length > 0 && (
                   <>
-                    <Typography color="text.secondary">
-                      Subtitles:{" "}
-                    </Typography>
+                    <Typography color="text.secondary">Subtitles: </Typography>
                     {subTitles.slice(0, 10).map((lang, index) => (
                       <Typography
                         key={index}
@@ -601,9 +551,7 @@ export function MetaHeroDetails({
                         }}
                       >
                         {lang}
-                        {index + 1 === subTitles.slice(0, 10).length
-                          ? ""
-                          : ","}
+                        {index + 1 === subTitles.slice(0, 10).length ? "" : ","}
                       </Typography>
                     ))}
                   </>

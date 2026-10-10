@@ -1,6 +1,7 @@
-import React from "react";
 import { Box, Grid, Typography } from "@mui/material";
 import { motion } from "framer-motion";
+import React from "react";
+
 import MovieItem from "../MovieItem";
 
 export interface MetaPageRecommendationsProps {
@@ -12,9 +13,7 @@ export function MetaPageRecommendations({ data }: MetaPageRecommendationsProps) 
   if (data.Related?.Hub?.length === 0) return <>Nothing here</>;
 
   const validHubs =
-    data.Related?.Hub?.filter(
-      (hub) => hub.Metadata && hub.Metadata.length > 0
-    ) || [];
+    data.Related?.Hub?.filter((hub) => hub.Metadata && hub.Metadata.length > 0) || [];
 
   if (validHubs.length === 0) return <>Nothing here</>;
 

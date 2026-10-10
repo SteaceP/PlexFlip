@@ -1,0 +1,9 @@
+node_modules/
+build/
+dist/
+coverage/
+*.tsbuildinfo
+bindings/
+src/bindings/
+public/
+pnpm-lock.yaml

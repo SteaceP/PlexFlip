@@ -1,27 +1,28 @@
-import React, { useState, useEffect } from "react";
+import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
+import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
+import DnsRoundedIcon from "@mui/icons-material/DnsRounded";
+import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
+import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
+import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
+import SensorsRoundedIcon from "@mui/icons-material/SensorsRounded";
 import {
-  Box,
-  Typography,
-  TextField,
-  Button,
-  CircularProgress,
   Alert,
+  Box,
+  Button,
   Chip,
-  Paper,
+  CircularProgress,
+  Collapse,
   Fade,
   InputAdornment,
-  Collapse,
+  Paper,
+  TextField,
+  Typography,
 } from "@mui/material";
-import DnsRoundedIcon from "@mui/icons-material/DnsRounded";
-import SensorsRoundedIcon from "@mui/icons-material/SensorsRounded";
-import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
-import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
-import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
-import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
-import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import axios from "axios";
-import { useStartupState } from "./Startup";
+import React, { useEffect, useState } from "react";
+
 import { getBackendURL } from "../backendURL";
+import { useStartupState } from "./Startup";
 
 function Utility() {
   const { lastStatus, frontEndStatus, setLastStatus, setFrontEndStatus } = useStartupState();
@@ -118,7 +119,8 @@ function Utility() {
         setSaveError(res.data?.error || "Failed to save configuration.");
       }
     } catch (err: any) {
-      const msg = err.response?.data?.error || err.message || "Could not save server configuration.";
+      const msg =
+        err.response?.data?.error || err.message || "Could not save server configuration.";
       setSaveError(msg);
     } finally {
       setSaving(false);
@@ -156,7 +158,11 @@ function Utility() {
         <img
           src="/logo.svg"
           alt="PlexFlip Logo"
-          style={{ width: "220px", height: "auto", filter: "drop-shadow(0 6px 16px rgba(99,102,241,0.25))" }}
+          style={{
+            width: "220px",
+            height: "auto",
+            filter: "drop-shadow(0 6px 16px rgba(99,102,241,0.25))",
+          }}
         />
       </Box>
 
@@ -179,11 +185,19 @@ function Utility() {
             <Alert
               severity="error"
               action={
-                <Button color="inherit" size="small" onClick={handleRetryBackend} startIcon={<RefreshRoundedIcon />}>
+                <Button
+                  color="inherit"
+                  size="small"
+                  onClick={handleRetryBackend}
+                  startIcon={<RefreshRoundedIcon />}
+                >
                   Retry
                 </Button>
               }
-              sx={{ bgcolor: "rgba(239, 68, 68, 0.15)", border: "1px solid rgba(239, 68, 68, 0.3)" }}
+              sx={{
+                bgcolor: "rgba(239, 68, 68, 0.15)",
+                border: "1px solid rgba(239, 68, 68, 0.3)",
+              }}
             >
               {frontEndStatus.message}
             </Alert>
@@ -207,7 +221,10 @@ function Utility() {
             <DnsRoundedIcon sx={{ color: "#fff", fontSize: 28 }} />
           </Box>
           <Box>
-            <Typography variant="h5" sx={{ fontWeight: 700, color: "#F4F8FF", letterSpacing: "-0.01em" }}>
+            <Typography
+              variant="h5"
+              sx={{ fontWeight: 700, color: "#F4F8FF", letterSpacing: "-0.01em" }}
+            >
               {isUnconfigured ? "Connect to Plex Media Server" : "Plex Server Configuration"}
             </Typography>
             <Typography variant="body2" sx={{ color: "#94A3B8" }}>
@@ -280,7 +297,9 @@ function Utility() {
             sx={{
               mb: 3,
               bgcolor: testResult.ok ? "rgba(16, 185, 129, 0.15)" : "rgba(239, 68, 68, 0.15)",
-              border: testResult.ok ? "1px solid rgba(16, 185, 129, 0.3)" : "1px solid rgba(239, 68, 68, 0.3)",
+              border: testResult.ok
+                ? "1px solid rgba(16, 185, 129, 0.3)"
+                : "1px solid rgba(239, 68, 68, 0.3)",
             }}
           >
             {testResult.message}
@@ -392,7 +411,9 @@ function Utility() {
             variant="outlined"
             onClick={handleTestConnection}
             disabled={testing || saving || !serverUrl.trim()}
-            startIcon={testing ? <CircularProgress size={18} color="inherit" /> : <SensorsRoundedIcon />}
+            startIcon={
+              testing ? <CircularProgress size={18} color="inherit" /> : <SensorsRoundedIcon />
+            }
             sx={{
               borderColor: "rgba(99, 102, 241, 0.4)",
               color: "#C7D2FE",
@@ -414,7 +435,9 @@ function Utility() {
             variant="contained"
             onClick={handleSaveAndConnect}
             disabled={saving || !serverUrl.trim()}
-            endIcon={saving ? <CircularProgress size={18} color="inherit" /> : <ArrowForwardRoundedIcon />}
+            endIcon={
+              saving ? <CircularProgress size={18} color="inherit" /> : <ArrowForwardRoundedIcon />
+            }
             sx={{
               background: "linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)",
               color: "#FFFFFF",
@@ -459,13 +482,16 @@ function Utility() {
                 Finding your Plex Server URL:
               </Typography>
               <Typography variant="caption" sx={{ color: "#94A3B8", display: "block", mb: 0.5 }}>
-                • <strong>Same computer:</strong> Use <code>http://localhost:32400</code> or <code>http://127.0.0.1:32400</code>
+                • <strong>Same computer:</strong> Use <code>http://localhost:32400</code> or{" "}
+                <code>http://127.0.0.1:32400</code>
               </Typography>
               <Typography variant="caption" sx={{ color: "#94A3B8", display: "block", mb: 0.5 }}>
-                • <strong>Local Network (LAN):</strong> Use your Plex machine's local IP address with port 32400, e.g. <code>http://192.168.1.50:32400</code>
+                • <strong>Local Network (LAN):</strong> Use your Plex machine's local IP address
+                with port 32400, e.g. <code>http://192.168.1.50:32400</code>
               </Typography>
               <Typography variant="caption" sx={{ color: "#94A3B8", display: "block" }}>
-                • <strong>Remote / Reverse Proxy:</strong> Use your domain e.g. <code>https://plex.yourdomain.com</code>
+                • <strong>Remote / Reverse Proxy:</strong> Use your domain e.g.{" "}
+                <code>https://plex.yourdomain.com</code>
               </Typography>
             </Box>
           </Collapse>

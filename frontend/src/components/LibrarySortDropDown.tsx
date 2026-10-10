@@ -47,25 +47,17 @@ export function sortMetadata(items: Plex.Metadata[], sort: LibrarySort) {
     case "title:desc":
       return items.sort((a, b) => b.title.localeCompare(a.title));
     case "addedAt:asc":
-      return items.sort((a, b) =>
-        a.addedAt.toString().localeCompare(b.addedAt.toString())
-      );
+      return items.sort((a, b) => a.addedAt.toString().localeCompare(b.addedAt.toString()));
     case "addedAt:desc":
-      return items.sort((a, b) =>
-        b.addedAt.toString().localeCompare(a.addedAt.toString())
-      );
+      return items.sort((a, b) => b.addedAt.toString().localeCompare(a.addedAt.toString()));
     case "year:asc":
       return items.sort((a, b) => a.year - b.year);
     case "year:desc":
       return items.sort((a, b) => b.year - a.year);
     case "updated:asc":
-      return items.sort((a, b) =>
-        a.updatedAt.toString().localeCompare(b.updatedAt.toString())
-      );
+      return items.sort((a, b) => a.updatedAt.toString().localeCompare(b.updatedAt.toString()));
     case "updated:desc":
-      return items.sort((a, b) =>
-        b.updatedAt.toString().localeCompare(a.updatedAt.toString())
-      );
+      return items.sort((a, b) => b.updatedAt.toString().localeCompare(a.updatedAt.toString()));
     case "random:desc":
       return items.sort(() => Math.random() - 0.5);
     default:

@@ -1,27 +1,19 @@
-import React, { useEffect, useState } from "react";
-import {
-  Typography,
-  Box,
-  Button,
-  CircularProgress,
-  Stack,
-  Alert,
-  Fade,
-} from "@mui/material";
-import { motion } from "framer-motion";
+import BookmarkAddedRoundedIcon from "@mui/icons-material/BookmarkAddedRounded";
 import CloudDoneRoundedIcon from "@mui/icons-material/CloudDoneRounded";
 import CloudOffRoundedIcon from "@mui/icons-material/CloudOffRounded";
-import SyncRoundedIcon from "@mui/icons-material/SyncRounded";
-import SecurityRoundedIcon from "@mui/icons-material/SecurityRounded";
 import CloudQueueRoundedIcon from "@mui/icons-material/CloudQueueRounded";
 import RateReviewRoundedIcon from "@mui/icons-material/RateReviewRounded";
-import BookmarkAddedRoundedIcon from "@mui/icons-material/BookmarkAddedRounded";
+import SecurityRoundedIcon from "@mui/icons-material/SecurityRounded";
+import SyncRoundedIcon from "@mui/icons-material/SyncRounded";
+import { Alert, Box, Button, CircularProgress, Fade, Stack, Typography } from "@mui/material";
+import { motion } from "framer-motion";
+import React, { useEffect, useState } from "react";
 
+import { CloudService } from "../../common/CloudService";
 import CheckBoxOption from "../../components/settings/CheckBoxOption";
 import SettingsCard from "../../components/settings/SettingsCard";
 import SettingsHeader from "../../components/settings/SettingsHeader";
 import { useUserSettings } from "../../states/UserSettingsState";
-import { CloudService } from "../../common/CloudService";
 import { useWatchListCache } from "../../states/WatchListCache";
 
 function SettingsCloud() {
@@ -65,8 +57,8 @@ function SettingsCloud() {
             isCloudHealthy === null
               ? "Checking D1..."
               : isCloudHealthy
-              ? "Cloudflare D1 Online"
-              : "D1 Offline",
+                ? "Cloudflare D1 Online"
+                : "D1 Offline",
           color: isCloudHealthy ? "success" : "default",
           icon:
             isCloudHealthy === null ? (
@@ -98,9 +90,10 @@ function SettingsCloud() {
             }}
           >
             <Typography variant="body2" sx={{ color: "#CBD5E1", lineHeight: 1.6 }}>
-              All cloud data is hosted on edge-replicated Cloudflare D1 databases.
-              Requests are authenticated via your Plex user token with zero personal tracking.
-              Each user maintains exclusive write and delete permissions over their own watchlist items and review threads.
+              All cloud data is hosted on edge-replicated Cloudflare D1 databases. Requests are
+              authenticated via your Plex user token with zero personal tracking. Each user
+              maintains exclusive write and delete permissions over their own watchlist items and
+              review threads.
             </Typography>
           </Box>
         </SettingsCard>

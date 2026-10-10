@@ -1,14 +1,14 @@
 import {
+  PauseRounded,
   PersonAddRounded,
   PersonRemoveRounded,
   PlayArrowRounded,
-  PauseRounded,
   ResetTvRounded,
 } from "@mui/icons-material";
 import { Avatar, Box, Divider, Typography } from "@mui/material";
-import { create } from "zustand";
-import { useEffect, useState } from "react";
 import React from "react";
+import { useEffect, useState } from "react";
+import { create } from "zustand";
 
 export interface ToastState {
   toasts: ToastProps[];
@@ -108,12 +108,7 @@ function ToastManager() {
 
 export default ToastManager;
 
-export type ToastIcons =
-  | "Play"
-  | "Pause"
-  | "UserAdd"
-  | "UserRemove"
-  | "PlaySet";
+export type ToastIcons = "Play" | "Pause" | "UserAdd" | "UserRemove" | "PlaySet";
 
 export function Toast({
   id,
@@ -162,7 +157,7 @@ export function Toast({
         });
       }, 500);
     }, duration);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -231,12 +226,7 @@ export function Toast({
         />
       )}
 
-      <Divider
-        orientation="vertical"
-        variant="middle"
-        flexItem
-        sx={{ mx: "15px" }}
-      />
+      <Divider orientation="vertical" variant="middle" flexItem sx={{ mx: "15px" }} />
 
       <Box
         sx={{

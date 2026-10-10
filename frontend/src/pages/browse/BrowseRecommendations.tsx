@@ -1,13 +1,12 @@
 import { Box, CircularProgress, Typography } from "@mui/material";
+import { motion } from "framer-motion";
 import React, { useEffect } from "react";
 import { useParams } from "react-router-dom";
+
 import HeroDisplay from "../../components/HeroDisplay";
-import MovieItemSlider, {
-  shuffleArray,
-} from "../../components/MovieItemSlider";
+import MovieItemSlider, { shuffleArray } from "../../components/MovieItemSlider";
 import { getLibrary, getLibraryDir, getLibraryMeta } from "../../plex";
 import { getIncludeProps } from "../../plex/QuickFunctions";
-import { motion } from "framer-motion";
 import { useUserSettings } from "../../states/UserSettingsState";
 
 interface Category {
@@ -21,12 +20,8 @@ interface Category {
 
 function BrowseRecommendations() {
   const { libraryID } = useParams<{ libraryID: string }>();
-  const [library, setLibrary] = React.useState<Plex.MediaContainer | null>(
-    null
-  );
-  const [featuredItem, setFeaturedItem] = React.useState<Plex.Metadata | null>(
-    null
-  );
+  const [library, setLibrary] = React.useState<Plex.MediaContainer | null>(null);
+  const [featuredItem, setFeaturedItem] = React.useState<Plex.Metadata | null>(null);
   const [categories, setCategories] = React.useState<Category[] | null>([]);
   const { settings } = useUserSettings();
 
@@ -55,16 +50,12 @@ function BrowseRecommendations() {
           ? `/library/sections/${library.librarySectionID}/all`
           : `/library/sections/${library.librarySectionID}/unwatched`;
 
-        let media = await getLibraryDir(
-          heroUrl,
-          isMusic ? { limit: 20 } : undefined
-        );
+        let media = await getLibraryDir(heroUrl, isMusic ? { limit: 20 } : undefined);
         let data = media?.Metadata;
         if (!data || data.length === 0) {
-          media = await getLibraryDir(
-            `/library/sections/${library.librarySectionID}/all`,
-            { limit: 20 }
-          );
+          media = await getLibraryDir(`/library/sections/${library.librarySectionID}/all`, {
+            limit: 20,
+          });
           data = media?.Metadata;
         }
         if (!data || data.length === 0) {
@@ -87,9 +78,7 @@ function BrowseRecommendations() {
         if (settings["DISABLE_GENRE_RECOMMENDATIONS"] === "true") {
           return resolve([]);
         }
-        getLibraryDir(
-          `/library/sections/${library.librarySectionID.toString()}/genre`
-        )
+        getLibraryDir(`/library/sections/${library.librarySectionID.toString()}/genre`)
           .then(async (media) => {
             const genres = media.Directory;
             if (!genres || !genres.length) return resolve([]);
@@ -118,17 +107,14 @@ function BrowseRecommendations() {
         if (settings["DISABLE_SIMILAR_RECOMMENDATIONS"] === "true") {
           return resolve([]);
         }
-        getLibraryDir(
-          `/library/sections/${library.librarySectionID.toString()}/all`,
-          {
-            type: libraryType === "movie" ? "1" : isMusic ? "9" : "2",
-            sort: "lastViewedAt:desc",
-            limit: "20",
-            unwatched: "0",
-          }
-        )
+        getLibraryDir(`/library/sections/${library.librarySectionID.toString()}/all`, {
+          type: libraryType === "movie" ? "1" : isMusic ? "9" : "2",
+          sort: "lastViewedAt:desc",
+          limit: "20",
+          unwatched: "0",
+        })
           .then(async (media) => {
-            let data = media.Metadata;
+            const data = media.Metadata;
             if (!data) return resolve([]);
             resolve(
               data.filter((item) =>
@@ -140,10 +126,7 @@ function BrowseRecommendations() {
       });
 
       try {
-        const [genres, lastViewed] = await Promise.all([
-          getGenres,
-          getLastViewed,
-        ]);
+        const [genres, lastViewed] = await Promise.all([getGenres, getLastViewed]);
 
         if (settings["DISABLE_SIMILAR_RECOMMENDATIONS"] !== "true") {
           if (lastViewed[0]) {
@@ -168,8 +151,7 @@ function BrowseRecommendations() {
           }
 
           if (lastViewed.length > 3) {
-            const randomItem =
-              lastViewed[Math.floor(Math.random() * lastViewed.length)];
+            const randomItem = lastViewed[Math.floor(Math.random() * lastViewed.length)];
             const randomMeta = await getLibraryMeta(randomItem.ratingKey);
 
             let shortenedTitle = randomMeta.title;

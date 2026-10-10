@@ -1,5 +1,5 @@
-import React from "react";
 import { Box, Stack, Typography } from "@mui/material";
+import React from "react";
 
 export default function LoginHeader() {
   return (
@@ -17,9 +17,7 @@ export default function LoginHeader() {
           mb: 0.5,
         }}
       >
-        <Typography sx={{ fontWeight: 900, fontSize: "1.8rem", color: "#000" }}>
-          P
-        </Typography>
+        <Typography sx={{ fontWeight: 900, fontSize: "1.8rem", color: "#000" }}>P</Typography>
       </Box>
       <Typography variant="h5" sx={{ fontWeight: 800, color: "#F8FAFC", letterSpacing: "-0.02em" }}>
         Sign in to Plex

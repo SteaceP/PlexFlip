@@ -1,5 +1,5 @@
+import { Box, Chip, Switch, Typography } from "@mui/material";
 import React from "react";
-import { Box, Typography, Switch, Chip } from "@mui/material";
 
 export interface CheckBoxOptionProps {
   title: string;

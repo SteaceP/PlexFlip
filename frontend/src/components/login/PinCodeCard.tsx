@@ -1,17 +1,9 @@
-import React from "react";
-import {
-  Box,
-  Button,
-  Chip,
-  IconButton,
-  Paper,
-  Stack,
-  Tooltip,
-  Typography,
-} from "@mui/material";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import CheckIcon from "@mui/icons-material/Check";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import { Box, Button, Chip, IconButton, Paper, Stack, Tooltip, Typography } from "@mui/material";
+import React from "react";
+
 import { openExternalURL } from "../../common/DesktopApp";
 
 interface PinCodeCardProps {
@@ -21,12 +13,7 @@ interface PinCodeCardProps {
   onQuickLink: () => void;
 }
 
-export default function PinCodeCard({
-  code,
-  copied,
-  onCopy,
-  onQuickLink,
-}: PinCodeCardProps) {
+export default function PinCodeCard({ code, copied, onCopy, onQuickLink }: PinCodeCardProps) {
   return (
     <Paper
       elevation={0}
@@ -56,7 +43,10 @@ export default function PinCodeCard({
         />
       </Stack>
 
-      <Typography variant="caption" sx={{ color: "#CBD5E1", display: "block", mb: 1.5, lineHeight: 1.4 }}>
+      <Typography
+        variant="caption"
+        sx={{ color: "#CBD5E1", display: "block", mb: 1.5, lineHeight: 1.4 }}
+      >
         Works with Google, Apple, or Email. Open{" "}
         <Box
           component="span"
@@ -73,7 +63,13 @@ export default function PinCodeCard({
         in your browser and enter:
       </Typography>
 
-      <Stack direction="row" alignItems="center" justifyContent="center" spacing={1.5} sx={{ mb: 1.8 }}>
+      <Stack
+        direction="row"
+        alignItems="center"
+        justifyContent="center"
+        spacing={1.5}
+        sx={{ mb: 1.8 }}
+      >
         <Typography
           sx={{
             fontFamily: "monospace",
