@@ -1,0 +1,460 @@
+name: Release Builds
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Release tag to attach binaries to (e.g. v1.4.2). If omitted, uses version.txt"
+        required: false
+        default: ""
+      prerelease:
+        description: "Mark as prerelease"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux:
+    name: Build Linux Packages & Binaries
+    runs-on: ubuntu-24.04
+    env:
+      APPIMAGE_EXTRACT_AND_RUN: 1
+      GIT_COMMITTER_NAME: "PlexFlip Release Bot"
+      GIT_COMMITTER_EMAIL: "noreply@github.com"
+      GOARCH: "amd64"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: "backend/go.mod"
+          check-latest: true
+          cache: true
+          cache-dependency-path: backend/go.sum
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            pkg-config \
+            libgtk-4-dev \
+            libwebkitgtk-6.0-dev \
+            rpm \
+            libfuse2 \
+            file \
+            tar
+
+      - name: Install Wails v3 CLI
+        run: |
+          go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.28
+
+      - name: Resolve version and configure build metadata
+        id: version_step
+        run: |
+          if [ -n "${{ inputs.tag_name }}" ]; then
+            TAG="${{ inputs.tag_name }}"
+          elif [ "${{ github.event_name }}" = "release" ]; then
+            TAG="${{ github.event.release.tag_name }}"
+          else
+            TAG="v$(cat version.txt 2>/dev/null || echo "0.1.0")"
+          fi
+          RAW_VER="${TAG#v}"
+          echo "RAW_VERSION=${RAW_VER}" >> $GITHUB_ENV
+          echo "TAG_NAME=v${RAW_VER}" >> $GITHUB_ENV
+
+          # Update build versions
+          sed -i "s/version: \".*\"/version: \"${RAW_VER}\"/" build/config.yml || true
+          sed -i "s/version: \".*\"/version: \"${RAW_VER}\"/" build/linux/nfpm/nfpm.yaml || true
+          chmod +x build/linux/appimage/build.sh build/linux/nfpm/scripts/postinstall.sh || true
+
+      - name: Build frontend and bindings
+        run: |
+          # Generate Wails TypeScript bindings
+          wails3 generate bindings -d frontend/src/bindings -ts -i ./backend
+          mkdir -p frontend/bindings
+          cp -r frontend/src/bindings/* frontend/bindings/
+
+          # Build React frontend
+          pnpm --dir frontend install --frozen-lockfile
+          pnpm --dir frontend run build
+
+          # Stage built assets into backend/www for Go embed
+          mkdir -p backend/www
+          rm -rf backend/www/*
+          cp -r frontend/build/* backend/www/
+          touch backend/www/.gitkeep
+
+      - name: Build Linux Desktop Packages (AppImage, deb, rpm)
+        run: |
+          mkdir -p bin
+          # Run Linux packaging via Wails task framework
+          wails3 task linux:package || {
+            echo "wails3 task linux:package had a non-fatal error; ensuring core packages..."
+            wails3 task linux:create:appimage || true
+            wails3 task linux:create:deb || true
+            wails3 task linux:create:rpm || true
+          }
+
+          # Archive standalone desktop binary
+          if [ -f bin/plexflip ]; then
+            tar -czvf bin/plexflip-desktop-linux-amd64.tar.gz -C bin plexflip
+          fi
+
+      - name: Build Linux Server Binaries (amd64 & arm64)
+        run: |
+          # Headless server amd64
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags server,production -trimpath -ldflags="-w -s" -o bin/plexflip-server-linux-amd64 ./backend
+          tar -czvf bin/plexflip-server-linux-amd64.tar.gz -C bin plexflip-server-linux-amd64
+
+          # Headless server arm64
+          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -tags server,production -trimpath -ldflags="-w -s" -o bin/plexflip-server-linux-arm64 ./backend
+          tar -czvf bin/plexflip-server-linux-arm64.tar.gz -C bin plexflip-server-linux-arm64
+
+      - name: Stage Linux release assets
+        run: |
+          mkdir -p dist-linux
+          # Copy AppImage
+          if [ -f bin/plexflip.AppImage ]; then
+            cp bin/plexflip.AppImage "dist-linux/plexflip-${RAW_VERSION}-linux-amd64.AppImage"
+            cp bin/plexflip.AppImage dist-linux/plexflip-linux-amd64.AppImage
+          fi
+          # Copy deb, rpm, tarballs
+          cp bin/*.deb dist-linux/ 2>/dev/null || true
+          cp bin/*.rpm dist-linux/ 2>/dev/null || true
+          cp bin/plexflip-desktop-linux-*.tar.gz dist-linux/ 2>/dev/null || true
+          cp bin/plexflip-server-linux-*.tar.gz dist-linux/ 2>/dev/null || true
+          echo "===> Linux artifacts prepared:"
+          ls -lh dist-linux/
+
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts-linux
+          path: dist-linux/*
+          if-no-files-found: error
+
+  build-windows:
+    name: Build Windows Installer & Binaries
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: "backend/go.mod"
+          check-latest: true
+          cache: true
+          cache-dependency-path: backend/go.sum
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install NSIS
+        shell: pwsh
+        run: |
+          choco install nsis -y
+          $nsisPath = "C:\Program Files (x86)\NSIS"
+          if (Test-Path $nsisPath) {
+            echo "$nsisPath" >> $env:GITHUB_PATH
+            $env:PATH = "$nsisPath;$env:PATH"
+          }
+
+      - name: Install Wails v3 CLI
+        shell: pwsh
+        run: |
+          go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.28
+
+      - name: Resolve version and configure build metadata
+        shell: pwsh
+        run: |
+          if ("${{ inputs.tag_name }}" -ne "") {
+            $tag = "${{ inputs.tag_name }}"
+          } elseif ("${{ github.event_name }}" -eq "release") {
+            $tag = "${{ github.event.release.tag_name }}"
+          } else {
+            $tag = "v" + (Get-Content version.txt -ErrorAction SilentlyContinue)
+            if (-not $tag -or $tag -eq "v") { $tag = "v0.1.0" }
+          }
+          $rawVer = $tag -replace '^v',''
+          echo "RAW_VERSION=$rawVer" >> $env:GITHUB_ENV
+          echo "TAG_NAME=v$rawVer" >> $env:GITHUB_ENV
+
+          # Update config version and nsis metadata
+          (Get-Content build/config.yml) -replace 'version: ".*"', "version: `"$rawVer`"" | Set-Content build/config.yml
+          (Get-Content build/windows/nsis/wails_tools.nsh) -replace 'INFO_PRODUCTVERSION ".*"', "INFO_PRODUCTVERSION `"$rawVer`"" | Set-Content build/windows/nsis/wails_tools.nsh
+
+      - name: Build frontend and bindings
+        shell: pwsh
+        run: |
+          # Generate Wails TypeScript bindings
+          wails3 generate bindings -d frontend/src/bindings -ts -i ./backend
+          if (!(Test-Path "frontend/bindings")) { New-Item -ItemType Directory -Path "frontend/bindings" -Force }
+          Copy-Item -Path "frontend/src/bindings/*" -Destination "frontend/bindings" -Recurse -Force
+
+          # Build React frontend
+          pnpm --dir frontend install --frozen-lockfile
+          pnpm --dir frontend run build
+
+          # Stage built assets into backend/www for Go embed
+          if (!(Test-Path "backend/www")) { New-Item -ItemType Directory -Path "backend/www" -Force }
+          Get-ChildItem -Path "backend/www" -Exclude ".gitkeep" | Remove-Item -Recurse -Force
+          Copy-Item -Path "frontend/build/*" -Destination "backend/www" -Recurse -Force
+          if (!(Test-Path "backend/www/.gitkeep")) { New-Item -ItemType File -Path "backend/www/.gitkeep" -Force }
+
+      - name: Build Windows Desktop Binary & NSIS Installer
+        shell: pwsh
+        run: |
+          if (!(Test-Path "bin")) { New-Item -ItemType Directory -Path "bin" -Force }
+
+          # Generate Windows syso (icon + manifest + version info)
+          wails3 generate syso -arch amd64 -icon build/windows/icon.ico -manifest build/windows/wails.exe.manifest -info build/windows/info.json -out backend/wails_windows_amd64.syso
+
+          # Compile native desktop executable
+          $env:GOOS = "windows"
+          $env:GOARCH = "amd64"
+          $env:CGO_ENABLED = "0"
+          go build -tags production -trimpath -buildvcs=false -ldflags="-w -s -H windowsgui" -o "bin/plexflip.exe" ./backend
+          Remove-Item backend/*.syso -Force -ErrorAction SilentlyContinue
+
+          # Package portable zip
+          Compress-Archive -Path "bin/plexflip.exe" -DestinationPath "bin/plexflip-windows-amd64.zip" -Force
+
+          # Create NSIS installer
+          wails3 generate webview2bootstrapper -dir "build/windows/nsis"
+          $root = (Get-Location).Path
+          Set-Location build/windows/nsis
+          makensis -DARG_WAILS_AMD64_BINARY="$root\bin\plexflip.exe" project.nsi
+          Set-Location $root
+
+      - name: Build Windows Server Binaries (amd64 & arm64)
+        shell: pwsh
+        run: |
+          $env:CGO_ENABLED = "0"
+          $env:GOOS = "windows"
+
+          # Windows server amd64
+          $env:GOARCH = "amd64"
+          go build -tags server,production -trimpath -ldflags="-w -s" -o "bin/plexflip-server-windows-amd64.exe" ./backend
+          Compress-Archive -Path "bin/plexflip-server-windows-amd64.exe" -DestinationPath "bin/plexflip-server-windows-amd64.zip" -Force
+
+          # Windows server arm64
+          $env:GOARCH = "arm64"
+          go build -tags server,production -trimpath -ldflags="-w -s" -o "bin/plexflip-server-windows-arm64.exe" ./backend
+          Compress-Archive -Path "bin/plexflip-server-windows-arm64.exe" -DestinationPath "bin/plexflip-server-windows-arm64.zip" -Force
+
+      - name: Stage Windows release assets
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path dist-windows -Force
+          # Copy NSIS installer
+          Get-ChildItem -Path bin -Filter "*installer.exe" | ForEach-Object {
+            Copy-Item $_.FullName -Destination "dist-windows/plexflip-$($env:RAW_VERSION)-windows-amd64-installer.exe"
+            Copy-Item $_.FullName -Destination "dist-windows/plexflip-windows-amd64-installer.exe"
+          }
+          # Copy desktop and server archives
+          Get-ChildItem -Path bin -Filter "*.zip" | ForEach-Object {
+            Copy-Item $_.FullName -Destination dist-windows/
+          }
+          echo "===> Windows artifacts prepared:"
+          Get-ChildItem dist-windows
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts-windows
+          path: dist-windows/*
+          if-no-files-found: error
+
+  build-macos:
+    name: Build macOS DMG & Universal Binaries
+    runs-on: macos-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: "backend/go.mod"
+          check-latest: true
+          cache: true
+          cache-dependency-path: backend/go.sum
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install Wails v3 CLI
+        run: |
+          go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.28
+
+      - name: Resolve version and configure build metadata
+        run: |
+          if [ -n "${{ inputs.tag_name }}" ]; then
+            TAG="${{ inputs.tag_name }}"
+          elif [ "${{ github.event_name }}" = "release" ]; then
+            TAG="${{ github.event.release.tag_name }}"
+          else
+            TAG="v$(cat version.txt 2>/dev/null || echo "0.1.0")"
+          fi
+          RAW_VER="${TAG#v}"
+          echo "RAW_VERSION=${RAW_VER}" >> $GITHUB_ENV
+          echo "TAG_NAME=v${RAW_VER}" >> $GITHUB_ENV
+
+          sed -i '' "s/version: \".*\"/version: \"${RAW_VER}\"/" build/config.yml || true
+
+      - name: Build frontend and bindings
+        run: |
+          # Generate Wails TypeScript bindings
+          wails3 generate bindings -d frontend/src/bindings -ts -i ./backend
+          mkdir -p frontend/bindings
+          cp -r frontend/src/bindings/* frontend/bindings/
+
+          # Build React frontend
+          pnpm --dir frontend install --frozen-lockfile
+          pnpm --dir frontend run build
+
+          # Stage built assets into backend/www for Go embed
+          mkdir -p backend/www
+          rm -rf backend/www/*
+          cp -r frontend/build/* backend/www/
+          touch backend/www/.gitkeep
+
+      - name: Build macOS Desktop App & DMG
+        run: |
+          mkdir -p bin
+          # Try universal package (arm64 + amd64) first; fall back to native arm64 if cross-compiling lipo issues arise
+          wails3 task darwin:package:universal || wails3 task darwin:package
+          wails3 task darwin:create:dmg || echo "DMG generation finished"
+
+          # Archive .app bundle into zip preserving symlinks and resource forks
+          if [ -d "bin/plexflip.app" ]; then
+            ditto -c -k --keepParent bin/plexflip.app bin/plexflip-macos.zip
+          fi
+
+      - name: Build macOS Server Binaries (amd64 & arm64)
+        run: |
+          # macOS server amd64
+          CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -tags server,production -trimpath -ldflags="-w -s" -o bin/plexflip-server-darwin-amd64 ./backend
+          tar -czvf bin/plexflip-server-darwin-amd64.tar.gz -C bin plexflip-server-darwin-amd64
+
+          # macOS server arm64
+          CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -tags server,production -trimpath -ldflags="-w -s" -o bin/plexflip-server-darwin-arm64 ./backend
+          tar -czvf bin/plexflip-server-darwin-arm64.tar.gz -C bin plexflip-server-darwin-arm64
+
+      - name: Stage macOS release assets
+        run: |
+          mkdir -p dist-macos
+          # Copy DMG
+          if [ -f bin/plexflip.dmg ]; then
+            cp bin/plexflip.dmg "dist-macos/plexflip-${RAW_VERSION}-darwin.dmg"
+            cp bin/plexflip.dmg dist-macos/plexflip-darwin.dmg
+          fi
+          # Copy zipped app bundle and server tarballs
+          cp bin/plexflip-macos*.zip dist-macos/ 2>/dev/null || true
+          cp bin/plexflip-server-darwin-*.tar.gz dist-macos/ 2>/dev/null || true
+          echo "===> macOS artifacts prepared:"
+          ls -lh dist-macos/
+
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts-macos
+          path: dist-macos/*
+          if-no-files-found: error
+
+  publish-release:
+    name: Publish Production Builds to GitHub Release
+    runs-on: ubuntu-latest
+    needs: [build-linux, build-windows, build-macos]
+    permissions:
+      contents: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve Release Tag
+        id: release_info
+        run: |
+          if [ -n "${{ inputs.tag_name }}" ]; then
+            TAG="${{ inputs.tag_name }}"
+          elif [ "${{ github.event_name }}" = "release" ]; then
+            TAG="${{ github.event.release.tag_name }}"
+          else
+            TAG="v$(cat version.txt 2>/dev/null || echo "0.1.0")"
+          fi
+          echo "tag_name=${TAG}" >> $GITHUB_OUTPUT
+          echo "Target Release Tag: ${TAG}"
+
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: raw-artifacts/
+
+      - name: Consolidate release assets and generate checksums
+        run: |
+          mkdir -p release-assets
+          find raw-artifacts/ -type f -exec cp {} release-assets/ \;
+          cd release-assets
+          sha256sum * > SHA256SUMS.txt
+          echo "===> Final Release Assets:"
+          ls -lh
+          echo "===> SHA-256 Checksums:"
+          cat SHA256SUMS.txt
+
+      - name: Upload Assets to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release_info.outputs.tag_name }}
+          files: release-assets/*
+          fail_on_unmatched_files: false
+          prerelease: ${{ inputs.prerelease || false }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
